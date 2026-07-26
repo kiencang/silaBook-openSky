@@ -15,7 +15,8 @@ export const DEFAULT_CUSTOM_MODELS: CustomModel[] = [
 ];
 
 export const DEFAULT_ECONOMY_MODELS: CustomModel[] = [
-  { id: 'google/gemini-3.1-flash-lite', name: 'Google Gemini 3.1 Flash Lite' },
+  { id: 'google/gemini-3.1-flash-lite', name: 'Google Gemini 3.1 Flash Lite (đa phương thức)' },
+  { id: 'deepseek/deepseek-v4-flash', name: 'DeepSeek V4 Flash' },
   { id: 'nvidia/nemotron-3-ultra-550b-a55b:free', name: 'Nemotron 3 Ultra (free)' }
 ];
 
@@ -56,7 +57,7 @@ export function getCustomEconomyModels(): CustomModel[] {
     if (raw) {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed.slice(0, 2).map((item: { id?: string; name?: string }) => ({
+        return parsed.slice(0, 3).map((item: { id?: string; name?: string }) => ({
           id: String(item.id || '').trim(),
           name: String(item.name || '').trim() || String(item.id || '').trim()
         })).filter(item => item.id.length > 0);
@@ -70,7 +71,7 @@ export function getCustomEconomyModels(): CustomModel[] {
 
 export function saveCustomEconomyModels(models: CustomModel[]): void {
   if (typeof window === 'undefined') return;
-  const valid = models.slice(0, 2).map(m => ({
+  const valid = models.slice(0, 3).map(m => ({
     id: m.id.trim(),
     name: m.name.trim() || m.id.trim()
   })).filter(m => m.id.length > 0);

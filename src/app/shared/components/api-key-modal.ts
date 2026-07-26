@@ -191,7 +191,7 @@ import { CustomModel, DEFAULT_CUSTOM_MODELS, DEFAULT_ECONOMY_MODELS, getCustomMo
               <div>
                 <div class="block text-xs font-bold text-amber-800 uppercase tracking-wider flex items-center gap-1.5">
                   <mat-icon class="!text-[16px] !w-4 !h-4 text-amber-600">savings</mat-icon>
-                  <span>DANH SÁCH MÔ HÌNH AI TIẾT KIỆM (TỐI ĐA 2 MODEL)</span>
+                  <span>DANH SÁCH MÔ HÌNH AI TIẾT KIỆM (TỐI ĐA 3 MODEL)</span>
                 </div>
                 <p class="text-[11px] text-zinc-500 mt-0.5 leading-relaxed">
                   Dùng riêng cho việc chuyển đổi PDF sang Markdown và quét chia khối trước khi dịch. Các mô hình này sử dụng Temperature cố định = 0.3 để tối ưu tính chính xác. Đối với việc chuyển đổi PDF thành markdown bắt buộc phải dùng modal đa phương thức (để có khả năng xử lý PDF scan). Để tiết kiệm nhất nên dùng các công cụ miễn phí bên ngoài để chuyển PDF thành markdown, ví dụ như PaddleOCR hoặc GLM-OCR.
@@ -249,7 +249,7 @@ import { CustomModel, DEFAULT_CUSTOM_MODELS, DEFAULT_ECONOMY_MODELS, getCustomMo
               }
             </div>
 
-            @if (economyModels().length < 2) {
+            @if (economyModels().length < 3) {
               <button 
                 type="button" 
                 (click)="addEconomyModel()" 
@@ -354,7 +354,7 @@ export class ApiKeyModal {
   }
 
   addEconomyModel() {
-    if (this.economyModels().length < 2) {
+    if (this.economyModels().length < 3) {
       this.economyModels.update(list => [...list, { id: '', name: '' }]);
     }
   }

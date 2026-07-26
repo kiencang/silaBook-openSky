@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, OnInit } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { FormsModule } from '@angular/forms';
 import { BookStore } from '../../../core/book.store';
@@ -202,7 +202,7 @@ import { CustomModel, getCustomModels } from '../../../core/openrouter';
     </div>
   `
 })
-export class TranslatorConfigComponent {
+export class TranslatorConfigComponent implements OnInit {
   store = inject(BookStore);
   models = signal<CustomModel[]>(getCustomModels());
   isCustomInstructionsExpanded = signal(!!this.store.customInstructions());
@@ -211,7 +211,16 @@ export class TranslatorConfigComponent {
     if (typeof window !== 'undefined') {
       window.addEventListener('openrouter-models-changed', () => {
         this.models.set(getCustomModels());
+        if (!this.store.config().model && this.models().length > 0) {
+          this.store.updateConfig({ model: this.models()[0].id });
+        }
       });
+    }
+  }
+
+  ngOnInit() {
+    if (!this.store.config().model && this.models().length > 0) {
+      this.store.updateConfig({ model: this.models()[0].id });
     }
   }
   
