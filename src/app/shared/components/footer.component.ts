@@ -36,7 +36,7 @@ import { MatIconModule } from '@angular/material/icon';
       </div>
 
       <div class="flex items-center flex-wrap justify-center gap-x-2 gap-y-1">
-        <span class="font-medium text-zinc-600">v1.0.5</span>
+        <span class="font-medium text-zinc-600">v1.0.6</span>
         <span class="text-zinc-300">•</span>
         <a href="https://github.com/kiencang/silaBook-openSky" target="_blank" rel="noopener noreferrer" class="hover:text-indigo-600 transition-colors">GitHub</a>
         <span class="text-zinc-300">•</span>
@@ -44,7 +44,7 @@ import { MatIconModule } from '@angular/material/icon';
         <span class="text-zinc-300">•</span>
         <span>contact&#64;wpsila.com</span>
         <span class="text-zinc-300">•</span>
-        <a href="https://silabook-intro.wpsila.com/" target="_blank" rel="noopener noreferrer" class="hover:text-indigo-600 transition-colors">Hướng dẫn dùng</a>
+        <a href="https://github.com/kiencang/silaBook-openSky/blob/main/README.md" target="_blank" rel="noopener noreferrer" class="hover:text-indigo-600 transition-colors">Hướng dẫn dùng</a>
         <span class="text-zinc-300">•</span>
         <a href="https://www.gutenberg.org/browse/scores/top#books-last100" target="_blank" rel="noopener noreferrer" class="hover:text-indigo-600 transition-colors">Gutenberg</a>
       </div>

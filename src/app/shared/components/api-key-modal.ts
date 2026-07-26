@@ -116,7 +116,7 @@ import { CustomModel, DEFAULT_CUSTOM_MODELS, DEFAULT_ECONOMY_MODELS, getCustomMo
               </div>
 
               <p class="text-[11px] text-zinc-500 leading-relaxed pt-0.5">
-                Áp dụng cho tất cả nhiệm vụ dùng Mô hình AI Chất lượng (Dịch thuật, Phân tích đại từ, Từ khó, Tóm tắt). Mặc định là <strong class="text-zinc-700">0.5</strong> (bước nhảy 0.1) giúp cân bằng hoàn hảo giữa độ chính xác và văn phong mượt mà.
+                Áp dụng cho tất cả nhiệm vụ dùng Mô hình AI Chất lượng cao (Dịch thuật, Phân tích Đại từ, Từ khó). Mặc định là <strong class="text-zinc-700">0.5</strong>, giúp cân bằng hoàn hảo giữa độ chính xác & văn phong mượt mà.
               </p>
             </div>
 
@@ -194,7 +194,7 @@ import { CustomModel, DEFAULT_CUSTOM_MODELS, DEFAULT_ECONOMY_MODELS, getCustomMo
                   <span>DANH SÁCH MÔ HÌNH AI TIẾT KIỆM (TỐI ĐA 3 MODEL)</span>
                 </div>
                 <p class="text-[11px] text-zinc-500 mt-0.5 leading-relaxed">
-                  Dùng riêng cho việc chuyển đổi PDF sang Markdown và quét chia khối trước khi dịch. Các mô hình này sử dụng Temperature cố định = 0.3 để tối ưu tính chính xác. Đối với việc chuyển đổi PDF thành markdown bắt buộc phải dùng modal đa phương thức (để có khả năng xử lý PDF scan). Để tiết kiệm nhất nên dùng các công cụ miễn phí bên ngoài để chuyển PDF thành markdown, ví dụ như PaddleOCR hoặc GLM-OCR.
+                  Dùng riêng cho việc chuyển đổi PDF sang Markdown và quét chia khối trước khi dịch. Các mô hình này sử dụng Temperature cố định = 0.3 để tối ưu tính chính xác. Đối với việc chuyển đổi PDF thành markdown bắt buộc phải dùng modal đa phương thức (để có khả năng xử lý PDF scan). Để tiết kiệm nhất nên dùng các công cụ miễn phí bên ngoài để chuyển PDF thành markdown, ví dụ như <a href="https://aistudio.baidu.com/paddleocr" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline">PaddleOCR</a> hoặc <a href="https://ocr.z.ai" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline">GLM-OCR</a>.
                 </p>
               </div>
             </div>
