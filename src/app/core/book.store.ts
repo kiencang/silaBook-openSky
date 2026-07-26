@@ -41,6 +41,7 @@ export interface TranslationVersion {
   useCustomInstructions?: boolean;
   customInstructionsSnapshot?: string;
   translationMode?: string;
+  temperature?: number;
 }
 
 export interface Chapter {

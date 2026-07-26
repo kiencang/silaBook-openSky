@@ -79,6 +79,29 @@ export function saveCustomEconomyModels(models: CustomModel[]): void {
   window.dispatchEvent(new Event('openrouter-models-changed'));
 }
 
+export function getQualityTemperature(): number {
+  if (typeof window === 'undefined') return 0.5;
+  try {
+    const raw = localStorage.getItem('user_quality_temperature');
+    if (raw !== null) {
+      const parsed = parseFloat(raw);
+      if (!isNaN(parsed)) {
+        return Math.min(1, Math.max(0, Math.round(parsed * 10) / 10));
+      }
+    }
+  } catch {
+    // fallback
+  }
+  return 0.5;
+}
+
+export function saveQualityTemperature(temp: number): void {
+  if (typeof window === 'undefined') return;
+  const clamped = Math.min(1, Math.max(0, Math.round(temp * 10) / 10));
+  localStorage.setItem('user_quality_temperature', String(clamped));
+  window.dispatchEvent(new Event('openrouter-models-changed'));
+}
+
 export function isQuotaError(e: unknown): boolean {
   const msg = (e as Error)?.message || e?.toString() || '';
   const lowerMsg = msg.toLowerCase();
@@ -179,7 +202,7 @@ export class OpenRouterClient {
     const payload: Record<string, unknown> = {
       model: model || '~google/gemini-flash-latest',
       messages,
-      temperature: options.temperature ?? 0.3
+      temperature: options.temperature ?? getQualityTemperature()
     };
 
     if (options.jsonMode) {
@@ -261,7 +284,7 @@ export class OpenRouterClient {
       { role: 'user' as const, content: userContent }
     ];
 
-    let result = await this.callChatCompletions(model, messages);
+    let result = await this.callChatCompletions(model, messages, { temperature: 0.3 });
     if (result.startsWith('```markdown')) {
       result = result.replace(/^```markdown\n/, '').replace(/\n```$/, '');
     } else if (result.startsWith('```')) {
@@ -311,7 +334,7 @@ export class OpenRouterClient {
           { role: 'system', content: si },
           { role: 'user', content: prompt }
         ],
-        { jsonMode: true }
+        { jsonMode: true, temperature: 0.3 }
       );
 
       let matchedItems: { english: string; pos: string }[] = [];
@@ -611,7 +634,7 @@ export class OpenRouterClient {
         { role: 'system', content: si || 'You analyze book content and output JSON configuration.' },
         { role: 'user', content: finalPrompt }
       ],
-      { jsonMode: true }
+      { jsonMode: true, temperature: 0.3 }
     );
 
     if (result.startsWith('```json')) {

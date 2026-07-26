@@ -2,7 +2,7 @@ import { Component, Output, EventEmitter, signal, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { ToastService } from '../../core/toast.service';
-import { CustomModel, DEFAULT_CUSTOM_MODELS, DEFAULT_ECONOMY_MODELS, getCustomModels, saveCustomModels, getCustomEconomyModels, saveCustomEconomyModels } from '../../core/openrouter';
+import { CustomModel, DEFAULT_CUSTOM_MODELS, DEFAULT_ECONOMY_MODELS, getCustomModels, saveCustomModels, getCustomEconomyModels, saveCustomEconomyModels, getQualityTemperature, saveQualityTemperature } from '../../core/openrouter';
 
 @Component({
   selector: 'app-api-key-modal',
@@ -28,7 +28,7 @@ import { CustomModel, DEFAULT_CUSTOM_MODELS, DEFAULT_ECONOMY_MODELS, getCustomMo
         <!-- Content -->
         <div class="p-6 space-y-5 overflow-y-auto bg-white">
           <p class="text-sm text-zinc-600 leading-relaxed">
-            Ứng dụng kết nối trực tiếp với OpenRouter API. Bạn có thể tự do cấu hình danh sách các mô hình AI mong muốn bên dưới.
+            Ứng dụng kết nối trực tiếp với OpenRouter API. Vì dịch là nhiệm vụ khó, bạn hãy chọn các model AI chất lượng nhất theo khả năng. Ứng dụng lưu trữ sẵn một số model mặc định, bạn có thể tự do điều chỉnh lại thành các model khác theo ý muốn.
           </p>
 
           <!-- Status badge/links -->
@@ -75,18 +75,49 @@ import { CustomModel, DEFAULT_CUSTOM_MODELS, DEFAULT_ECONOMY_MODELS, getCustomMo
 
           <!-- Quality Custom Models List Config -->
           <div class="space-y-3">
-            <div class="flex items-center justify-between">
-              <div>
-                <div class="block text-xs font-bold text-zinc-800 uppercase tracking-wider">
-                  DANH SÁCH MÔ HÌNH AI CHẤT LƯỢNG (TỐI ĐA 5 MODEL)
-                </div>
-                <p class="text-[11px] text-zinc-500 mt-0.5">
-                  Nhập mã model từ OpenRouter (VD: <code class="bg-zinc-100 px-1 py-0.5 rounded text-zinc-700">~google/gemini-flash-latest</code>) dùng cho dịch thuật chính thức, phân tích đại từ & từ khó.
-                </p>
+            <div>
+              <div class="block text-xs font-bold text-zinc-800 uppercase tracking-wider">
+                DANH SÁCH MÔ HÌNH AI CHẤT LƯỢNG (TỐI ĐA 5 MODEL)
               </div>
-              <button type="button" (click)="resetDefaultModels()" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium hover:underline bg-transparent border-none cursor-pointer">
-                Khôi phục mặc định
-              </button>
+              <p class="text-[11px] text-zinc-500 mt-0.5">
+                Nhập mã model từ OpenRouter (VD: <code class="bg-zinc-100 px-1 py-0.5 rounded text-zinc-700">~google/gemini-flash-latest</code>) dùng cho dịch thuật chính thức, phân tích đại từ & từ khó.
+              </p>
+            </div>
+
+            <!-- Quality Temperature Setting -->
+            <div class="bg-indigo-50/50 p-3.5 rounded-xl border border-indigo-100 space-y-2.5">
+              <label for="qualityTempRange" class="text-xs font-bold text-indigo-950 flex items-center gap-1.5">
+                <mat-icon class="!text-[16px] !w-4 !h-4 text-indigo-600">tune</mat-icon>
+                <span>Chỉ số ngẫu nhiên / Sáng tạo (Temperature)</span>
+              </label>
+
+              <!-- Centered Temperature Value Badge -->
+              <div class="flex items-center justify-center pt-0.5 pb-0.5">
+                <span class="px-3 py-0.5 bg-indigo-600 text-white font-mono text-xs font-bold rounded-lg shadow-xs flex items-center gap-1.5">
+                  <span class="text-indigo-200 text-[11px] font-normal">Giá trị:</span>
+                  <span>{{ qualityTemperature().toFixed(1) }}</span>
+                </span>
+              </div>
+
+              <!-- Slider & Edge Labels -->
+              <div class="flex items-center justify-between gap-2 px-0.5">
+                <span class="text-[11px] font-medium text-zinc-500 whitespace-nowrap shrink-0">0.0 (Chính xác)</span>
+                <input 
+                  id="qualityTempRange"
+                  type="range" 
+                  min="0" 
+                  max="1" 
+                  step="0.1" 
+                  [ngModel]="qualityTemperature()" 
+                  (ngModelChange)="onTemperatureChange($event)"
+                  class="grow max-w-[180px] sm:max-w-[220px] accent-indigo-600 cursor-pointer h-1.5 bg-indigo-200/80 rounded-lg appearance-none"
+                />
+                <span class="text-[11px] font-medium text-zinc-500 whitespace-nowrap shrink-0">1.0 (Sáng tạo)</span>
+              </div>
+
+              <p class="text-[11px] text-zinc-500 leading-relaxed pt-0.5">
+                Áp dụng cho tất cả nhiệm vụ dùng Mô hình AI Chất lượng (Dịch thuật, Phân tích đại từ, Từ khó, Tóm tắt). Mặc định là <strong class="text-zinc-700">0.5</strong> (bước nhảy 0.1) giúp cân bằng hoàn hảo giữa độ chính xác và văn phong mượt mà.
+              </p>
             </div>
 
             <div class="space-y-2">
@@ -162,8 +193,8 @@ import { CustomModel, DEFAULT_CUSTOM_MODELS, DEFAULT_ECONOMY_MODELS, getCustomMo
                   <mat-icon class="!text-[16px] !w-4 !h-4 text-amber-600">savings</mat-icon>
                   <span>DANH SÁCH MÔ HÌNH AI TIẾT KIỆM (TỐI ĐA 2 MODEL)</span>
                 </div>
-                <p class="text-[11px] text-zinc-500 mt-0.5">
-                  Dùng riêng cho việc chuyển đổi PDF sang Markdown và quét mã nguồn sách để chia khối.
+                <p class="text-[11px] text-zinc-500 mt-0.5 leading-relaxed">
+                  Dùng riêng cho việc chuyển đổi PDF sang Markdown và quét chia khối trước khi dịch. Các mô hình này sử dụng Temperature cố định = 0.3 để tối ưu tính chính xác. Đối với việc chuyển đổi PDF thành markdown bắt buộc phải dùng modal đa phương thức (để có khả năng xử lý PDF scan). Để tiết kiệm nhất nên dùng các công cụ miễn phí bên ngoài để chuyển PDF thành markdown, ví dụ như PaddleOCR hoặc GLM-OCR.
                 </p>
               </div>
             </div>
@@ -232,14 +263,19 @@ import { CustomModel, DEFAULT_CUSTOM_MODELS, DEFAULT_ECONOMY_MODELS, getCustomMo
         </div>
 
         <!-- Actions -->
-        <div class="p-4 bg-zinc-50 border-t border-zinc-100 flex justify-between items-center shrink-0">
-          <div>
+        <div class="p-4 bg-zinc-50 border-t border-zinc-100 flex flex-wrap justify-between items-center gap-2 shrink-0">
+          <div class="flex items-center gap-2">
             @if (hasSavedKey()) {
               <button (click)="deleteKey()" 
                       class="px-3.5 py-1.5 bg-white border border-red-200 text-red-600 font-medium hover:bg-red-50 hover:border-red-300 rounded-lg transition-all shadow-sm focus:ring-2 focus:ring-red-100 focus:outline-none text-xs cursor-pointer">
                 Xóa Key cá nhân
               </button>
             }
+            <button type="button" (click)="resetDefaultModels()" 
+                    class="px-3.5 py-1.5 bg-white border border-zinc-300 text-zinc-700 font-medium hover:bg-zinc-100 hover:text-indigo-600 hover:border-indigo-300 rounded-lg transition-all shadow-sm focus:ring-2 focus:ring-zinc-200 focus:outline-none text-xs cursor-pointer flex items-center gap-1.5">
+              <mat-icon class="!text-[16px] !w-4 !h-4 text-zinc-500">restart_alt</mat-icon>
+              <span>Khôi phục mặc định</span>
+            </button>
           </div>
           <div class="flex space-x-2">
             <button (click)="triggerClose()" 
@@ -269,11 +305,20 @@ export class ApiKeyModal {
   hasSavedKey = signal(false);
   models = signal<CustomModel[]>([]);
   economyModels = signal<CustomModel[]>([]);
+  qualityTemperature = signal<number>(0.5);
 
   constructor() {
     this.checkSavedKey();
     this.models.set(getCustomModels().map(m => ({ ...m })));
     this.economyModels.set(getCustomEconomyModels().map(m => ({ ...m })));
+    this.qualityTemperature.set(getQualityTemperature());
+  }
+
+  onTemperatureChange(val: number | string) {
+    const num = typeof val === 'string' ? parseFloat(val) : val;
+    if (!isNaN(num)) {
+      this.qualityTemperature.set(Math.min(1, Math.max(0, Math.round(num * 10) / 10)));
+    }
   }
 
   addModel() {
@@ -341,9 +386,22 @@ export class ApiKeyModal {
   }
 
   resetDefaultModels() {
-    this.models.set(DEFAULT_CUSTOM_MODELS.map(m => ({ ...m })));
-    this.economyModels.set(DEFAULT_ECONOMY_MODELS.map(m => ({ ...m })));
-    this.toast.info('Đã khôi phục danh sách model mặc định.');
+    const defaultModels = DEFAULT_CUSTOM_MODELS.map(m => ({ ...m }));
+    const defaultEconomy = DEFAULT_ECONOMY_MODELS.map(m => ({ ...m }));
+    const defaultTemp = 0.5;
+
+    this.models.set(defaultModels);
+    this.economyModels.set(defaultEconomy);
+    this.qualityTemperature.set(defaultTemp);
+
+    if (typeof window !== 'undefined') {
+      saveCustomModels(defaultModels);
+      saveCustomEconomyModels(defaultEconomy);
+      saveQualityTemperature(defaultTemp);
+      window.dispatchEvent(new Event('api-key-changed'));
+    }
+
+    this.toast.success('Đã khôi phục và tự động lưu cấu hình mặc định thành công!');
   }
 
   checkSavedKey() {
@@ -383,8 +441,9 @@ export class ApiKeyModal {
       localStorage.setItem('user_gemini_api_key', trimmed);
       saveCustomModels(this.models());
       saveCustomEconomyModels(this.economyModels());
+      saveQualityTemperature(this.qualityTemperature());
       window.dispatchEvent(new Event('api-key-changed'));
-      this.toast.success('Đã lưu cấu hình OpenRouter API Key & Danh sách Model thành công!');
+      this.toast.success('Đã lưu cấu hình OpenRouter API Key, Models & Temperature thành công!');
     }
     this.triggerClose();
   }

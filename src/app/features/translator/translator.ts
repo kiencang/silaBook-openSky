@@ -2,6 +2,7 @@ import { Component, computed, inject, signal, ViewChildren, QueryList } from '@a
 import { BookStore, Chapter, TranslationVersion } from '../../core/book.store';
 import { ToastService } from '../../core/toast.service';
 import { GeminiClient, parseGeminiError, isQuotaError } from '../../core/gemini';
+import { getQualityTemperature } from '../../core/openrouter';
 import { MatIconModule } from '@angular/material/icon';
 import { FormsModule } from '@angular/forms';
 import { TokenEstimationComponent } from './components/token-estimation';
@@ -277,7 +278,8 @@ export class Translator {
         contextSummaryChapterTitle: contextSummaryChapterTitle,
         useCustomInstructions: !!this.store.customInstructions(),
         customInstructionsSnapshot: this.store.customInstructions() || undefined,
-        translationMode: config.translationMode || 'standard'
+        translationMode: config.translationMode || 'standard',
+        temperature: getQualityTemperature()
       };
       
       const versions = [...(chapter.versions || []), newVersion].slice(-3);
