@@ -2,7 +2,7 @@ import { Component, computed, inject, signal, ViewChildren, QueryList } from '@a
 import { BookStore, Chapter, TranslationVersion } from '../../core/book.store';
 import { ToastService } from '../../core/toast.service';
 import { GeminiClient, parseGeminiError, isQuotaError } from '../../core/gemini';
-import { getQualityTemperature } from '../../core/openrouter';
+import { getQualityTemperature, getCustomEconomyModels } from '../../core/openrouter';
 import { MatIconModule } from '@angular/material/icon';
 import { FormsModule } from '@angular/forms';
 import { TokenEstimationComponent } from './components/token-estimation';
@@ -250,12 +250,13 @@ export class Translator {
         validChaptersCount > 3,
         contextSummarySnapshot,
         this.store.customInstructions(),
-        config.translationMode || 'standard'
+        config.translationMode || 'standard',
+        config.economyModel || getCustomEconomyModels()[0]?.id
       );
       
       let summaryText: string | undefined = undefined;
       if (config.generateSummary !== false) {
-        summaryText = await this.gemini.summarizeTranslation(translatedText, config.model);
+        summaryText = await this.gemini.summarizeTranslation(translatedText, config.economyModel || getCustomEconomyModels()[0]?.id || config.model);
       }
       
       const newVersionNumber = (chapter.latestVersionNumber || 0) + 1;

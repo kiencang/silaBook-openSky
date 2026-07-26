@@ -46,6 +46,7 @@ import { ReaderStore } from '../../../core/reader.store';
 import { GeminiClient } from '../../../core/gemini';
 import { OFFLINE_READER_SCRIPT, OFFLINE_READER_STYLES, OFFLINE_READER_TOOLBAR_HTML, PRINT_PDF_STYLES, MATHJAX_SCRIPT } from '../../../core/html-export.util';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { getCustomEconomyModels } from '../../../core/openrouter';
 
 @Component({
   selector: 'app-chapter-item',
@@ -643,8 +644,8 @@ export class ChapterItemComponent {
     this.isGeneratingSummary.set(true);
 
     try {
-      // Use the model stored in the version, or fallback to config model
-      const model = version.model || this.store.config().model;
+      // Use the economy model from config, fallback to first custom economy model, or version model
+      const model = this.store.config().economyModel || getCustomEconomyModels()[0]?.id || version.model || this.store.config().model;
       const summary = await this.gemini.summarizeTranslation(version.text, model);
       
       if (summary) {

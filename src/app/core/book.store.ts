@@ -65,6 +65,7 @@ export interface TranslationConfig {
   pronounGenModel?: string;
   glossaryGenModel?: string;
   analysisModel?: string;
+  economyModel?: string;
   generateSummary?: boolean;
 }
 

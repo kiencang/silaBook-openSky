@@ -2,7 +2,7 @@ import { Component, inject, signal, OnInit } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { FormsModule } from '@angular/forms';
 import { BookStore } from '../../../core/book.store';
-import { CustomModel, getCustomModels } from '../../../core/openrouter';
+import { CustomModel, getCustomModels, getCustomEconomyModels } from '../../../core/openrouter';
 
 @Component({
   selector: 'app-translator-config',
@@ -59,25 +59,6 @@ import { CustomModel, getCustomModels } from '../../../core/openrouter';
                 </label>
               </div>
             }
-          </div>
-        </div>
-
-        <div class="w-px bg-zinc-200 hidden md:block"></div>
-
-        <!-- Model Selection -->
-        <div class="flex-1">
-          <h3 class="text-sm font-semibold text-zinc-900 uppercase tracking-wider mb-4">Mô hình AI (OpenRouter)</h3>
-          <div class="flex flex-col space-y-2">
-            <select 
-              [disabled]="store.isTranslatingAny()"
-              [ngModel]="store.config().model"
-              (ngModelChange)="store.updateConfig({model: $event})"
-              class="w-full pl-3 pr-10 py-2.5 border border-zinc-300 rounded-xl bg-zinc-50 focus:bg-white text-sm font-medium text-zinc-800 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all disabled:opacity-50 cursor-pointer truncate"
-            >
-              @for (m of models(); track m.id) {
-                <option [value]="m.id">{{ m.name }} ({{ m.id }})</option>
-              }
-            </select>
           </div>
         </div>
 
@@ -151,6 +132,43 @@ import { CustomModel, getCustomModels } from '../../../core/openrouter';
           </div>
         </div>
       </div>
+
+      <!-- Settings Row 2 -->
+      <div class="pt-6 border-t border-zinc-200 flex flex-col md:flex-row gap-8">
+        <!-- Main Translation Model Selection -->
+        <div class="flex-1">
+          <h3 class="text-sm font-semibold text-zinc-900 uppercase tracking-wider mb-4">AI cho dịch thuật</h3>
+          <div class="flex flex-col space-y-2">
+            <select 
+              [disabled]="store.isTranslatingAny()"
+              [ngModel]="store.config().model"
+              (ngModelChange)="store.updateConfig({model: $event})"
+              class="w-full pl-3 pr-10 py-2.5 border border-zinc-300 rounded-xl bg-zinc-50 focus:bg-white text-sm font-medium text-zinc-800 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all disabled:opacity-50 cursor-pointer truncate"
+            >
+              @for (m of models(); track m.id) {
+                <option [value]="m.id">{{ m.name }} ({{ m.id }})</option>
+              }
+            </select>
+          </div>
+        </div>
+
+        <!-- Economy Model Selection (Summary/Glossary) -->
+        <div class="flex-1">
+          <h3 class="text-sm font-semibold text-zinc-900 uppercase tracking-wider mb-4">AI lọc thuật ngữ/tóm tắt</h3>
+          <div class="flex flex-col space-y-2">
+            <select 
+              [disabled]="store.isTranslatingAny()"
+              [ngModel]="store.config().economyModel"
+              (ngModelChange)="store.updateConfig({economyModel: $event})"
+              class="w-full pl-3 pr-10 py-2.5 border border-zinc-300 rounded-xl bg-zinc-50 focus:bg-white text-sm font-medium text-zinc-800 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all disabled:opacity-50 cursor-pointer truncate"
+            >
+              @for (m of economyModels(); track m.id) {
+                <option [value]="m.id">{{ m.name }} ({{ m.id }})</option>
+              }
+            </select>
+          </div>
+        </div>
+      </div>
       
       <!-- Summarization Toggle -->
       <div class="pt-6 border-t border-zinc-200 flex items-center justify-between">
@@ -205,22 +223,38 @@ import { CustomModel, getCustomModels } from '../../../core/openrouter';
 export class TranslatorConfigComponent implements OnInit {
   store = inject(BookStore);
   models = signal<CustomModel[]>(getCustomModels());
+  economyModels = signal<CustomModel[]>(getCustomEconomyModels());
   isCustomInstructionsExpanded = signal(!!this.store.customInstructions());
 
   constructor() {
     if (typeof window !== 'undefined') {
       window.addEventListener('openrouter-models-changed', () => {
         this.models.set(getCustomModels());
-        if (!this.store.config().model && this.models().length > 0) {
+        this.economyModels.set(getCustomEconomyModels());
+        
+        if (this.models().length > 0) {
           this.store.updateConfig({ model: this.models()[0].id });
+        }
+        if (this.economyModels().length > 0) {
+          this.store.updateConfig({ economyModel: this.economyModels()[0].id });
         }
       });
     }
   }
 
   ngOnInit() {
-    if (!this.store.config().model && this.models().length > 0) {
-      this.store.updateConfig({ model: this.models()[0].id });
+    const currentModel = this.store.config().model;
+    if (!currentModel || !this.models().find(m => m.id === currentModel)) {
+      if (this.models().length > 0) {
+        this.store.updateConfig({ model: this.models()[0].id });
+      }
+    }
+    
+    const currentEcoModel = this.store.config().economyModel;
+    if (!currentEcoModel || !this.economyModels().find(m => m.id === currentEcoModel)) {
+      if (this.economyModels().length > 0) {
+        this.store.updateConfig({ economyModel: this.economyModels()[0].id });
+      }
     }
   }
   

@@ -423,7 +423,8 @@ export class OpenRouterClient {
     shouldFilterGlossary = true,
     contextSummary?: string,
     customInstructions?: string,
-    translationMode: 'standard' | 'scientific' = 'standard'
+    translationMode: 'standard' | 'scientific' = 'standard',
+    economyModel?: string
   ): Promise<{ text: string; customGlossary?: string; glossaryStatus?: 'none' | 'full' | 'filtered'; glossaryRatio?: number }> {
     
     let activeGlossary = '';
@@ -432,7 +433,7 @@ export class OpenRouterClient {
 
     if (useGlossary && glossaryTable) {
         if (shouldFilterGlossary) {
-            const filterRes = await this.filterGlossary(text, glossaryTable, model);
+            const filterRes = await this.filterGlossary(text, glossaryTable, economyModel || model);
             activeGlossary = filterRes.text;
             glossaryStatus = activeGlossary === glossaryTable ? 'full' : 'filtered';
             if (filterRes.totalCount > 0) {
