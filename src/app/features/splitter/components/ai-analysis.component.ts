@@ -1,5 +1,6 @@
 import { Component, input, output, model } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
+import { CustomModel } from '../../../core/openrouter';
 
 @Component({
   selector: 'app-ai-analysis',
@@ -28,14 +29,15 @@ import { MatIconModule } from '@angular/material/icon';
         </div>
         
         <div class="mt-3 flex items-center gap-3">
-          <div class="max-w-[250px] flex-1">
-            <select [value]="analysisModel()" (change)="analysisModel.set($any($event.target).value)" [disabled]="isAnalyzing()" class="w-full pl-3 pr-8 py-1.5 text-xs text-indigo-900 bg-white/80 border-indigo-200 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 rounded-lg border disabled:cursor-not-allowed">
-              <option value="gemini-flash-lite-latest">Lite (Rẻ & Nhanh nhất)</option>
-              <option value="gemini-flash-latest">Flash (Cân bằng & Tinh tế)</option>
+          <div class="max-w-[280px] flex-1">
+            <select [value]="analysisModel()" (change)="analysisModel.set($any($event.target).value)" [disabled]="isAnalyzing()" class="w-full pl-3 pr-8 py-1.5 text-xs text-indigo-900 bg-white/80 border-indigo-200 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 rounded-lg border disabled:cursor-not-allowed cursor-pointer">
+              @for (m of economyModels(); track m.id) {
+                <option [value]="m.id">{{ m.name }} ({{ m.id }})</option>
+              }
             </select>
           </div>
           <div class="max-w-[150px] flex-1">
-            <select [value]="samplePercentage()" (change)="samplePercentage.set(+$any($event.target).value)" [disabled]="isAnalyzing()" class="w-full pl-3 pr-8 py-1.5 text-xs text-indigo-900 bg-white/80 border-indigo-200 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 rounded-lg border disabled:cursor-not-allowed">
+            <select [value]="samplePercentage()" (change)="samplePercentage.set(+$any($event.target).value)" [disabled]="isAnalyzing()" class="w-full pl-3 pr-8 py-1.5 text-xs text-indigo-900 bg-white/80 border-indigo-200 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 rounded-lg border disabled:cursor-not-allowed cursor-pointer">
               <option value="25">Lấy mẫu 25%</option>
               <option value="50">Lấy mẫu 50%</option>
               <option value="100">Lấy mẫu 100%</option>
@@ -64,6 +66,7 @@ export class AiAnalysisComponent {
   isAnalyzing = input.required<boolean>();
   totalWords = input.required<number>();
   estimatedTokens = input.required<number>();
+  economyModels = input<CustomModel[]>([]);
   
   analysisModel = model.required<string>();
   samplePercentage = model.required<number>();

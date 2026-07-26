@@ -4,6 +4,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { ToastService } from '../../core/toast.service';
 import { analyzeAndSplitText, PreviewChapter, countWords } from './splitter.util';
 import { GeminiClient, parseGeminiError, isQuotaError } from '../../core/gemini';
+import { CustomModel, getCustomEconomyModels } from '../../core/openrouter';
 import { AiAnalysisComponent } from './components/ai-analysis.component';
 import { SplitLimitsComponent } from './components/split-limits.component';
 import { SplitOptionsComponent } from './components/split-options.component';
@@ -59,6 +60,7 @@ import { SplitPreviewComponent } from './components/split-preview.component';
           [isAnalyzing]="isAnalyzing()"
           [totalWords]="totalWords()"
           [estimatedTokens]="estimatedTokens()"
+          [economyModels]="economyModels()"
           [(analysisModel)]="analysisModel"
           [(samplePercentage)]="samplePercentage"
           (analyze)="runBookAnalysis()" />
@@ -127,7 +129,8 @@ export class Splitter {
   gemini = inject(GeminiClient);
 
   get isAnalyzing() { return this.store.isAnalyzingSplits; }
-  analysisModel = signal<string>(this.store.config().analysisModel ?? 'gemini-flash-lite-latest');
+  economyModels = signal<CustomModel[]>(getCustomEconomyModels());
+  analysisModel = signal<string>(this.store.config().analysisModel || getCustomEconomyModels()[0]?.id || 'google/gemini-3.1-flash-lite');
   samplePercentage = signal<number>(50);
 
   draftKeywords = signal<string[]>(['Chapter', 'Part', 'Section']);
@@ -178,6 +181,12 @@ export class Splitter {
   }
 
   constructor() {
+    if (typeof window !== 'undefined') {
+      window.addEventListener('openrouter-models-changed', () => {
+        this.economyModels.set(getCustomEconomyModels());
+      });
+    }
+
     const settings = this.store.splitSettings();
     if (settings) {
       this.draftKeywords.set(settings.activeKeywords);

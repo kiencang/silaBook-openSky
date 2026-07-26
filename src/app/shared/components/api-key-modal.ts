@@ -2,14 +2,14 @@ import { Component, Output, EventEmitter, signal, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { ToastService } from '../../core/toast.service';
-import { CustomModel, DEFAULT_CUSTOM_MODELS, getCustomModels, saveCustomModels } from '../../core/openrouter';
+import { CustomModel, DEFAULT_CUSTOM_MODELS, DEFAULT_ECONOMY_MODELS, getCustomModels, saveCustomModels, getCustomEconomyModels, saveCustomEconomyModels } from '../../core/openrouter';
 
 @Component({
   selector: 'app-api-key-modal',
   imports: [FormsModule, MatIconModule],
   template: `
     <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 selection:bg-indigo-100 selection:text-indigo-900 animate-fade-in" tabindex="0" (click)="triggerClose()" (keydown.escape)="triggerClose()" [class.animate-fade-out]="isClosing()">
-      <div role="presentation" tabindex="-1" (keyup.enter)="$event.stopPropagation()" class="bg-white rounded-2xl shadow-xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh] animate-zoom-in cursor-default" (click)="$event.stopPropagation()" [class.animate-zoom-out]="isClosing()">
+      <div role="presentation" tabindex="-1" (keyup.enter)="$event.stopPropagation()" class="bg-white rounded-2xl shadow-xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh] animate-zoom-in cursor-default" (click)="$event.stopPropagation()" [class.animate-zoom-out]="isClosing()">
         <!-- Header -->
         <div class="p-6 border-b border-zinc-100 flex justify-between items-center bg-white">
           <div class="flex items-center space-x-2.5">
@@ -73,15 +73,15 @@ import { CustomModel, DEFAULT_CUSTOM_MODELS, getCustomModels, saveCustomModels }
           <!-- Divider -->
           <div class="h-px bg-zinc-200 my-2"></div>
 
-          <!-- Custom Models List Config -->
+          <!-- Quality Custom Models List Config -->
           <div class="space-y-3">
             <div class="flex items-center justify-between">
               <div>
                 <div class="block text-xs font-bold text-zinc-800 uppercase tracking-wider">
-                  DANH SÁCH MÔ HÌNH AI LỰA CHỌN (TỐI ĐA 5 MODEL)
+                  DANH SÁCH MÔ HÌNH AI CHẤT LƯỢNG (TỐI ĐA 5 MODEL)
                 </div>
                 <p class="text-[11px] text-zinc-500 mt-0.5">
-                  Nhập mã model từ OpenRouter (VD: <code class="bg-zinc-100 px-1 py-0.5 rounded text-zinc-700">anthropic/claude-3.5-sonnet</code>) và tên hiển thị tương ứng.
+                  Nhập mã model từ OpenRouter (VD: <code class="bg-zinc-100 px-1 py-0.5 rounded text-zinc-700">~google/gemini-flash-latest</code>) dùng cho dịch thuật chính thức, phân tích đại từ & từ khó.
                 </p>
               </div>
               <button type="button" (click)="resetDefaultModels()" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium hover:underline bg-transparent border-none cursor-pointer">
@@ -93,6 +93,26 @@ import { CustomModel, DEFAULT_CUSTOM_MODELS, getCustomModels, saveCustomModels }
               @for (model of models(); track $index) {
                 <div class="flex items-center space-x-2 bg-zinc-50 p-2 rounded-xl border border-zinc-200">
                   <span class="text-xs font-bold text-zinc-400 w-4 text-center">{{ $index + 1 }}</span>
+                  <div class="flex items-center space-x-1">
+                    <button 
+                      type="button" 
+                      (click)="moveModelUp($index)" 
+                      [disabled]="$first"
+                      class="w-7 h-7 flex items-center justify-center text-zinc-500 hover:text-indigo-600 hover:bg-zinc-200/60 rounded-lg disabled:opacity-20 disabled:hover:bg-transparent border-none bg-transparent cursor-pointer transition-colors"
+                      title="Di chuyển lên"
+                    >
+                      <mat-icon class="!text-[22px] !w-5.5 !h-5.5">keyboard_arrow_up</mat-icon>
+                    </button>
+                    <button 
+                      type="button" 
+                      (click)="moveModelDown($index)" 
+                      [disabled]="$last"
+                      class="w-7 h-7 flex items-center justify-center text-zinc-500 hover:text-indigo-600 hover:bg-zinc-200/60 rounded-lg disabled:opacity-20 disabled:hover:bg-transparent border-none bg-transparent cursor-pointer transition-colors"
+                      title="Di chuyển xuống"
+                    >
+                      <mat-icon class="!text-[22px] !w-5.5 !h-5.5">keyboard_arrow_down</mat-icon>
+                    </button>
+                  </div>
                   <div class="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <input 
                       type="text" 
@@ -103,7 +123,7 @@ import { CustomModel, DEFAULT_CUSTOM_MODELS, getCustomModels, saveCustomModels }
                     <input 
                       type="text" 
                       [(ngModel)]="model.name" 
-                      placeholder="Tên hiển thị (vd: Gemini 2.5 Flash)" 
+                      placeholder="Tên hiển thị (vd: Google Gemini Flash Latest)" 
                       class="px-2.5 py-1.5 border border-zinc-300 rounded-lg text-xs text-zinc-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
                     />
                   </div>
@@ -126,7 +146,86 @@ import { CustomModel, DEFAULT_CUSTOM_MODELS, getCustomModels, saveCustomModels }
                 class="w-full py-2 border border-dashed border-indigo-300 text-indigo-600 hover:bg-indigo-50/50 hover:border-indigo-400 font-medium rounded-xl text-xs transition-all flex items-center justify-center gap-1 cursor-pointer bg-transparent"
               >
                 <mat-icon class="!text-[16px] !w-4 !h-4">add</mat-icon>
-                Thêm mô hình AI mới
+                Thêm mô hình chất lượng
+              </button>
+            }
+          </div>
+
+          <!-- Divider -->
+          <div class="h-px bg-zinc-200 my-2"></div>
+
+          <!-- Economy Custom Models List Config -->
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="block text-xs font-bold text-amber-800 uppercase tracking-wider flex items-center gap-1.5">
+                  <mat-icon class="!text-[16px] !w-4 !h-4 text-amber-600">savings</mat-icon>
+                  <span>DANH SÁCH MÔ HÌNH AI TIẾT KIỆM (TỐI ĐA 2 MODEL)</span>
+                </div>
+                <p class="text-[11px] text-zinc-500 mt-0.5">
+                  Dùng riêng cho việc chuyển đổi PDF sang Markdown và quét mã nguồn sách để chia khối.
+                </p>
+              </div>
+            </div>
+
+            <div class="space-y-2">
+              @for (model of economyModels(); track $index) {
+                <div class="flex items-center space-x-2 bg-amber-50/50 p-2 rounded-xl border border-amber-200/80">
+                  <span class="text-xs font-bold text-amber-500 w-4 text-center">{{ $index + 1 }}</span>
+                  <div class="flex items-center space-x-1">
+                    <button 
+                      type="button" 
+                      (click)="moveEconomyModelUp($index)" 
+                      [disabled]="$first"
+                      class="w-7 h-7 flex items-center justify-center text-amber-600 hover:text-amber-800 hover:bg-amber-100/70 rounded-lg disabled:opacity-20 disabled:hover:bg-transparent border-none bg-transparent cursor-pointer transition-colors"
+                      title="Di chuyển lên"
+                    >
+                      <mat-icon class="!text-[22px] !w-5.5 !h-5.5">keyboard_arrow_up</mat-icon>
+                    </button>
+                    <button 
+                      type="button" 
+                      (click)="moveEconomyModelDown($index)" 
+                      [disabled]="$last"
+                      class="w-7 h-7 flex items-center justify-center text-amber-600 hover:text-amber-800 hover:bg-amber-100/70 rounded-lg disabled:opacity-20 disabled:hover:bg-transparent border-none bg-transparent cursor-pointer transition-colors"
+                      title="Di chuyển xuống"
+                    >
+                      <mat-icon class="!text-[22px] !w-5.5 !h-5.5">keyboard_arrow_down</mat-icon>
+                    </button>
+                  </div>
+                  <div class="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <input 
+                      type="text" 
+                      [(ngModel)]="model.id" 
+                      placeholder="Mã model (vd: google/gemini-3.1-flash-lite)" 
+                      class="px-2.5 py-1.5 border border-amber-200 rounded-lg text-xs font-mono text-zinc-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-amber-500"
+                    />
+                    <input 
+                      type="text" 
+                      [(ngModel)]="model.name" 
+                      placeholder="Tên hiển thị (vd: Google Gemini 3.1 Flash Lite)" 
+                      class="px-2.5 py-1.5 border border-amber-200 rounded-lg text-xs text-zinc-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-amber-500"
+                    />
+                  </div>
+                  <button 
+                    type="button" 
+                    (click)="removeEconomyModel($index)" 
+                    class="w-7 h-7 text-zinc-400 hover:text-red-600 flex items-center justify-center rounded-md hover:bg-red-50 border-none bg-transparent cursor-pointer"
+                    title="Xóa model này"
+                  >
+                    <mat-icon class="!text-[18px] !w-4.5 !h-4.5">delete</mat-icon>
+                  </button>
+                </div>
+              }
+            </div>
+
+            @if (economyModels().length < 2) {
+              <button 
+                type="button" 
+                (click)="addEconomyModel()" 
+                class="w-full py-2 border border-dashed border-amber-300 text-amber-700 hover:bg-amber-50/50 hover:border-amber-400 font-medium rounded-xl text-xs transition-all flex items-center justify-center gap-1 cursor-pointer bg-transparent"
+              >
+                <mat-icon class="!text-[16px] !w-4 !h-4">add</mat-icon>
+                Thêm mô hình tiết kiệm
               </button>
             }
           </div>
@@ -169,10 +268,12 @@ export class ApiKeyModal {
   apiKey = '';
   hasSavedKey = signal(false);
   models = signal<CustomModel[]>([]);
+  economyModels = signal<CustomModel[]>([]);
 
   constructor() {
     this.checkSavedKey();
     this.models.set(getCustomModels().map(m => ({ ...m })));
+    this.economyModels.set(getCustomEconomyModels().map(m => ({ ...m })));
   }
 
   addModel() {
@@ -185,8 +286,63 @@ export class ApiKeyModal {
     this.models.update(list => list.filter((_, i) => i !== index));
   }
 
+  moveModelUp(index: number) {
+    if (index <= 0) return;
+    this.models.update(list => {
+      const newList = [...list];
+      const temp = newList[index];
+      newList[index] = newList[index - 1];
+      newList[index - 1] = temp;
+      return newList;
+    });
+  }
+
+  moveModelDown(index: number) {
+    if (index >= this.models().length - 1) return;
+    this.models.update(list => {
+      const newList = [...list];
+      const temp = newList[index];
+      newList[index] = newList[index + 1];
+      newList[index + 1] = temp;
+      return newList;
+    });
+  }
+
+  addEconomyModel() {
+    if (this.economyModels().length < 2) {
+      this.economyModels.update(list => [...list, { id: '', name: '' }]);
+    }
+  }
+
+  removeEconomyModel(index: number) {
+    this.economyModels.update(list => list.filter((_, i) => i !== index));
+  }
+
+  moveEconomyModelUp(index: number) {
+    if (index <= 0) return;
+    this.economyModels.update(list => {
+      const newList = [...list];
+      const temp = newList[index];
+      newList[index] = newList[index - 1];
+      newList[index - 1] = temp;
+      return newList;
+    });
+  }
+
+  moveEconomyModelDown(index: number) {
+    if (index >= this.economyModels().length - 1) return;
+    this.economyModels.update(list => {
+      const newList = [...list];
+      const temp = newList[index];
+      newList[index] = newList[index + 1];
+      newList[index + 1] = temp;
+      return newList;
+    });
+  }
+
   resetDefaultModels() {
     this.models.set(DEFAULT_CUSTOM_MODELS.map(m => ({ ...m })));
+    this.economyModels.set(DEFAULT_ECONOMY_MODELS.map(m => ({ ...m })));
     this.toast.info('Đã khôi phục danh sách model mặc định.');
   }
 
@@ -226,6 +382,7 @@ export class ApiKeyModal {
       localStorage.setItem('user_openrouter_api_key', trimmed);
       localStorage.setItem('user_gemini_api_key', trimmed);
       saveCustomModels(this.models());
+      saveCustomEconomyModels(this.economyModels());
       window.dispatchEvent(new Event('api-key-changed'));
       this.toast.success('Đã lưu cấu hình OpenRouter API Key & Danh sách Model thành công!');
     }

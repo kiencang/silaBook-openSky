@@ -72,15 +72,12 @@ import { CustomModel, getCustomModels } from '../../../core/openrouter';
               [disabled]="store.isTranslatingAny()"
               [ngModel]="store.config().model"
               (ngModelChange)="store.updateConfig({model: $event})"
-              class="w-full p-2.5 border border-zinc-300 rounded-xl bg-zinc-50 focus:bg-white text-sm font-medium text-zinc-800 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all disabled:opacity-50 cursor-pointer"
+              class="w-full pl-3 pr-10 py-2.5 border border-zinc-300 rounded-xl bg-zinc-50 focus:bg-white text-sm font-medium text-zinc-800 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all disabled:opacity-50 cursor-pointer truncate"
             >
               @for (m of models(); track m.id) {
                 <option [value]="m.id">{{ m.name }} ({{ m.id }})</option>
               }
             </select>
-            <p class="text-[11px] text-zinc-500 italic mt-1">
-              Bạn có thể sử dụng bất kỳ AI nào từ OpenRouter bằng cách chọn mô hình ở đây.
-            </p>
           </div>
         </div>
 

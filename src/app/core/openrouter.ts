@@ -14,6 +14,11 @@ export const DEFAULT_CUSTOM_MODELS: CustomModel[] = [
   { id: 'nvidia/nemotron-3-ultra-550b-a55b:free', name: 'Nemotron 3 Ultra (free)' }
 ];
 
+export const DEFAULT_ECONOMY_MODELS: CustomModel[] = [
+  { id: 'google/gemini-3.1-flash-lite', name: 'Google Gemini 3.1 Flash Lite' },
+  { id: 'nvidia/nemotron-3-ultra-550b-a55b:free', name: 'Nemotron 3 Ultra (free)' }
+];
+
 export function getCustomModels(): CustomModel[] {
   if (typeof window === 'undefined') return DEFAULT_CUSTOM_MODELS;
   try {
@@ -41,6 +46,36 @@ export function saveCustomModels(models: CustomModel[]): void {
   })).filter(m => m.id.length > 0);
   
   localStorage.setItem('user_openrouter_models', JSON.stringify(valid));
+  window.dispatchEvent(new Event('openrouter-models-changed'));
+}
+
+export function getCustomEconomyModels(): CustomModel[] {
+  if (typeof window === 'undefined') return DEFAULT_ECONOMY_MODELS;
+  try {
+    const raw = localStorage.getItem('user_openrouter_economy_models');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed.slice(0, 2).map((item: { id?: string; name?: string }) => ({
+          id: String(item.id || '').trim(),
+          name: String(item.name || '').trim() || String(item.id || '').trim()
+        })).filter(item => item.id.length > 0);
+      }
+    }
+  } catch {
+    // fallback
+  }
+  return DEFAULT_ECONOMY_MODELS;
+}
+
+export function saveCustomEconomyModels(models: CustomModel[]): void {
+  if (typeof window === 'undefined') return;
+  const valid = models.slice(0, 2).map(m => ({
+    id: m.id.trim(),
+    name: m.name.trim() || m.id.trim()
+  })).filter(m => m.id.length > 0);
+  
+  localStorage.setItem('user_openrouter_economy_models', JSON.stringify(valid));
   window.dispatchEvent(new Event('openrouter-models-changed'));
 }
 

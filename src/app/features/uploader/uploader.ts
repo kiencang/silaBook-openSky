@@ -4,7 +4,7 @@ import { CommonModule } from '@angular/common';
 import { BookStore } from '../../core/book.store';
 import { ToastService } from '../../core/toast.service';
 import { GeminiClient, parseGeminiError, isQuotaError } from '../../core/gemini';
-import { CustomModel, getCustomModels } from '../../core/openrouter';
+import { CustomModel, getCustomEconomyModels } from '../../core/openrouter';
 import { MatIconModule } from '@angular/material/icon';
 import { PdfService } from './pdf.service';
 import { processEpubContent } from './epub.util';
@@ -47,8 +47,8 @@ import { processHtmlContent, getTurndownService } from './html.util';
             <div class="text-left mb-8 relative">
               <label class="block text-sm font-medium text-zinc-700 mb-2">
                 Chọn model chuyển đổi định dạng PDF (*)
-                <select [(ngModel)]="pdfModel" (ngModelChange)="onModelChange()" class="mt-2 w-full px-4 pr-10 py-3 rounded-xl border border-zinc-200 bg-zinc-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors appearance-none font-normal text-base cursor-pointer">
-                  @for (m of models(); track m.id) {
+                <select [(ngModel)]="pdfModel" (ngModelChange)="onModelChange()" class="mt-2 w-full px-4 pr-10 py-3 rounded-xl border border-zinc-200 bg-zinc-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors appearance-none font-normal text-base cursor-pointer truncate">
+                  @for (m of economyModels(); track m.id) {
                     <option [value]="m.id">{{ m.name }} ({{ m.id }})</option>
                   }
                 </select>
@@ -250,17 +250,17 @@ export class Uploader {
   pdfService = inject(PdfService);
   fileInput = viewChild.required<ElementRef<HTMLInputElement>>('fileInput');
 
-  models = signal<CustomModel[]>(getCustomModels());
+  economyModels = signal<CustomModel[]>(getCustomEconomyModels());
   isDragging = false;
 
   pendingPdfFile = signal<File | null>(null);
-  pdfModel = signal<string>('~google/gemini-flash-latest');
+  pdfModel = signal<string>(getCustomEconomyModels()[0]?.id || 'google/gemini-3.1-flash-lite');
   showVideo = signal(false);
 
   constructor() {
     if (typeof window !== 'undefined') {
       window.addEventListener('openrouter-models-changed', () => {
-        this.models.set(getCustomModels());
+        this.economyModels.set(getCustomEconomyModels());
       });
     }
   }
