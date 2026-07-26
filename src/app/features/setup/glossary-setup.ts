@@ -238,7 +238,7 @@ export class GlossarySetup {
       if (v.model === 'Tải lên từ Excel') return 'Từ file Excel';
       return 'Thủ công';
     }
-    const name = v.model.includes('pro') ? 'Pro' : 'Flash';
+    const name = v.model;
     if (v.source === 'ai_edited') return `${name} (Chỉnh tay)`;
     return name;
   }
@@ -331,8 +331,7 @@ export class GlossarySetup {
         glossaryGenModel: task.model
       });
 
-      const isProModel = task.model.includes('pro');
-      const maxConcurrent = isProModel ? 2 : 4;
+      const maxConcurrent = 4;
       
       const chunksToProcess = task.chunks.filter(c => c.status !== 'completed');
       

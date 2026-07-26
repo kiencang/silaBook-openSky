@@ -208,7 +208,7 @@ export class PronounSetup {
 
   getModelDisplay(v: import('../../core/db').ContentVersion | null | undefined): string {
     if (!v) return '';
-    const name = v.model.includes('pro') ? 'Pro' : 'Flash';
+    const name = v.model;
     if (v.source === 'manual') return 'Thủ công';
     if (v.source === 'ai_edited') return `${name} (Chỉnh tay)`;
     return name;
@@ -302,8 +302,7 @@ export class PronounSetup {
         pronounGenModel: task.model
       });
 
-      const isProModel = task.model.includes('pro');
-      const maxConcurrent = isProModel ? 2 : 4;
+      const maxConcurrent = 4;
       
       const chunksToProcess = task.chunks.filter(c => c.status !== 'completed');
 
