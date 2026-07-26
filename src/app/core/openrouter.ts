@@ -11,6 +11,7 @@ export const DEFAULT_CUSTOM_MODELS: CustomModel[] = [
   { id: '~openai/gpt-latest', name: 'OpenAI GPT Latest' },
   { id: '~anthropic/claude-opus-latest', name: 'Anthropic Claude Opus Latest' },
   { id: '~x-ai/grok-latest', name: 'xAI Grok Latest' },
+  { id: '~moonshotai/kimi-latest', name: 'MoonshotAI Kimi Latest' },
   { id: 'nvidia/nemotron-3-ultra-550b-a55b:free', name: 'Nemotron 3 Ultra (free)' }
 ];
 
@@ -27,7 +28,7 @@ export function getCustomModels(): CustomModel[] {
     if (raw) {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed.slice(0, 5).map((item: { id?: string; name?: string }) => ({
+        return parsed.slice(0, 6).map((item: { id?: string; name?: string }) => ({
           id: String(item.id || '').trim(),
           name: String(item.name || '').trim() || String(item.id || '').trim()
         })).filter(item => item.id.length > 0);
@@ -41,7 +42,7 @@ export function getCustomModels(): CustomModel[] {
 
 export function saveCustomModels(models: CustomModel[]): void {
   if (typeof window === 'undefined') return;
-  const valid = models.slice(0, 5).map(m => ({
+  const valid = models.slice(0, 6).map(m => ({
     id: m.id.trim(),
     name: m.name.trim() || m.id.trim()
   })).filter(m => m.id.length > 0);
