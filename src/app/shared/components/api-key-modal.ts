@@ -28,7 +28,7 @@ import { CustomModel, DEFAULT_CUSTOM_MODELS, DEFAULT_ECONOMY_MODELS, getCustomMo
         <!-- Content -->
         <div class="p-6 space-y-5 overflow-y-auto bg-white">
           <p class="text-sm text-zinc-600 leading-relaxed">
-            Ứng dụng kết nối trực tiếp với OpenRouter API. Vì dịch là nhiệm vụ khó, bạn hãy chọn các model AI chất lượng nhất theo khả năng. Ứng dụng lưu trữ sẵn một số model mặc định, bạn có thể tự do điều chỉnh lại thành các model khác theo ý muốn.
+            Ứng dụng kết nối trực tiếp với OpenRouter API. Vì dịch là nhiệm vụ khó, bạn hãy chọn các model AI chất lượng nhất trong khả năng. Ứng dụng lưu trữ sẵn một số model mặc định, bạn có thể tự do điều chỉnh lại thành các model khác theo ý muốn.
           </p>
 
           <!-- Status badge/links -->
@@ -77,10 +77,10 @@ import { CustomModel, DEFAULT_CUSTOM_MODELS, DEFAULT_ECONOMY_MODELS, getCustomMo
           <div class="space-y-3">
             <div>
               <div class="block text-xs font-bold text-zinc-800 uppercase tracking-wider">
-                DANH SÁCH MÔ HÌNH AI CHẤT LƯỢNG (TỐI ĐA 5 MODEL)
+                DANH SÁCH MÔ HÌNH AI CHẤT LƯỢNG CAO (TỐI ĐA 5 MODEL)
               </div>
               <p class="text-[11px] text-zinc-500 mt-0.5">
-                Nhập mã model từ OpenRouter (VD: <code class="bg-zinc-100 px-1 py-0.5 rounded text-zinc-700">~google/gemini-flash-latest</code>) dùng cho dịch thuật chính thức, phân tích đại từ & từ khó.
+                Nhập mã model từ OpenRouter (VD: <code class="bg-zinc-100 px-1 py-0.5 rounded text-zinc-700">~google/gemini-flash-latest</code>) dùng cho dịch thuật chính thức, phân tích đại từ & từ khó. Mã model ở cột trái cần nhập tuyệt đối chính xác, nhãn tên ở cột phải tùy ý bạn đặt miễn sao phù hợp. Bạn có thể thêm, sửa, xóa, điều chỉnh thứ tự danh sách các model AI bên dưới.
               </p>
             </div>
 
@@ -227,13 +227,13 @@ import { CustomModel, DEFAULT_CUSTOM_MODELS, DEFAULT_ECONOMY_MODELS, getCustomMo
                     <input 
                       type="text" 
                       [(ngModel)]="model.id" 
-                      placeholder="Mã model (vd: google/gemini-3.1-flash-lite)" 
+                      placeholder="Mã model (vd: google/gemini-3.5-flash-lite)" 
                       class="px-2.5 py-1.5 border border-amber-200 rounded-lg text-xs font-mono text-zinc-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-amber-500"
                     />
                     <input 
                       type="text" 
                       [(ngModel)]="model.name" 
-                      placeholder="Tên hiển thị (vd: Google Gemini 3.1 Flash Lite)" 
+                      placeholder="Tên hiển thị (vd: Google Gemini 3.5 Flash Lite)" 
                       class="px-2.5 py-1.5 border border-amber-200 rounded-lg text-xs text-zinc-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-amber-500"
                     />
                   </div>

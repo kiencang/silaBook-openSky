@@ -29,7 +29,7 @@ import { Component, input, model, output, inject, signal, effect, OnInit, OnDest
         <div class="relative z-10 flex flex-col items-center bg-white/90 p-8 rounded-2xl shadow-sm backdrop-blur-sm border border-indigo-100 min-w-[240px]">
             <mat-icon class="animate-spin mb-4 text-indigo-600 !w-8 !h-8 !text-[32px] flex items-center justify-center">sync</mat-icon>
             <div class="text-sm font-semibold text-indigo-600 tracking-wider uppercase bg-indigo-50 px-4 py-2 rounded-full shadow-sm">
-                Gemini đang dịch...
+                Đang dịch...
             </div>
         </div>
     </div>

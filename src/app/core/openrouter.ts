@@ -15,7 +15,7 @@ export const DEFAULT_CUSTOM_MODELS: CustomModel[] = [
 ];
 
 export const DEFAULT_ECONOMY_MODELS: CustomModel[] = [
-  { id: 'google/gemini-3.1-flash-lite', name: 'Google Gemini 3.1 Flash Lite (đa phương thức)' },
+  { id: 'google/gemini-3.5-flash-lite', name: 'Google Gemini 3.5 Flash Lite (đa phương thức)' },
   { id: 'deepseek/deepseek-v4-flash', name: 'DeepSeek V4 Flash' },
   { id: 'nvidia/nemotron-3-ultra-550b-a55b:free', name: 'Nemotron 3 Ultra (free)' }
 ];

@@ -130,7 +130,7 @@ export class Splitter {
 
   get isAnalyzing() { return this.store.isAnalyzingSplits; }
   economyModels = signal<CustomModel[]>(getCustomEconomyModels());
-  analysisModel = signal<string>(this.store.config().analysisModel || getCustomEconomyModels()[0]?.id || 'google/gemini-3.1-flash-lite');
+  analysisModel = signal<string>(this.store.config().analysisModel || getCustomEconomyModels()[0]?.id || 'google/gemini-3.5-flash-lite');
   samplePercentage = signal<number>(50);
 
   draftKeywords = signal<string[]>(['Chapter', 'Part', 'Section']);

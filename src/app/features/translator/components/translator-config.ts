@@ -137,7 +137,7 @@ import { CustomModel, getCustomModels, getCustomEconomyModels } from '../../../c
       <div class="pt-6 border-t border-zinc-200 flex flex-col md:flex-row gap-8">
         <!-- Main Translation Model Selection -->
         <div class="flex-1">
-          <h3 class="text-sm font-semibold text-zinc-900 uppercase tracking-wider mb-4">AI cho dịch thuật</h3>
+          <h3 class="text-sm font-semibold text-zinc-900 uppercase tracking-wider mb-4">AI chất lượng cao cho dịch thuật</h3>
           <div class="flex flex-col space-y-2">
             <select 
               [disabled]="store.isTranslatingAny()"
@@ -154,7 +154,7 @@ import { CustomModel, getCustomModels, getCustomEconomyModels } from '../../../c
 
         <!-- Economy Model Selection (Summary/Glossary) -->
         <div class="flex-1">
-          <h3 class="text-sm font-semibold text-zinc-900 uppercase tracking-wider mb-4">AI lọc thuật ngữ/tóm tắt</h3>
+          <h3 class="text-sm font-semibold text-zinc-900 uppercase tracking-wider mb-4">AI tiết kiệm cho lọc thuật ngữ/tóm tắt</h3>
           <div class="flex flex-col space-y-2">
             <select 
               [disabled]="store.isTranslatingAny()"

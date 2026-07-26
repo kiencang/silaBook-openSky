@@ -254,7 +254,7 @@ export class Uploader {
   isDragging = false;
 
   pendingPdfFile = signal<File | null>(null);
-  pdfModel = signal<string>(getCustomEconomyModels()[0]?.id || 'google/gemini-3.1-flash-lite');
+  pdfModel = signal<string>(getCustomEconomyModels()[0]?.id || 'google/gemini-3.5-flash-lite');
   showVideo = signal(false);
 
   constructor() {
