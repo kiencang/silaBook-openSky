@@ -3,7 +3,7 @@ Dịch sách thông qua bất cứ AI nào (triển khai qua OpenRouter). Đang 
 
 Link ứng dụng: https://silabook-opensky.wpsila.com
 
-Được phát triển dựa trên repo đã ổn định này: https://github.com/kiencang/silaBook (cùng tác giả).
+Được phát triển dựa trên repo (v1.0.99) đã ổn định này: https://github.com/kiencang/silaBook (cùng tác giả).
 
 ---
 
