@@ -2,7 +2,7 @@ import { Component, Output, EventEmitter, signal, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { ToastService } from '../../core/toast.service';
-import { CustomModel, DEFAULT_CUSTOM_MODELS, DEFAULT_ECONOMY_MODELS, getCustomModels, saveCustomModels, getCustomEconomyModels, saveCustomEconomyModels, getQualityTemperature, saveQualityTemperature } from '../../core/openrouter';
+import { CustomModel, DEFAULT_CUSTOM_MODELS, DEFAULT_ECONOMY_MODELS, getCustomModels, saveCustomModels, getCustomEconomyModels, saveCustomEconomyModels, getQualityTemperature, saveQualityTemperature, ReasoningEffortOption, getReasoningEffort, saveReasoningEffort } from '../../core/openrouter';
 
 @Component({
   selector: 'app-api-key-modal',
@@ -120,6 +120,78 @@ import { CustomModel, DEFAULT_CUSTOM_MODELS, DEFAULT_ECONOMY_MODELS, getCustomMo
 
               <p class="text-[11px] text-zinc-500 leading-relaxed pt-0.5">
                 Áp dụng cho tất cả nhiệm vụ dùng Mô hình AI Chất lượng cao (Dịch thuật, Phân tích Đại từ, Từ khó). Mặc định là <strong class="text-zinc-700">0.5</strong>, giúp cân bằng hoàn hảo giữa độ chính xác & văn phong mượt mà.
+              </p>
+            </div>
+
+            <!-- Reasoning Effort Setting -->
+            <div class="bg-indigo-50/50 p-3.5 rounded-xl border border-indigo-100 space-y-2.5">
+              <div class="flex items-center justify-between gap-2">
+                <label class="text-xs font-bold text-indigo-950 flex items-center gap-1.5">
+                  <mat-icon class="!text-[16px] !w-4 !h-4 text-indigo-600">psychology</mat-icon>
+                  <span>Mức độ tư duy suy luận (Reasoning Effort)</span>
+                </label>
+              </div>
+
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5 bg-indigo-100/60 p-1 rounded-xl">
+                <button 
+                  type="button" 
+                  (click)="reasoningEffort.set('high')"
+                  [class.bg-indigo-600]="reasoningEffort() === 'high'"
+                  [class.text-white]="reasoningEffort() === 'high'"
+                  [class.shadow-xs]="reasoningEffort() === 'high'"
+                  [class.text-zinc-700]="reasoningEffort() !== 'high'"
+                  [class.hover:bg-indigo-200/50]="reasoningEffort() !== 'high'"
+                  class="py-1.5 px-2 text-xs font-medium rounded-lg transition-all cursor-pointer border-none flex flex-col items-center justify-center gap-0.5"
+                >
+                  <span class="font-bold">High (Cao)</span>
+                  <span class="text-[10px] opacity-80 font-normal">Mặc định</span>
+                </button>
+
+                <button 
+                  type="button" 
+                  (click)="reasoningEffort.set('medium')"
+                  [class.bg-indigo-600]="reasoningEffort() === 'medium'"
+                  [class.text-white]="reasoningEffort() === 'medium'"
+                  [class.shadow-xs]="reasoningEffort() === 'medium'"
+                  [class.text-zinc-700]="reasoningEffort() !== 'medium'"
+                  [class.hover:bg-indigo-200/50]="reasoningEffort() !== 'medium'"
+                  class="py-1.5 px-2 text-xs font-medium rounded-lg transition-all cursor-pointer border-none flex flex-col items-center justify-center gap-0.5"
+                >
+                  <span class="font-bold">Medium</span>
+                  <span class="text-[10px] opacity-80 font-normal">Vừa phải</span>
+                </button>
+
+                <button 
+                  type="button" 
+                  (click)="reasoningEffort.set('low')"
+                  [class.bg-indigo-600]="reasoningEffort() === 'low'"
+                  [class.text-white]="reasoningEffort() === 'low'"
+                  [class.shadow-xs]="reasoningEffort() === 'low'"
+                  [class.text-zinc-700]="reasoningEffort() !== 'low'"
+                  [class.hover:bg-indigo-200/50]="reasoningEffort() !== 'low'"
+                  class="py-1.5 px-2 text-xs font-medium rounded-lg transition-all cursor-pointer border-none flex flex-col items-center justify-center gap-0.5"
+                >
+                  <span class="font-bold">Low (Thấp)</span>
+                  <span class="text-[10px] opacity-80 font-normal">Tiết kiệm</span>
+                </button>
+
+                <button 
+                  type="button" 
+                  (click)="reasoningEffort.set('none')"
+                  [class.bg-indigo-600]="reasoningEffort() === 'none'"
+                  [class.text-white]="reasoningEffort() === 'none'"
+                  [class.shadow-xs]="reasoningEffort() === 'none'"
+                  [class.text-zinc-700]="reasoningEffort() !== 'none'"
+                  [class.hover:bg-indigo-200/50]="reasoningEffort() !== 'none'"
+                  class="py-1.5 px-2 text-xs font-medium rounded-lg transition-all cursor-pointer border-none flex flex-col items-center justify-center gap-0.5"
+                >
+                  <span class="font-bold">Tắt</span>
+                  <span class="text-[10px] opacity-80 font-normal">Nhanh nhất</span>
+                </button>
+              </div>
+
+              <p class="text-[11px] text-zinc-500 leading-relaxed pt-0.5">
+                Áp dụng cho các model AI hỗ trợ tính năng tư duy (Reasoning tokens). Mặc định là <strong class="text-zinc-700">High</strong> để cho chất lượng phân tích & dịch thuật sâu nhất. Chọn <strong class="text-zinc-700">Medium / Low</strong> để giảm token tiêu tốn, hoặc <strong class="text-zinc-700">Tắt</strong> nếu ưu tiên phản hồi nhanh.
               </p>
             </div>
 
@@ -309,12 +381,14 @@ export class ApiKeyModal {
   models = signal<CustomModel[]>([]);
   economyModels = signal<CustomModel[]>([]);
   qualityTemperature = signal<number>(0.5);
+  reasoningEffort = signal<ReasoningEffortOption>('high');
 
   constructor() {
     this.checkSavedKey();
     this.models.set(getCustomModels().map(m => ({ ...m })));
     this.economyModels.set(getCustomEconomyModels().map(m => ({ ...m })));
     this.qualityTemperature.set(getQualityTemperature());
+    this.reasoningEffort.set(getReasoningEffort());
   }
 
   onTemperatureChange(val: number | string) {
@@ -392,15 +466,18 @@ export class ApiKeyModal {
     const defaultModels = DEFAULT_CUSTOM_MODELS.map(m => ({ ...m }));
     const defaultEconomy = DEFAULT_ECONOMY_MODELS.map(m => ({ ...m }));
     const defaultTemp = 0.5;
+    const defaultReasoning: ReasoningEffortOption = 'high';
 
     this.models.set(defaultModels);
     this.economyModels.set(defaultEconomy);
     this.qualityTemperature.set(defaultTemp);
+    this.reasoningEffort.set(defaultReasoning);
 
     if (typeof window !== 'undefined') {
       saveCustomModels(defaultModels);
       saveCustomEconomyModels(defaultEconomy);
       saveQualityTemperature(defaultTemp);
+      saveReasoningEffort(defaultReasoning);
       window.dispatchEvent(new Event('api-key-changed'));
     }
 
@@ -445,8 +522,9 @@ export class ApiKeyModal {
       saveCustomModels(this.models());
       saveCustomEconomyModels(this.economyModels());
       saveQualityTemperature(this.qualityTemperature());
+      saveReasoningEffort(this.reasoningEffort());
       window.dispatchEvent(new Event('api-key-changed'));
-      this.toast.success('Đã lưu cấu hình OpenRouter API Key, Models & Temperature thành công!');
+      this.toast.success('Đã lưu cấu hình OpenRouter API Key, Models, Temperature & Reasoning thành công!');
     }
     this.triggerClose();
   }

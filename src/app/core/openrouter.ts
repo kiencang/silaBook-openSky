@@ -104,6 +104,27 @@ export function saveQualityTemperature(temp: number): void {
   window.dispatchEvent(new Event('openrouter-models-changed'));
 }
 
+export type ReasoningEffortOption = 'high' | 'medium' | 'low' | 'none';
+
+export function getReasoningEffort(): ReasoningEffortOption {
+  if (typeof window === 'undefined') return 'high';
+  try {
+    const raw = localStorage.getItem('user_reasoning_effort');
+    if (raw === 'high' || raw === 'medium' || raw === 'low' || raw === 'none') {
+      return raw;
+    }
+  } catch {
+    // fallback
+  }
+  return 'high';
+}
+
+export function saveReasoningEffort(effort: ReasoningEffortOption): void {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem('user_reasoning_effort', effort);
+  window.dispatchEvent(new Event('openrouter-models-changed'));
+}
+
 export function isQuotaError(e: unknown): boolean {
   const msg = (e as Error)?.message || e?.toString() || '';
   const lowerMsg = msg.toLowerCase();
@@ -201,11 +222,19 @@ export class OpenRouterClient {
       throw new Error('Chưa cấu hình OpenRouter API Key. Vui lòng mở mục cài đặt API Key để thiết lập.');
     }
 
+    const reasoningEffort = getReasoningEffort();
     const payload: Record<string, unknown> = {
       model: model || '~google/gemini-flash-latest',
       messages,
       temperature: options.temperature ?? getQualityTemperature()
     };
+
+    if (reasoningEffort !== 'none') {
+      payload['reasoning'] = {
+        effort: reasoningEffort,
+        exclude: true
+      };
+    }
 
     if (options.jsonMode) {
       payload['response_format'] = { type: 'json_object' };
@@ -215,7 +244,7 @@ export class OpenRouterClient {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
-        'HTTP-Referer': 'https://silabook.wpsila.com',
+        'HTTP-Referer': 'https://silabook-opensky.wpsila.com',
         'X-Title': 'silaBook openSky',
         'Content-Type': 'application/json'
       },
