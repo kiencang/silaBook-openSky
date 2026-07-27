@@ -80,7 +80,7 @@ import { CustomModel, DEFAULT_CUSTOM_MODELS, DEFAULT_ECONOMY_MODELS, getCustomMo
           <div class="space-y-3">
             <div>
               <div class="block text-xs font-bold text-zinc-800 uppercase tracking-wider">
-                DANH SÁCH MÔ HÌNH AI CHẤT LƯỢNG CAO (TỐI ĐA 6 MODEL)
+                DANH SÁCH MÔ HÌNH AI CHẤT LƯỢNG CAO (TỐI ĐA 7 MODEL)
               </div>
               <p class="text-[11px] text-zinc-500 mt-0.5">
                 Nhập mã model từ OpenRouter (VD: <code class="bg-zinc-100 px-1 py-0.5 rounded text-zinc-700">~google/gemini-flash-latest</code>) dùng cho dịch thuật chính thức, phân tích đại từ & từ khó. Mã model ở cột trái cần nhập tuyệt đối chính xác, nhãn tên ở cột phải tùy ý bạn đặt miễn sao dễ hiểu cho chính bạn. Bạn có thể thêm, sửa, xóa, điều chỉnh thứ tự danh sách các model AI bên dưới. Danh sách các model AI có thể tham khảo ở đây: <a href="https://openrouter.ai/discover" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline">https://openrouter.ai/discover</a>
@@ -245,7 +245,7 @@ import { CustomModel, DEFAULT_CUSTOM_MODELS, DEFAULT_ECONOMY_MODELS, getCustomMo
               }
             </div>
 
-            @if (models().length < 6) {
+            @if (models().length < 7) {
               <button 
                 type="button" 
                 (click)="addModel()" 
@@ -399,7 +399,7 @@ export class ApiKeyModal {
   }
 
   addModel() {
-    if (this.models().length < 6) {
+    if (this.models().length < 7) {
       this.models.update(list => [...list, { id: '', name: '' }]);
     }
   }

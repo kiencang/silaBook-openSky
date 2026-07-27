@@ -28,7 +28,7 @@ import {AppsModalComponent} from './shared/components/apps-modal.component';
                title="Quay về trang chủ" 
                (click)="!store.isBusy() && store.closeProject()">
             <div class="text-2xl font-bold text-zinc-900 tracking-tight flex items-center font-courier pt-1">
-              <span>silaBook-openSky</span>
+              <span>sila<span class="text-indigo-600">Book</span>-open<span class="text-indigo-600">Sky</span></span>
             </div>
           </button>
           @if (store.currentProjectName()) {
