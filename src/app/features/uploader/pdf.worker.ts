@@ -1,6 +1,10 @@
 /// <reference lib="webworker" />
 
 import { PDFDocument } from 'pdf-lib';
+import * as pdfjsLib from 'pdfjs-dist';
+
+// Cấu hình worker cho pdfjs-dist thông qua CDN để tránh lỗi build
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
 
 addEventListener('message', async ({ data }) => {
   const { type, payload, id } = data;
@@ -48,15 +52,20 @@ addEventListener('message', async ({ data }) => {
       }
     } else if (type === 'EXTRACT_TOKEN_PAGES') {
       const { arrayBuffer, start, end } = payload;
-      const pdfDoc = await PDFDocument.load(arrayBuffer);
       
-      const newPdf = await PDFDocument.create();
-      const pageIndices = Array.from({ length: end - start + 1 }, (_, i) => start - 1 + i);
-      const copiedPages = await newPdf.copyPages(pdfDoc, pageIndices);
-      copiedPages.forEach((page) => newPdf.addPage(page));
+      const uint8Array = new Uint8Array(arrayBuffer);
+      const loadingTask = pdfjsLib.getDocument({ data: uint8Array });
+      const pdf = await loadingTask.promise;
       
-      const b64Data = await newPdf.saveAsBase64();
-      postMessage({ type: 'SUCCESS', id, payload: { b64Data } });
+      let textContent = '';
+      for (let i = start; i <= end; i++) {
+        const page = await pdf.getPage(i);
+        const textContentPage = await page.getTextContent();
+        const pageText = textContentPage.items.map((item: any) => item.str).join(' ');
+        textContent += pageText + '\n\n';
+      }
+      
+      postMessage({ type: 'SUCCESS', id, payload: { text: textContent } });
     }
 
   } catch (error) {

@@ -44,23 +44,25 @@ import { processHtmlContent, getTurndownService } from './html.util';
               </div>
             </div>
 
-            <div class="text-left mb-8 relative">
+            <div class="text-left mb-8">
               <label class="block text-sm font-medium text-zinc-700 mb-2">
                 Chọn model chuyển đổi định dạng PDF (*)
-                <select [(ngModel)]="pdfModel" (ngModelChange)="onModelChange()" class="mt-2 w-full px-4 pr-10 py-3 rounded-xl border border-zinc-200 bg-zinc-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors appearance-none font-normal text-base cursor-pointer truncate">
+              </label>
+              <div class="relative w-full">
+                <select [(ngModel)]="pdfModel" (ngModelChange)="onModelChange()" class="w-full px-4 pr-10 py-3 rounded-xl border border-zinc-200 bg-zinc-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors appearance-none font-normal text-base cursor-pointer truncate">
                   @for (m of economyModels(); track m.id) {
-                    <option [value]="m.id">{{ m.name }} ({{ m.id }})</option>
+                    <option [value]="m.id">{{ m.name }}</option>
                   }
                 </select>
-              </label>
-              <div class="pointer-events-none absolute inset-y-0 right-0 top-[36px] pl-2 pr-4 flex items-center text-zinc-500">
-                <mat-icon class="!w-5 !h-5 !text-[20px]">expand_more</mat-icon>
+                <div class="pointer-events-none absolute inset-y-0 right-0 pl-2 pr-4 flex items-center text-zinc-500">
+                  <mat-icon class="!w-5 !h-5 !text-[20px] flex items-center justify-center">expand_more</mat-icon>
+                </div>
               </div>
             </div>
 
             <div class="mb-8">
               <div class="flex justify-between text-xs font-semibold uppercase tracking-wider mb-2">
-                <span class="text-zinc-500">Token Usage</span>
+                <span class="text-zinc-500">Token (Ước tính)</span>
                 @if (isCountingTokens()) {
                    <span class="text-indigo-500 flex items-center gap-1">
                      <mat-icon class="!w-3 !h-3 !text-[12px] animate-spin">autorenew</mat-icon> Đang tính...
@@ -86,6 +88,10 @@ import { processHtmlContent, getTurndownService } from './html.util';
               </div>
             </div>
 
+            <div class="border border-dashed border-amber-300/80 rounded-xl p-4 mb-6 bg-amber-50/70 text-left text-[13px] text-amber-950 leading-relaxed">
+              <strong class="font-semibold text-amber-900">Lưu ý:</strong> Bạn nên sử dụng các công cụ chuyên sâu để chuyển PDF thành định dạng markdown, rồi tải tài liệu markdown đó lên ứng dụng này, điều đó vừa đỡ tốn token, vừa nhanh và ít lỗi hơn. Hãy sử dụng các công cụ như <a href="https://aistudio.baidu.com/paddleocr" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline font-medium">PaddleOCR</a> hoặc <a href="https://ocr.z.ai" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline font-medium">GLM-OCR</a>.
+            </div>
+
             <div class="flex flex-col gap-3">
               <button (click)="startPdfConversion(pFile)" [disabled]="store.isConverting() || isCountingTokens() || (tokenCount() || 0) > 1000000" class="w-full justify-center flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                 @if (store.isConverting()) {
@@ -102,7 +108,7 @@ import { processHtmlContent, getTurndownService } from './html.util';
             </div>
             
             <p class="mt-6 text-[13px] text-zinc-400 italic text-left leading-relaxed">
-              (*) Tài liệu PDF trước khi dịch sẽ được <strong class="font-medium text-zinc-500">chuyển sang định dạng thân thiện với AI hơn</strong>. Việc này có thể dễ dàng thực hiện với các model thấp để có tốc độ cao và tiết kiệm ngưỡng miễn phí (giúp bạn dùng miễn phí được nhiều hơn). Khi tiến hành dịch thuật chính thức bạn có tùy chọn với các model AI cao nhất để có chất lượng dịch tốt nhất.
+              (*) Tài liệu PDF trước khi dịch sẽ được <strong class="font-medium text-zinc-500">chuyển sang định dạng thân thiện với AI hơn</strong>. Chỉ các model có khả năng xử lý "Đa phương thức" mới chuyển đổi được PDF.
             </p>
           </div>
         } @else if (store.pdfTask(); as task) {
@@ -332,7 +338,7 @@ export class Uploader {
       }
 
       const result = await this.pdfService.runWorkerTask('EXTRACT_TOKEN_PAGES', { arrayBuffer, start, end });
-      const count = await this.gemini.countTokens(result.b64Data || '', 'application/pdf', this.pdfModel());
+      const count = await this.gemini.countTokens(result.text || '', 'text/plain', this.pdfModel());
       this.tokenCount.set(count);
     } catch (e) {
       console.error('Lỗi khi đếm token:', e);

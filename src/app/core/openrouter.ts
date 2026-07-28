@@ -287,7 +287,7 @@ export class OpenRouterClient {
   }
 
   async countTokens(base64OrText: string, mimeType = 'text/plain', _model = '~google/gemini-flash-latest'): Promise<number> {
-    if (mimeType === 'application/pdf' || base64OrText.startsWith('data:') || base64OrText.length > 50000) {
+    if (mimeType !== 'text/plain' && (mimeType === 'application/pdf' || base64OrText.startsWith('data:') || base64OrText.length > 50000)) {
       // Base64 estimation (~ 1 token per 3 bytes of raw base64 data)
       return Math.round(base64OrText.length / 4);
     }

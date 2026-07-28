@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 export interface PdfWorkerResult {
   count?: number;
   b64Data?: string;
+  text?: string;
   resultType?: string;
   chunks?: { index: number; pdfData: Uint8Array; }[];
 }
