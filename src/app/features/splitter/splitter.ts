@@ -1,5 +1,5 @@
 import { Component, computed, inject, signal, effect } from '@angular/core';
-import { BookStore, Chapter } from '../../core/book.store';
+import { BookStore, Chapter, countTokensWithTiktoken } from '../../core/book.store';
 import { MatIconModule } from '@angular/material/icon';
 import { ToastService } from '../../core/toast.service';
 import { analyzeAndSplitText, PreviewChapter, countWords } from './splitter.util';
@@ -171,7 +171,8 @@ export class Splitter {
   });
 
   estimatedTokens = computed(() => {
-    return Math.round(this.totalWords() * 1.4);
+    const text = this.store.rawMarkdown() || '';
+    return countTokensWithTiktoken(text);
   });
 
   formatNumber(val: number): string {

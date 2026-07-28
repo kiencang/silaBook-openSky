@@ -69,7 +69,7 @@ import { CustomModel, DEFAULT_CUSTOM_MODELS, DEFAULT_ECONOMY_MODELS, getCustomMo
               </button>
             </div>
             <p class="text-[11px] text-zinc-450 leading-relaxed">
-              Khóa API được lưu <em class="not-italic font-semibold text-zinc-600">cục bộ tuyệt đối</em> trong trình duyệt (<code class="bg-zinc-100 px-1 py-0.5 rounded text-zinc-700">LocalStorage</code>).
+              Khóa API được lưu <em class="not-italic font-semibold text-zinc-600">cục bộ an toàn</em> trong trình duyệt của bạn (<code class="bg-zinc-100 px-1 py-0.5 rounded text-zinc-700">LocalStorage</code>). Chỉ nên dùng trên máy tính cá nhân của bạn, nếu bất khả kháng phải dùng trên máy tính của người khác thì sau khi dịch xong, cần "Xóa Key cá nhân" này khỏi ứng dụng (nút ngoài cùng ở dưới, bên trái).
             </p>
           </div>
 
@@ -80,7 +80,7 @@ import { CustomModel, DEFAULT_CUSTOM_MODELS, DEFAULT_ECONOMY_MODELS, getCustomMo
           <div class="space-y-3">
             <div>
               <div class="block text-xs font-bold text-zinc-800 uppercase tracking-wider">
-                DANH SÁCH MÔ HÌNH AI CHẤT LƯỢNG CAO (TỐI ĐA 7 MODEL)
+                DANH SÁCH MÔ HÌNH AI CHẤT LƯỢNG CAO (TỐI ĐA 9 MODEL)
               </div>
               <p class="text-[11px] text-zinc-500 mt-0.5">
                 Nhập mã model từ OpenRouter (VD: <code class="bg-zinc-100 px-1 py-0.5 rounded text-zinc-700">~google/gemini-flash-latest</code>) dùng cho dịch thuật chính thức, phân tích đại từ & từ khó. Mã model ở cột trái cần nhập tuyệt đối chính xác, nhãn tên ở cột phải tùy ý bạn đặt miễn sao dễ hiểu cho chính bạn. Bạn có thể thêm, sửa, xóa, điều chỉnh thứ tự danh sách các model AI bên dưới. Danh sách các model AI có thể tham khảo ở đây: <a href="https://openrouter.ai/discover" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline">https://openrouter.ai/discover</a>
@@ -119,7 +119,7 @@ import { CustomModel, DEFAULT_CUSTOM_MODELS, DEFAULT_ECONOMY_MODELS, getCustomMo
               </div>
 
               <p class="text-[11px] text-zinc-500 leading-relaxed pt-0.5">
-                Áp dụng cho tất cả nhiệm vụ dùng Mô hình AI Chất lượng cao (Dịch thuật, Phân tích Đại từ, Từ khó). Mặc định là <strong class="text-zinc-700">0.5</strong>, giúp cân bằng hoàn hảo giữa độ chính xác & văn phong mượt mà.
+                Áp dụng cho tất cả nhiệm vụ dùng Mô hình AI Chất lượng cao (Dịch thuật, Phân tích Đại từ, Từ khó). Mặc định là <strong class="text-zinc-700">1</strong>, giúp các model AI có khả năng suy luận (reasoning) tốt hơn.
               </p>
             </div>
 
@@ -245,14 +245,14 @@ import { CustomModel, DEFAULT_CUSTOM_MODELS, DEFAULT_ECONOMY_MODELS, getCustomMo
               }
             </div>
 
-            @if (models().length < 7) {
+            @if (models().length < 9) {
               <button 
                 type="button" 
                 (click)="addModel()" 
                 class="w-full py-2 border border-dashed border-indigo-300 text-indigo-600 hover:bg-indigo-50/50 hover:border-indigo-400 font-medium rounded-xl text-xs transition-all flex items-center justify-center gap-1 cursor-pointer bg-transparent"
               >
                 <mat-icon class="!text-[16px] !w-4 !h-4">add</mat-icon>
-                Thêm mô hình chất lượng
+                Thêm model AI dịch khác
               </button>
             }
           </div>
@@ -380,7 +380,7 @@ export class ApiKeyModal {
   hasSavedKey = signal(false);
   models = signal<CustomModel[]>([]);
   economyModels = signal<CustomModel[]>([]);
-  qualityTemperature = signal<number>(0.5);
+  qualityTemperature = signal<number>(1.0);
   reasoningEffort = signal<ReasoningEffortOption>('high');
 
   constructor() {
@@ -399,7 +399,7 @@ export class ApiKeyModal {
   }
 
   addModel() {
-    if (this.models().length < 7) {
+    if (this.models().length < 9) {
       this.models.update(list => [...list, { id: '', name: '' }]);
     }
   }
@@ -465,7 +465,7 @@ export class ApiKeyModal {
   resetDefaultModels() {
     const defaultModels = DEFAULT_CUSTOM_MODELS.map(m => ({ ...m }));
     const defaultEconomy = DEFAULT_ECONOMY_MODELS.map(m => ({ ...m }));
-    const defaultTemp = 0.5;
+    const defaultTemp = 1.0;
     const defaultReasoning: ReasoningEffortOption = 'high';
 
     this.models.set(defaultModels);

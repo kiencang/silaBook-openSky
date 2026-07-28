@@ -83,7 +83,7 @@ export function saveCustomEconomyModels(models: CustomModel[]): void {
 }
 
 export function getQualityTemperature(): number {
-  if (typeof window === 'undefined') return 0.5;
+  if (typeof window === 'undefined') return 1.0;
   try {
     const raw = localStorage.getItem('user_quality_temperature');
     if (raw !== null) {
@@ -95,7 +95,7 @@ export function getQualityTemperature(): number {
   } catch {
     // fallback
   }
-  return 0.5;
+  return 1.0;
 }
 
 export function saveQualityTemperature(temp: number): void {

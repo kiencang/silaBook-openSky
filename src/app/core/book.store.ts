@@ -10,7 +10,7 @@ import { OFFLINE_READER_SCRIPT, OFFLINE_READER_STYLES, OFFLINE_READER_TOOLBAR_HT
 import { getEncoding } from 'js-tiktoken';
 
 let tiktokenEnc: ReturnType<typeof getEncoding> | null = null;
-function countTokensWithTiktoken(text: string): number {
+export function countTokensWithTiktoken(text: string): number {
   if (!text) return 0;
   try {
     if (!tiktokenEnc) tiktokenEnc = getEncoding('cl100k_base');

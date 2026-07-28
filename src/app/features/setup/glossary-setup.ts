@@ -35,11 +35,14 @@ import * as XLSX from 'xlsx';
           <div class="flex flex-col lg:flex-row gap-4 lg:items-end">
             <div class="w-full lg:w-1/2">
               <label for="glossaryModel" class="block text-xs font-semibold text-zinc-700 uppercase tracking-widest mb-2">Mô hình nhận diện</label>
-              <select id="glossaryModel" [value]="glossaryModel()" (change)="glossaryModel.set($any($event.target).value)" [disabled]="isGenerating() || !!glossaryTask()" class="w-full pl-3 pr-10 py-2 text-sm border-zinc-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 rounded-lg border disabled:cursor-not-allowed cursor-pointer truncate">
-                @for (m of models(); track m.id) {
-                  <option [value]="m.id">{{ m.name }} ({{ m.id }})</option>
-                }
-              </select>
+              <div class="relative">
+                <select id="glossaryModel" [value]="glossaryModel()" (change)="glossaryModel.set($any($event.target).value)" [disabled]="isGenerating() || !!glossaryTask()" class="w-full pl-3 pr-12 py-2 appearance-none text-sm border-zinc-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 rounded-lg border disabled:cursor-not-allowed cursor-pointer truncate">
+                  @for (m of models(); track m.id) {
+                    <option [value]="m.id">{{ m.name }}</option>
+                  }
+                </select>
+                <mat-icon class="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-400 !text-[20px] !w-5 !h-5 transition-colors">unfold_more</mat-icon>
+              </div>
             </div>
             
             <div class="w-full lg:w-1/2">

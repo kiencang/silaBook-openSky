@@ -29,19 +29,21 @@ import { CustomModel } from '../../../core/openrouter';
         </div>
         
         <div class="mt-3 flex items-center gap-3">
-          <div class="max-w-[280px] flex-1">
-            <select [value]="analysisModel()" (change)="analysisModel.set($any($event.target).value)" [disabled]="isAnalyzing()" class="w-full pl-3 pr-8 py-1.5 text-xs text-indigo-900 bg-white/80 border-indigo-200 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 rounded-lg border disabled:cursor-not-allowed cursor-pointer">
+          <div class="relative max-w-[280px] flex-1">
+            <select [value]="analysisModel()" (change)="analysisModel.set($any($event.target).value)" [disabled]="isAnalyzing()" class="w-full pl-3 pr-10 py-1.5 appearance-none text-xs text-indigo-900 bg-white/80 border-indigo-200 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 rounded-lg border disabled:cursor-not-allowed cursor-pointer">
               @for (m of economyModels(); track m.id) {
-                <option [value]="m.id">{{ m.name }} ({{ m.id }})</option>
+                <option [value]="m.id">{{ m.name }}</option>
               }
             </select>
+            <mat-icon class="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-indigo-400 !text-[18px] !w-4.5 !h-4.5 transition-colors">unfold_more</mat-icon>
           </div>
-          <div class="max-w-[150px] flex-1">
-            <select [value]="samplePercentage()" (change)="samplePercentage.set(+$any($event.target).value)" [disabled]="isAnalyzing()" class="w-full pl-3 pr-8 py-1.5 text-xs text-indigo-900 bg-white/80 border-indigo-200 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 rounded-lg border disabled:cursor-not-allowed cursor-pointer">
+          <div class="relative max-w-[150px] flex-1">
+            <select [value]="samplePercentage()" (change)="samplePercentage.set(+$any($event.target).value)" [disabled]="isAnalyzing()" class="w-full pl-3 pr-10 py-1.5 appearance-none text-xs text-indigo-900 bg-white/80 border-indigo-200 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 rounded-lg border disabled:cursor-not-allowed cursor-pointer">
               <option value="25">Lấy mẫu 25%</option>
               <option value="50">Lấy mẫu 50%</option>
               <option value="100">Lấy mẫu 100%</option>
             </select>
+            <mat-icon class="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-indigo-400 !text-[18px] !w-4.5 !h-4.5 transition-colors">unfold_more</mat-icon>
           </div>
         </div>
       </div>

@@ -138,34 +138,36 @@ import { CustomModel, getCustomModels, getCustomEconomyModels } from '../../../c
         <!-- Main Translation Model Selection -->
         <div class="flex-1">
           <h3 class="text-sm font-semibold text-zinc-900 uppercase tracking-wider mb-4">AI chất lượng cao cho dịch thuật</h3>
-          <div class="flex flex-col space-y-2">
+          <div class="relative">
             <select 
               [disabled]="store.isTranslatingAny()"
               [ngModel]="store.config().model"
               (ngModelChange)="store.updateConfig({model: $event})"
-              class="w-full pl-3 pr-10 py-2.5 border border-zinc-300 rounded-xl bg-zinc-50 focus:bg-white text-sm font-medium text-zinc-800 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all disabled:opacity-50 cursor-pointer truncate"
+              class="w-full pl-3 pr-12 py-2.5 appearance-none border border-zinc-300 rounded-xl bg-zinc-50 focus:bg-white text-sm font-medium text-zinc-800 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all disabled:opacity-50 cursor-pointer truncate"
             >
               @for (m of models(); track m.id) {
-                <option [value]="m.id">{{ m.name }} ({{ m.id }})</option>
+                <option [value]="m.id">{{ m.name }}</option>
               }
             </select>
+            <mat-icon class="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-400 !text-[20px] !w-5 !h-5 transition-colors">unfold_more</mat-icon>
           </div>
         </div>
 
         <!-- Economy Model Selection (Summary/Glossary) -->
         <div class="flex-1">
           <h3 class="text-sm font-semibold text-zinc-900 uppercase tracking-wider mb-4">AI tiết kiệm cho lọc thuật ngữ/tóm tắt</h3>
-          <div class="flex flex-col space-y-2">
+          <div class="relative">
             <select 
               [disabled]="store.isTranslatingAny()"
               [ngModel]="store.config().economyModel"
               (ngModelChange)="store.updateConfig({economyModel: $event})"
-              class="w-full pl-3 pr-10 py-2.5 border border-zinc-300 rounded-xl bg-zinc-50 focus:bg-white text-sm font-medium text-zinc-800 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all disabled:opacity-50 cursor-pointer truncate"
+              class="w-full pl-3 pr-12 py-2.5 appearance-none border border-zinc-300 rounded-xl bg-zinc-50 focus:bg-white text-sm font-medium text-zinc-800 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all disabled:opacity-50 cursor-pointer truncate"
             >
               @for (m of economyModels(); track m.id) {
-                <option [value]="m.id">{{ m.name }} ({{ m.id }})</option>
+                <option [value]="m.id">{{ m.name }}</option>
               }
             </select>
+            <mat-icon class="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-400 !text-[20px] !w-5 !h-5 transition-colors">unfold_more</mat-icon>
           </div>
         </div>
       </div>
