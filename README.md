@@ -1,9 +1,11 @@
 # silaBook-openSky
-Dịch sách thông qua bất cứ AI nào (triển khai qua OpenRouter). Đang trong giai đoạn phát triển và thử nghiệm.
+Dịch sách thông qua bất cứ AI nào (triển khai qua OpenRouter). silaBook-openSky đang trong giai đoạn phát triển và thử nghiệm.
 
-Link ứng dụng: https://silabook-opensky.wpsila.com
+**Link**: https://silabook-opensky.wpsila.com
 
-Được phát triển dựa trên repo (v1.0.99) đã ổn định này: https://github.com/kiencang/silaBook (cùng tác giả).
+Ứng dụng web không cần đăng nhập, tạo tài khoản. Chỉ cần nhập API Key của OpenRouter là dùng được ngay. API Key được lưu cục bộ tại trình duyệt của người dùng, do vậy bạn chỉ nên dùng nó trên máy tính cá nhân của riêng bạn.
+
+silaBook-openSky được phát triển dựa trên repo (v1.0.99) đã ổn định này: https://github.com/kiencang/silaBook (cùng tác giả).
 
 ---
 
