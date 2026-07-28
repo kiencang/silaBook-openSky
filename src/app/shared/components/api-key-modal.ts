@@ -191,7 +191,7 @@ import { CustomModel, DEFAULT_CUSTOM_MODELS, DEFAULT_ECONOMY_MODELS, getCustomMo
               </div>
 
               <p class="text-[11px] text-zinc-500 leading-relaxed pt-0.5">
-                Áp dụng cho các model AI hỗ trợ tính năng tư duy (Reasoning tokens). Mặc định là <strong class="text-zinc-700">High</strong> để cho chất lượng phân tích & dịch thuật sâu nhất. Chọn <strong class="text-zinc-700">Medium / Low</strong> để giảm token tiêu tốn, hoặc <strong class="text-zinc-700">Tắt</strong> nếu ưu tiên phản hồi nhanh.
+                Áp dụng cho các model AI hỗ trợ tính năng tư duy (Reasoning tokens). Mặc định là <strong class="text-zinc-700">High</strong> để cho chất lượng phân tích & dịch thuật cao nhất nhất. Chọn <strong class="text-zinc-700">Medium / Low</strong> để giảm token tiêu tốn, hoặc <strong class="text-zinc-700">Tắt</strong> nếu ưu tiên phản hồi nhanh. Nên ưu tiên chọn <strong class="text-zinc-700">High</strong> hoặc ít nhất là <strong class="text-zinc-700">Medium</strong> để chất lượng dịch không bị suy giảm, điều này đặc biệt đúng với các tài liệu khó.
               </p>
             </div>
 
