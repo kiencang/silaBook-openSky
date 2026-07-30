@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { BookStore } from '../../core/book.store';
 import { ToastService } from '../../core/toast.service';
+import { hasSecureApiKey } from '../../core/crypto-storage.util';
 import { GeminiClient, parseGeminiError, isQuotaError } from '../../core/gemini';
 import { CustomModel, getCustomEconomyModels } from '../../core/openrouter';
 import { MatIconModule } from '@angular/material/icon';
@@ -536,8 +537,7 @@ export class Uploader {
   }
 
   async startPdfConversion(file: File) {
-    const userKey = localStorage.getItem('user_gemini_api_key');
-    if (!userKey?.trim()) {
+    if (!hasSecureApiKey()) {
       this.toast.error('Vui lòng thêm GEMINI API KEY CÁ NHÂN (biểu tượng chìa khóa ở góc trái dưới cùng màn hình) trước khi sử dụng tính năng này.');
       if (this.fileInput()) {
         this.fileInput().nativeElement.value = '';

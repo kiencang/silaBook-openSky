@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { getEncoding, Tiktoken } from 'js-tiktoken';
+import { getCachedApiKey, loadSecureApiKey } from './crypto-storage.util';
 
 export interface CustomModel {
   id: string;
@@ -186,10 +187,16 @@ export class OpenRouterClient {
   }
 
   getApiKey(): string {
+    const cached = getCachedApiKey();
+    if (cached) return cached;
+
     if (typeof window !== 'undefined') {
       const userKey = localStorage.getItem('user_openrouter_api_key') || localStorage.getItem('user_gemini_api_key');
       if (userKey && userKey.trim()) {
-        return userKey.trim();
+        const trimmed = userKey.trim();
+        if (!trimmed.startsWith('enc:v1:')) {
+          return trimmed;
+        }
       }
     }
     return (typeof process !== 'undefined' && (process.env['OPENROUTER_API_KEY'] || process.env['GEMINI_API_KEY'])) || '';
@@ -218,6 +225,7 @@ export class OpenRouterClient {
     messages: { role: 'system' | 'user' | 'assistant'; content: string | unknown[] }[],
     options: { jsonMode?: boolean; temperature?: number } = {}
   ): Promise<string> {
+    await loadSecureApiKey();
     const apiKey = this.getApiKey();
     if (!apiKey) {
       throw new Error('Chưa cấu hình OpenRouter API Key. Vui lòng mở mục cài đặt API Key để thiết lập.');

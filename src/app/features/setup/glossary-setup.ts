@@ -2,6 +2,7 @@ import { Component, inject, signal, effect, computed, ViewChild, ElementRef } fr
 import { CommonModule } from '@angular/common';
 import { BookStore } from '../../core/book.store';
 import { ToastService } from '../../core/toast.service';
+import { hasSecureApiKey } from '../../core/crypto-storage.util';
 import { GeminiClient, parseGeminiError, isQuotaError } from '../../core/gemini';
 import { CustomModel, getCustomModels } from '../../core/openrouter';
 import { MatIconModule } from '@angular/material/icon';
@@ -284,8 +285,7 @@ export class GlossarySetup {
   }
 
   async startGeneration() {
-    const userKey = localStorage.getItem('user_gemini_api_key');
-    if (!userKey?.trim()) {
+    if (!hasSecureApiKey()) {
       this.toast.error('Vui lòng thêm GEMINI API KEY CÁ NHÂN (biểu tượng chìa khóa ở góc trái dưới cùng màn hình) trước khi sử dụng tính năng này.');
       return;
     }

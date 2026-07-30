@@ -3,6 +3,7 @@ import { BookStore } from '../../core/book.store';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { ToastService } from '../../core/toast.service';
+import { hasSecureApiKey } from '../../core/crypto-storage.util';
 
 @Component({
   selector: 'app-home',
@@ -66,8 +67,7 @@ export class Home {
       const projectName = author ? `${title} - ${author}` : title;
       
       if (typeof window !== 'undefined') {
-        const key = localStorage.getItem('user_gemini_api_key');
-        if (!key || key.trim() === '') {
+        if (!hasSecureApiKey()) {
           this.toast.error('Bạn cần nhập API Key để dịch, nó là button nằm bên trái ở chân trang.');
         }
       }

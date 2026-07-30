@@ -13,6 +13,7 @@ import {ToastComponent} from './shared/components/toast.component';
 import {ApiKeyModal} from './shared/components/api-key-modal';
 import {FooterComponent} from './shared/components/footer.component';
 import {AppsModalComponent} from './shared/components/apps-modal.component';
+import {loadSecureApiKey} from './core/crypto-storage.util';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -140,6 +141,9 @@ export class App {
   showAppsModal = signal<boolean>(false);
 
   constructor() {
+    if (typeof window !== 'undefined') {
+      loadSecureApiKey().catch(err => console.warn('Failed to initialize secure API key:', err));
+    }
     effect(() => {
       if (typeof window !== 'undefined') {
         if (this.store.isTranslatingAny()) {

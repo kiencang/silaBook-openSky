@@ -2,6 +2,7 @@ import { Component, computed, inject, signal, effect } from '@angular/core';
 import { BookStore, Chapter, countTokensWithTiktoken } from '../../core/book.store';
 import { MatIconModule } from '@angular/material/icon';
 import { ToastService } from '../../core/toast.service';
+import { hasSecureApiKey } from '../../core/crypto-storage.util';
 import { analyzeAndSplitText, PreviewChapter, countWords } from './splitter.util';
 import { GeminiClient, parseGeminiError, isQuotaError } from '../../core/gemini';
 import { CustomModel, getCustomEconomyModels } from '../../core/openrouter';
@@ -260,8 +261,7 @@ export class Splitter {
   }
 
   async runBookAnalysis() {
-    const userKey = localStorage.getItem('user_gemini_api_key');
-    if (!userKey?.trim()) {
+    if (!hasSecureApiKey()) {
       this.toast.error('Vui lòng thêm GEMINI API KEY CÁ NHÂN (biểu tượng chìa khóa ở góc trái dưới cùng màn hình) trước khi sử dụng tính năng này.');
       return;
     }

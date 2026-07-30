@@ -2,6 +2,7 @@ import { Component, Output, EventEmitter, signal, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { ToastService } from '../../core/toast.service';
+import { loadSecureApiKey, saveSecureApiKey, removeSecureApiKey } from '../../core/crypto-storage.util';
 import { CustomModel, DEFAULT_CUSTOM_MODELS, DEFAULT_ECONOMY_MODELS, getCustomModels, saveCustomModels, getCustomEconomyModels, saveCustomEconomyModels, getQualityTemperature, saveQualityTemperature, ReasoningEffortOption, getReasoningEffort, saveReasoningEffort } from '../../core/openrouter';
 
 @Component({
@@ -71,6 +72,13 @@ import { CustomModel, DEFAULT_CUSTOM_MODELS, DEFAULT_ECONOMY_MODELS, getCustomMo
             <p class="text-[11px] text-zinc-450 leading-relaxed">
               Khóa API được lưu <em class="not-italic font-semibold text-zinc-600">cục bộ an toàn</em> trong trình duyệt của bạn (<code class="bg-zinc-100 px-1 py-0.5 rounded text-zinc-700">LocalStorage</code>). Chỉ nên dùng trên máy tính cá nhân của bạn, nếu bất khả kháng phải dùng trên máy tính của người khác thì sau khi dịch xong, cần "Xóa Key cá nhân" này khỏi ứng dụng (nút ngoài cùng ở dưới, bên trái).
             </p>
+            <div class="mt-2.5 p-3.5 bg-amber-50/80 border border-amber-200/80 rounded-xl text-xs text-amber-900 leading-relaxed flex items-start space-x-2.5 shadow-sm">
+              <mat-icon class="!text-[18px] !w-4.5 !h-4.5 text-amber-600 shrink-0 mt-0.5">shield</mat-icon>
+              <div>
+                <strong class="font-bold text-amber-950">Khuyến nghị đặt hạn mức chi tiêu (Credit Limit):</strong>
+                Bạn nên tạo một API Key riêng cho ứng dụng này và cài đặt limit (ví dụ: chi tiêu tối đa 10$ là dừng hoặc/và thêm tùy chỉnh ngày mà Key hết hạn, chẳng hạn sau một tháng). Điều đó sẽ giúp Key của bạn an toàn hơn, tránh các rủi ro chi tiêu quá mức.
+              </div>
+            </div>
           </div>
 
           <!-- Divider -->
@@ -484,9 +492,9 @@ export class ApiKeyModal {
     this.toast.success('Đã khôi phục và tự động lưu cấu hình mặc định thành công!');
   }
 
-  checkSavedKey() {
+  async checkSavedKey() {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('user_openrouter_api_key') || localStorage.getItem('user_gemini_api_key');
+      const saved = await loadSecureApiKey();
       this.hasSavedKey.set(!!(saved && saved.trim() !== ''));
       if (saved) {
         this.apiKey = saved;
@@ -507,7 +515,7 @@ export class ApiKeyModal {
     }, 200);
   }
 
-  saveKey() {
+  async saveKey() {
     const trimmed = this.apiKey.trim();
     if (!trimmed) return;
     
@@ -517,22 +525,20 @@ export class ApiKeyModal {
     }
 
     if (typeof window !== 'undefined') {
-      localStorage.setItem('user_openrouter_api_key', trimmed);
-      localStorage.setItem('user_gemini_api_key', trimmed);
+      await saveSecureApiKey(trimmed);
       saveCustomModels(this.models());
       saveCustomEconomyModels(this.economyModels());
       saveQualityTemperature(this.qualityTemperature());
       saveReasoningEffort(this.reasoningEffort());
       window.dispatchEvent(new Event('api-key-changed'));
-      this.toast.success('Đã lưu cấu hình OpenRouter API Key, Models, Temperature & Reasoning thành công!');
+      this.toast.success('Đã lưu mã hóa an toàn OpenRouter API Key, Models, Temperature & Reasoning thành công!');
     }
     this.triggerClose();
   }
 
   deleteKey() {
     if (typeof window !== 'undefined') {
-      localStorage.removeItem('user_openrouter_api_key');
-      localStorage.removeItem('user_gemini_api_key');
+      removeSecureApiKey();
       window.dispatchEvent(new Event('api-key-changed'));
       this.toast.success('Xóa OpenRouter API Key cá nhân thành công.');
     }
