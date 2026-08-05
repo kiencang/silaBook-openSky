@@ -1,5 +1,5 @@
 # silaBook-openSky
-Dịch sách thông qua bất cứ AI nào (triển khai qua OpenRouter). silaBook-openSky đang trong giai đoạn phát triển và thử nghiệm.
+Dịch sách thông qua bất cứ AI nào (triển khai qua cổng trung gian **OpenRouter**). silaBook-openSky đang trong giai đoạn phát triển và thử nghiệm.
 
 **Link**: https://silabook-opensky.wpsila.com
 
