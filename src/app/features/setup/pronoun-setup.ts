@@ -132,7 +132,7 @@ import { smartHardSplit } from '../splitter/splitter.util';
                   @if (activeVersion()) {
                     <div class="flex items-center space-x-3 text-xs text-zinc-500">
                       <span class="flex items-center" title="Model"><mat-icon class="!w-4 !h-4 !text-[16px] mr-1">model_training</mat-icon> {{ getModelDisplay(activeVersion()) }}</span>
-                      <span class="flex items-center" title="Thời gian"><mat-icon class="!w-4 !h-4 !text-[16px] mr-1">schedule</mat-icon> {{ activeVersion()?.timestamp | date:'HH:mm:ss dd/MM' }}</span>
+                      <span class="flex items-center" title="Thời gian"><mat-icon class="!w-4 !h-4 !text-[16px] mr-1">schedule</mat-icon> {{ activeVersion()?.timestamp | date:'HH:mm dd/MM/yy' }}</span>
                     </div>
                   }
                 </div>

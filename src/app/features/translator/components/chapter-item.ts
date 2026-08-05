@@ -137,7 +137,7 @@ import { getCustomEconomyModels } from '../../../core/openrouter';
                         <mat-icon class="!w-3.5 !h-3.5 !text-[14px]" [class]="activeV.translationMode === 'scientific' ? 'text-purple-500' : 'text-amber-500'">
                           {{ activeV.translationMode === 'scientific' ? 'science' : 'g_translate' }}
                         </mat-icon>
-                        Chế độ dịch: {{ activeV.translationMode === 'scientific' ? 'Khoa học, chuyên ngành' : 'Truyện ngắn, tiểu thuyết' }}
+                        Phong cách dịch: {{ activeV.translationMode === 'scientific' ? 'Khoa học, chuyên ngành' : 'Truyện ngắn, tiểu thuyết' }}
                       </span>
                     </div>
                     <div class="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">

@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit, Output, EventEmitter } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, Output, EventEmitter } from '@angular/core';
 import { DbService, Project } from '../../core/db';
 import { BookStore } from '../../core/book.store';
 import { ToastService } from '../../core/toast.service';
@@ -14,6 +14,16 @@ import { DatePipe } from '@angular/common';
         <div class="px-6 py-4 border-b border-zinc-200 flex justify-between items-center bg-zinc-50/80">
           <h2 class="text-xl font-bold text-zinc-900">Quản lý dự án</h2>
           <div class="flex items-center gap-2">
+            <button 
+              (click)="toggleSort()" 
+              class="text-sm px-3 py-1.5 bg-white text-zinc-700 hover:bg-zinc-100 border border-zinc-200 rounded-lg font-medium transition-colors flex items-center gap-1.5 shadow-xs"
+              [title]="sortBy() === 'time' ? 'Đang sắp xếp theo thời gian. Nhấn để sắp xếp theo tên (A-Z)' : 'Đang sắp xếp theo tên A-Z. Nhấn để sắp xếp theo thời gian'"
+            >
+              <span class="material-icons text-[18px] text-zinc-500">
+                {{ sortBy() === 'time' ? 'schedule' : 'sort_by_alpha' }}
+              </span>
+              <span class="hidden sm:inline">{{ sortBy() === 'time' ? 'Mới nhất' : 'Tên A-Z' }}</span>
+            </button>
             <button (click)="fileInput.click()" class="text-sm px-3 py-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-lg font-medium transition-colors flex items-center gap-1">
               <span class="material-icons text-[18px]">file_upload</span> Nhập dự án
             </button>
@@ -29,7 +39,7 @@ import { DatePipe } from '@angular/common';
             <div class="flex justify-center items-center h-32">
               <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
             </div>
-          } @else if (projects().length === 0) {
+          } @else if (sortedProjects().length === 0) {
             <div class="text-center py-12">
               <div class="bg-zinc-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
                 <span class="material-icons text-zinc-400 text-3xl">folder_open</span>
@@ -43,7 +53,7 @@ import { DatePipe } from '@angular/common';
             </div>
           } @else {
             <div class="grid gap-4">
-              @for (p of projects(); track p.id) {
+              @for (p of sortedProjects(); track p.id) {
                 <div class="border border-zinc-200 rounded-xl p-4 hover:border-indigo-300 hover:shadow-md transition-all group flex flex-col gap-4 bg-white relative overflow-hidden"
                      [class.ring-2]="store.currentProjectId() === p.id" [class.ring-indigo-500]="store.currentProjectId() === p.id">
                   
@@ -158,6 +168,27 @@ export class ProjectModal implements OnInit {
   isLoading = signal(true);
   confirmingDeleteId = signal<string | null>(null);
   isClosing = signal(false);
+  sortBy = signal<'time' | 'name'>('time');
+
+  sortedProjects = computed(() => {
+    const list = [...this.projects()];
+    const currentId = this.store.currentProjectId();
+
+    const activeProjects = currentId ? list.filter(p => p.id === currentId) : [];
+    const otherProjects = currentId ? list.filter(p => p.id !== currentId) : list;
+
+    if (this.sortBy() === 'name') {
+      otherProjects.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'vi', { sensitivity: 'base' }));
+    } else {
+      otherProjects.sort((a, b) => (b.importedAt ?? b.createdAt) - (a.importedAt ?? a.createdAt));
+    }
+
+    return [...activeProjects, ...otherProjects];
+  });
+
+  toggleSort() {
+    this.sortBy.update(curr => curr === 'time' ? 'name' : 'time');
+  }
   
   @Output() closeModal = new EventEmitter<void>();
 

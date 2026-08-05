@@ -13,7 +13,7 @@ import { CustomModel, getCustomModels, getCustomEconomyModels } from '../../../c
       <div class="flex flex-col md:flex-row gap-8">
         <!-- Translation Mode Selection -->
         <div class="flex-1">
-          <h3 class="text-sm font-semibold text-zinc-900 uppercase tracking-wider mb-4">Chế độ dịch</h3>
+          <h3 class="text-sm font-semibold text-zinc-900 uppercase tracking-wider mb-4">Phong cách dịch</h3>
           <div class="flex flex-col space-y-2.5">
             <label class="flex items-center space-x-2.5 group transition-opacity"
                     [class.cursor-pointer]="!store.isTranslatingAny()"
@@ -67,10 +67,10 @@ import { CustomModel, getCustomModels, getCustomEconomyModels } from '../../../c
             <button 
               (click)="store.phase.set(3)"
               [disabled]="store.isTranslatingAny()"
-              class="inline-flex max-w-fit items-center px-4 py-2 bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 rounded-lg text-sm font-medium transition-colors mt-2 disabled:opacity-50"
+              class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 rounded-lg text-sm font-medium transition-colors mt-2 disabled:opacity-50"
             >
-              <mat-icon class="mr-2 !w-4 !h-4 !text-base">assignment_ind</mat-icon>
-              Chỉnh sửa & Tạo
+              <mat-icon class="!w-4 !h-4 !text-[16px] shrink-0 leading-none flex items-center justify-center">assignment_ind</mat-icon>
+              <span>Chỉnh sửa & Tạo</span>
             </button>
           </div>
         </div>
@@ -102,10 +102,10 @@ import { CustomModel, getCustomModels, getCustomEconomyModels } from '../../../c
             <button 
               (click)="store.phase.set(4)"
               [disabled]="store.isTranslatingAny()"
-              class="inline-flex max-w-fit items-center px-4 py-2 bg-green-50 text-green-700 border border-green-200 hover:bg-green-100 rounded-lg text-sm font-medium transition-colors mt-2 disabled:opacity-50"
+              class="inline-flex items-center gap-2 px-4 py-2 bg-green-50 text-green-700 border border-green-200 hover:bg-green-100 rounded-lg text-sm font-medium transition-colors mt-2 disabled:opacity-50"
             >
-              <mat-icon class="mr-2 !w-4 !h-4 !text-base">library_books</mat-icon>
-              Chỉnh sửa & Tạo
+              <mat-icon class="!w-4 !h-4 !text-[16px] shrink-0 leading-none flex items-center justify-center">library_books</mat-icon>
+              <span>Chỉnh sửa & Tạo</span>
             </button>
           </div>
         </div>
