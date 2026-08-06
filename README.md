@@ -40,6 +40,18 @@ Với vai trò AI dịch thuật chúng ta nên tập trung vào các nhóm (a),
 
 Đặt ở khía cạnh kinh tế, khi bạn dịch nhiều, các model nhóm (b) là đáng quan tâm nhất, chúng vẫn tiệm cận nhóm tốt nhất, nhưng giá lại rẻ hơn nhiều. Ngoài ra, dù tốc độ cao nhất không phải là mục tiêu, chúng ta cũng cần tránh dùng các AI quá chậm, vì dịch sách cần khá nhiều lời gọi với thao tác xử lý lớn.
 
+### Để ý đến context đầu vào tối đa với các sách có dung lượng rất lớn
+
+Mỗi AI đều có khả năng xử lý lượng đầu vào tối đa riêng. Đối với công cụ dịch sách này, ở phase phân tích đại từ là phase duy nhất mà nó cần nhìn lại tổng thể cả cuốn sách, nói cách khác nó sẽ đưa *toàn bộ cuốn sách* để phân tích trong luồng xử lý của nó.
+
+Điều đó nghĩa là bạn không nên chọn AI có context quá thấp, chính xác hơn là không được thấp hơn số lượng token của cuốn sách mà bạn định dịch.
+
+Ngày nay đa số các AI mạnh đều có context lên đến 1 triệu token, nó tương đương với 5 cuốn tiểu thuyết dầy như `Tội ác và Hình phạt` (bản tiếng Anh). Ở ngưỡng này hầu như chúng ta không bao giờ vượt qua.
+
+Tuy nhiên cũng có một số model AI có đầu vào chấp nhận tương đối thấp, ví dụ 262K tokens (Hy3 preview), với ngưỡng này, thật ra cũng không mấy sách thông thường vượt qua được, nên cũng không quá lo.
+
+Tóm lại: Trừ khi bạn định dịch cuốn sách tầm 1000 trang hoặc hơn, còn không thì không cần lo lắng về context của AI. Đối với đa số các AI hiện nay, thậm chí sách 1000 trang vẫn nằm trong khả năng xử lý của nó.
+
 **Lưu ý**: OpenRouter có phí nên các bạn nào muốn rẻ và vẫn có chất lượng tốt thì tham khảo repo chuyên cho Gemini (https://github.com/kiencang/silaBook), dịch không quá nhiều thì thậm chí bạn không tốn đồng nào vì ngưỡng miễn phí ngày của Gemini khá lớn. Chỉ bạn nào quan tâm đến việc dùng các AI khác (Claude, OpenAI, Grok, v.v...) thì mới cần quan tâm đến repo này.
 
 ## Ghi công
