@@ -11,7 +11,7 @@ silaBook-openSky được phát triển dựa trên repo (v1.0.99) đã ổn đ�
 
 Phiên bản ban đầu silaBook (https://github.com/kiencang/silaBook) hiện chỉ dùng được với Gemini, ngoài ra không kết hợp được với AI khác.
 
-silaBook-openSky ra đời để phù hợp với nhu cầu kết hợp với rất nhiều model AI hiện có trên thị trường. Một điểm lợi thế của ứng dụng này là đa phần các chức năng lõi của nó (dịch sách, tạo bảng đại từ, tạo bảng thuật ngữ, tóm tắt, chia sách) đều có thể dùng các AI không cần phải là dạng đang phương thức (multimodal), nói cách khác là từ text -> text, chứ không cần khả năng nhìn ảnh (ảnh vẫn giữ được trong bản dịch của công cụ này, vì nó là dạng link, công cụ chỉ cần giữ nguyên link đó đúng vị trí tương ứng).
+silaBook-openSky ra đời để phù hợp với nhu cầu kết hợp với rất nhiều model AI hiện có trên thị trường. Một điểm lợi thế của ứng dụng này là đa phần các chức năng lõi của nó (dịch sách, tạo bảng đại từ, tạo bảng thuật ngữ, tóm tắt, chia sách) đều có thể dùng các AI không cần phải là dạng đa phương thức (multimodal), nói cách khác là chỉ cần chuyển đổi từ text -> text, chứ không cần khả năng nhìn ảnh (ảnh vẫn giữ được trong bản dịch của công cụ này, vì nó là dạng link, công cụ chỉ cần giữ nguyên link đó đúng vị trí tương ứng).
 
 Hệ quả của việc này là bạn có thể dùng rất nhiều AI chất lượng cao hiện không phải là dạng đa phương thức (trong đó có nhiều AI Trung Quốc với giá cả cự kỳ thân thiện, ví dụ như DeepSeek).
 
@@ -23,12 +23,14 @@ Danh sách các model quan trọng nhất có thể tìm thấy ở đây: https
 
 Có thể chia thành các nhóm model AI sau:
 - (a) Nhóm các model AI có chất lượng cao nhất: Tốt nhất nhưng thường có giá rất cao;
-- (b) Nhóm các model có hiệu quả nhất cho mỗi đồng bỏ ra (Value leaders): Tuy không tốt nhất xét theo chất lượng thuần túy, nhưng giá lại cạnh tranh hơn nhiều;
+- (b) **Nhóm các model có hiệu quả nhất cho mỗi đồng bỏ ra (Value leaders)**: Tuy không tốt nhất xét theo chất lượng thuần túy, nhưng giá lại cạnh tranh hơn nhiều;
 - (c) Nhóm các model AI có tốc độ cao nhất (Fastest models);
 - (d) Nhóm các model AI miễn phí;
 - (e) Nhóm các model AI sử dụng bí danh (để luôn dùng model mới nhất và tránh phải cập nhật tên model liên tục): ví dụ các bí danh như `~anthropic/claude-opus-latest` là để chỉ model Claude bản mới nhất;
 
 Với vai trò AI dịch thuật chúng ta nên tập trung vào các nhóm (a), (b), (e). Nhóm (c) tốc độ cao nhất không phải là trọng tâm trong dịch thuật. Nhóm (d) AI miễn phí các bạn có thể dùng để test, chất lượng của các model này rất khó để so sánh với các model trả phí chất lượng cao.
+
+Đặt ở khía cạnh kinh tế, khi bạn dịch nhiều, các model nhóm (b) là đáng quan tâm nhất, chúng vẫn tiệm cận nhóm tốt nhất, nhưng giá lại rẻ hơn nhiều.
 
 Lưu ý: OpenRouter có phí nên các bạn nào muốn rẻ và vẫn có chất lượng tốt thì tham khảo repo chuyên cho Gemini (https://github.com/kiencang/silaBook), dịch không quá nhiều thì thậm chí bạn không tốn đồng nào vì ngưỡng miễn phí ngày của Gemini khá lớn. Chỉ bạn nào quan tâm đến việc dùng các AI khác (Claude, OpenAI, Grok, v.v...) thì mới cần quan tâm đến repo này.
 
