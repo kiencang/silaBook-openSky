@@ -17,6 +17,10 @@ Hệ quả của việc này là bạn có thể dùng rất nhiều AI chất l
 
 Phần duy nhất cần AI đa phương thức là chuyển PDF thành markdown, tuy nhiên chúng tôi cũng không khuyến khích bạn sử dụng AI để làm việc này, dù AI làm khá tốt (và ứng dụng có tích hợp sẵn khả năng chuyển đổi). Lý do là vì hiện có nhiều công cụ miễn phí chất lượng cao xử lý rất tốt nhiệm vụ đó, ví dụ như PaddleOCR (https://aistudio.baidu.com/paddleocr) hoặc OCR Z-AI (https://ocr.z.ai/).
 
+### Giảm khả năng bị chặn dịch
+
+Gemini có bộ chặn lọc nội dung khá gắt gao, điều này là cần thiết để tránh xử lý các nội dung có tiềm ẩn nguy cơ nguy hiểm hoặc gây hại, tuy nhiên mức độ chặn nhầm của nó là có, đặc biệt với thể loại tiểu thuyết với nhiều tình tiết hư cấu dễ gây hiểu nhầm. Các AI khác có mức chặn, hạn chế thấp hơn có thể hữu ích trong trường hợp này.
+
 ## Cách dùng
 
 Không có điểm khác biệt đáng kể nào trong cách dùng bản openSky này với bản gốc. Chỉ có điểm khác duy nhất ở phần nhập API Key và bổ sung các model AI theo nhu cầu. Công cụ hướng dẫn rất chi tiết trong phần sử dụng tương ứng. Thao tác thêm mới các model, điều chỉnh một vài thông số cũng rất đơn giản. Nói chung nếu bạn đã từng dùng bản gốc thì bản openSky này gần như không phải học thêm gì nhiều.
