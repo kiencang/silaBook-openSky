@@ -1,5 +1,5 @@
 # silaBook-openSky
-Dịch sách thông qua bất cứ AI nào phù hợp qua cổng trung gian **[OpenRouter](https://openrouter.ai/)**.
+Dịch sách bằng bất cứ AI nào phù hợp qua cổng trung gian **[OpenRouter](https://openrouter.ai/)**.
 
 **Link**: https://silabook-opensky.wpsila.com
 
