@@ -1,5 +1,6 @@
 # silaBook-openSky
-Dịch sách bằng bất cứ AI nào phù hợp qua cổng trung gian **[OpenRouter](https://openrouter.ai/)**.
+
+Dịch sách từ tiếng Anh sang tiếng Việt bằng bất cứ AI nào phù hợp qua cổng trung gian **[OpenRouter](https://openrouter.ai/)**.
 
 **Link**: https://silabook-opensky.wpsila.com
 
