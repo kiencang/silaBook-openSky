@@ -38,6 +38,15 @@ import { BookStore } from '../../../core/book.store';
           @if (hasGutenbergSkipped()) {
             <div class="text-[11px] text-zinc-500 italic mt-1">Đã loại bỏ phần thông tin bản quyền Gutenberg vào tính toán, do phần này được giữ nguyên, không cần dịch.</div>
           }
+
+          <div class="mt-3 pt-3 border-t border-indigo-100/60 text-xs text-zinc-600 space-y-1.5 leading-relaxed">
+            <p>Các con số trên là chỉ tính riêng cho cuốn sách. Nếu bạn áp dụng tất cả các bước, bao gồm <code class="bg-indigo-100/70 text-indigo-800 px-1 py-0.5 rounded text-[11px] font-mono">Đại từ</code>, <code class="bg-indigo-100/70 text-indigo-800 px-1 py-0.5 rounded text-[11px] font-mono">Từ khó</code> và <code class="bg-indigo-100/70 text-indigo-800 px-1 py-0.5 rounded text-[11px] font-mono">Tạo bản tóm tắt cho khối dịch kế tiếp</code> thì tổng lượng token input/output thực tế được dùng sẽ cao hơn đáng kể.</p>
+            <div class="font-medium text-zinc-700 pt-0.5">Ước tính:</div>
+            <ul class="list-disc list-inside space-y-1 pl-1 text-zinc-600">
+              <li>Token đầu vào sẽ gấp 6 tới 7 lần token của ước tính cho phần tiếng Anh;</li>
+              <li>Token đầu ra sẽ gấp 1,5 tới 2 lần token ước tính cho phần tiếng Việt;</li>
+            </ul>
+          </div>
         </div>
       }
     </div>

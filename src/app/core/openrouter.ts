@@ -11,10 +11,10 @@ export const DEFAULT_CUSTOM_MODELS: CustomModel[] = [
   { id: '~google/gemini-flash-latest', name: 'Google Gemini Flash Latest' },
   { id: '~openai/gpt-latest', name: 'OpenAI GPT Latest' },
   { id: '~anthropic/claude-opus-latest', name: 'Anthropic Claude Opus Latest' },
-  { id: '~x-ai/grok-latest', name: 'xAI Grok Latest' },
-  { id: '~moonshotai/kimi-latest', name: 'MoonshotAI Kimi Latest' },
-  { id: 'z-ai/glm-5.2', name: 'Z.ai GLM 5.2' },
-  { id: 'deepseek/deepseek-v4-pro', name: 'DeepSeek V4 Pro' }
+  { id: '~deepseek/deepseek-v4-flash-latest', name: 'DeepSeek V4 Flash Latest' },
+  { id: 'openai/gpt-5.6-luna', name: 'OpenAI GPT-5.6 Luna' },
+  { id: 'meta/muse-spark-1.2', name: 'Meta Muse Spark 1.2' },
+  { id: 'z-ai/glm-5.2', name: 'Z.ai GLM 5.2' }
 ];
 
 export const DEFAULT_ECONOMY_MODELS: CustomModel[] = [
