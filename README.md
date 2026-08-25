@@ -1,8 +1,12 @@
 # silaBook-openSky
-
+<p align="center">
+  <img src="images/silaBook-openSky.png" alt="Giao diện chọn model của silaBook-openSky">
+   <br><em>Giao diện cài đặt model của silaBook-openSky</em>
+</p>
 Dịch sách từ tiếng Anh sang tiếng Việt bằng bất cứ AI nào phù hợp qua cổng trung gian **[OpenRouter](https://openrouter.ai/)**.
 
-**Link**: https://silabook-opensky.wpsila.com
+**Link web**: https://silabook-opensky.wpsila.com
+**Link app tren AI Studio**: https://aistudio.google.com/apps/6d89987c-21e6-4c75-921a-5fbf0e78cfa2?showPreview=true&showAssistant=true&fullscreenApplet=true (mọi người có thể remix về, và vibe coding thêm nếu muốn).
 
 Ứng dụng web không cần đăng nhập, tạo tài khoản. Chỉ cần nhập API Key của OpenRouter là dùng được ngay. API Key được lưu cục bộ tại trình duyệt của người dùng, do vậy bạn chỉ nên dùng nó trên máy tính cá nhân của riêng bạn.
 
