@@ -19,7 +19,7 @@ Phiên bản ban đầu silaBook (https://github.com/kiencang/silaBook) hiện c
 
 silaBook-openSky ra đời để phù hợp với nhu cầu kết hợp với rất nhiều model AI hiện có trên thị trường. Một điểm lợi thế của ứng dụng này là đa phần các chức năng lõi của nó (dịch sách, tạo bảng đại từ, tạo bảng thuật ngữ, tóm tắt, chia sách) đều có thể dùng các AI không cần phải là dạng đa phương thức (multimodal), nói cách khác là chỉ cần chuyển đổi từ text -> text, chứ không cần khả năng nhìn ảnh (ảnh vẫn giữ được trong bản dịch của công cụ này, vì nó là dạng link, công cụ chỉ cần giữ nguyên link đó đúng vị trí tương ứng).
 
-Hệ quả của việc này là bạn có thể dùng rất nhiều AI chất lượng cao hiện không phải là dạng đa phương thức (trong đó có nhiều AI Trung Quốc với giá cả cự kỳ thân thiện, ví dụ như DeepSeek).
+Hệ quả của việc này là bạn có thể dùng rất nhiều AI chất lượng cao hiện không phải là dạng đa phương thức (trong đó có nhiều AI Trung Quốc với giá cả cực kỳ thân thiện, ví dụ như DeepSeek).
 
 Phần duy nhất cần AI đa phương thức là chuyển PDF thành markdown, tuy nhiên chúng tôi cũng không khuyến khích bạn sử dụng AI để làm việc này, dù AI làm khá tốt (và ứng dụng có tích hợp sẵn khả năng chuyển đổi). Lý do là vì hiện có nhiều công cụ miễn phí chất lượng cao xử lý rất tốt nhiệm vụ đó, ví dụ như PaddleOCR (https://aistudio.baidu.com/paddleocr) hoặc OCR Z-AI (https://ocr.z.ai/).
 
@@ -29,7 +29,7 @@ Gemini có bộ chặn lọc nội dung khá gắt gao, điều này là cần t
 
 ## Cách dùng
 
-Không có điểm khác biệt đáng kể nào trong cách dùng bản openSky này với bản gốc. Chỉ có điểm khác duy nhất ở phần nhập API Key và bổ sung các model AI theo nhu cầu. Công cụ hướng dẫn rất chi tiết trong phần sử dụng tương ứng. Thao tác thêm mới các model, điều chỉnh một vài thông số cũng rất đơn giản. Nói chung nếu bạn đã từng dùng bản gốc thì bản openSky này gần như không phải học thêm gì nhiều.
+Không có điểm khác biệt đáng kể nào trong cách dùng nhánh openSky này với bản gốc. Chỉ có điểm khác duy nhất ở phần nhập API Key và bổ sung các model AI theo nhu cầu. Công cụ hướng dẫn rất chi tiết trong phần sử dụng tương ứng. Thao tác thêm mới các model, điều chỉnh một vài thông số cũng rất đơn giản. Nói chung nếu bạn đã từng dùng bản gốc thì nhánh openSky này gần như không phải học thêm gì nhiều.
 
 ## Các model AI
 
@@ -44,7 +44,7 @@ Có thể chia thành các nhóm model AI sau:
 
 Với vai trò AI dịch thuật chúng ta nên tập trung vào các nhóm (a), (b), (e). Nhóm (c) tốc độ cao nhất không phải là trọng tâm trong dịch thuật. Nhóm (d) AI miễn phí các bạn có thể dùng để test, chất lượng của các model này rất khó để so sánh với các model trả phí chất lượng cao.
 
-Đặt ở khía cạnh kinh tế, khi bạn dịch nhiều, các model nhóm (b) là đáng quan tâm nhất, chúng vẫn tiệm cận nhóm tốt nhất, nhưng giá lại rẻ hơn nhiều. Ngoài ra, dù tốc độ cao nhất không phải là mục tiêu, chúng ta cũng cần tránh dùng các AI quá chậm, vì dịch sách cần khá nhiều lời gọi với thao tác xử lý lớn.
+Đặt ở khía cạnh kinh tế, khi bạn dịch nhiều, các model nhóm (b) là đáng quan tâm nhất, chúng vẫn tiệm cận nhóm tốt nhất, nhưng giá lại rẻ hơn nhiều. Ngoài ra, dù tốc độ cao nhất không phải là mục tiêu, chúng ta cũng cần tránh dùng các AI quá chậm, vì dịch sách cần khá nhiều lời gọi với thao tác xử lý lớn dữ liệu.
 
 **Lưu ý**: OpenRouter có phí nên các bạn nào muốn rẻ và vẫn có chất lượng tốt thì tham khảo repo chuyên cho Gemini (https://github.com/kiencang/silaBook), dịch không quá nhiều thì thậm chí bạn không tốn đồng nào vì ngưỡng miễn phí ngày của Gemini khá lớn. Chỉ bạn nào quan tâm đến việc dùng các AI khác (Claude, OpenAI, Grok, v.v...) thì mới cần quan tâm đến repo này.
 
@@ -54,7 +54,7 @@ Mỗi AI đều có khả năng xử lý lượng đầu vào tối đa riêng. 
 
 Điều đó nghĩa là bạn không nên chọn AI có context quá thấp, chính xác hơn là không được thấp hơn số lượng token của cuốn sách mà bạn định dịch.
 
-Ngày nay đa số các AI mạnh đều có context lên đến 1 triệu token, nó tương đương với 5 cuốn tiểu thuyết dầy như `Tội ác và Hình phạt` (bản tiếng Anh). Ở ngưỡng này hầu như chúng ta không bao giờ vượt qua.
+Ngày nay đa số các AI mạnh đều có context lên đến 1 triệu token, nó tương đương với 5 cuốn tiểu thuyết dầy như `Tội ác và Hình phạt` (bản tiếng Anh). Ở mức này hầu như chúng ta không phải lo lắng AI bị quá ngưỡng.
 
 Tuy nhiên cũng có một số model AI có đầu vào chấp nhận tương đối thấp, ví dụ 262K tokens (Hy3 preview), với ngưỡng này, thật ra cũng không mấy sách thông thường vượt qua được, nên cũng không quá lo.
 
