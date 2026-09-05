@@ -1,6 +1,6 @@
 # silaBook-openSky
 <p align="center">
-  <img src="images/silaBook-openSky.png" alt="Giao diện chọn model của silaBook-openSky">
+  <img src="images/model-AI.png" alt="Giao diện chọn model của silaBook-openSky">
    <br><em>Giao diện cài đặt model của silaBook-openSky</em>
 </p>
 
@@ -55,6 +55,11 @@ Tuy nhiên cũng có một số model AI có đầu vào chấp nhận tương �
 
 Tóm lại: Trừ khi bạn định dịch cuốn sách tầm 1000 trang hoặc hơn, còn không thì không cần lo lắng về context của AI. Đối với đa số các AI hiện nay, thậm chí sách 1000 trang vẫn nằm trong khả năng xử lý của nó.
 
+## Tuyên bố từ chối trách nhiệm
+Công cụ này có thể được sử dụng cho mục đích nghiên cứu và học tập cá nhân.
+
+silaBook-openSky cũng như người phát triển nó không đưa ra bất kỳ bảo đảm rõ ràng hay ngụ ý nào, cũng như không tuyên bố rằng công cụ sẽ vận hành hoàn hảo, chính xác hoặc cập nhật. Người phát triển sẽ không chịu trách nhiệm cho bất kỳ tổn thất hay thiệt hại nào phát sinh trực tiếp hoặc gián tiếp liên quan đến hoặc phát sinh từ việc sử dụng công cụ này.
+
 ## Ghi công
 Ứng dụng được phát triển tối ưu hoàn toàn ở phía Client-side (trình duyệt, nghĩa là không gửi dữ liệu ra bên ngoài, trừ phần dịch chính). Một số thư viện quan trọng mà ứng dụng này dùng bao gồm:
 
@@ -75,8 +80,3 @@ Tóm lại: Trừ khi bạn định dịch cuốn sách tầm 1000 trang hoặc 
 
 ### 4. Lưu trữ cục bộ
 *   **[idb (IndexedDB Wrapper)](https://github.com/jakearchibald/idb)**: Thư viện wrap IndexedDB, hỗ trợ xử lý các tác vụ liên quan đến IndexedDB tốt hơn. Toàn bộ dữ liệu sách được lưu cục bộ tại trình duyệt là thông qua IndexedDB.
-
-## Tuyên bố từ chối trách nhiệm
-Công cụ này có thể được sử dụng cho mục đích nghiên cứu và học tập cá nhân.
-
-silaBook-openSky cũng như người phát triển nó không đưa ra bất kỳ bảo đảm rõ ràng hay ngụ ý nào, cũng như không tuyên bố rằng công cụ sẽ vận hành hoàn hảo, chính xác hoặc cập nhật. Người phát triển sẽ không chịu trách nhiệm cho bất kỳ tổn thất hay thiệt hại nào phát sinh trực tiếp hoặc gián tiếp liên quan đến hoặc phát sinh từ việc sử dụng công cụ này.
