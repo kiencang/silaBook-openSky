@@ -646,7 +646,11 @@ export class ChapterItemComponent {
     try {
       // Use the economy model from config, fallback to first custom economy model, or version model
       const model = this.store.config().economyModel || getCustomEconomyModels()[0]?.id || version.model || this.store.config().model;
-      const summary = await this.gemini.summarizeTranslation(version.text, model);
+      const summary = await this.gemini.summarizeTranslation(
+        version.text, 
+        model,
+        this.store.config().translationMode || 'standard'
+      );
       
       if (summary) {
         // Update the version in the chapter

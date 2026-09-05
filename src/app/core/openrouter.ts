@@ -684,12 +684,15 @@ export class OpenRouterClient {
     return result.trim();
   }
 
-  async summarizeTranslation(translatedText: string, model = '~google/gemini-flash-latest'): Promise<string> {
+  async summarizeTranslation(translatedText: string, model = '~google/gemini-flash-latest', translationMode: 'standard' | 'scientific' = 'standard'): Promise<string> {
     try {
       if (!translatedText.trim()) return '';
 
-      const si = await this.loadPromptText('/prompts/summary_system_instruction.md');
-      const p = await this.loadPromptText('/prompts/summary_prompt.md');
+      const siFileName = translationMode === 'scientific' ? '/prompts/summary_scientific_system_instruction.md' : '/prompts/summary_multi_system_instruction.md';
+      const promptFileName = translationMode === 'scientific' ? '/prompts/summary_scientific_prompt.md' : '/prompts/summary_multi_prompt.md';
+
+      const si = await this.loadPromptText(siFileName);
+      const p = await this.loadPromptText(promptFileName);
 
       const systemInstruction = si || 'You are an expert summarizer. Provide a concise context summary in Vietnamese for the next chapter.';
       const promptTemplate = p || 'Hãy tóm tắt nội dung bản dịch dưới đây để làm thông tin bối cảnh (context) cho việc dịch phần tiếp theo:\n\n{{nội dung}}';

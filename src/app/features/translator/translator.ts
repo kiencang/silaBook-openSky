@@ -256,7 +256,11 @@ export class Translator {
       
       let summaryText: string | undefined = undefined;
       if (config.generateSummary !== false) {
-        summaryText = await this.gemini.summarizeTranslation(translatedText, config.economyModel || getCustomEconomyModels()[0]?.id || config.model);
+        summaryText = await this.gemini.summarizeTranslation(
+          translatedText, 
+          config.economyModel || getCustomEconomyModels()[0]?.id || config.model,
+          config.translationMode || 'standard'
+        );
       }
       
       const newVersionNumber = (chapter.latestVersionNumber || 0) + 1;
