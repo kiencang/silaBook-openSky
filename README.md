@@ -14,7 +14,7 @@ Dịch sách từ tiếng Anh sang tiếng Việt bằng bất cứ AI nào phù
 silaBook-openSky được phát triển dựa trên repo (v1.0.99) đã ổn định này: https://github.com/kiencang/silaBook (cùng tác giả).
 
 ## Lý do triển khai
-Phiên bản ban đầu silaBook (https://github.com/kiencang/silaBook) hiện chỉ dùng được với Gemini, ngoài ra không kết hợp được với AI khác.
+Phiên bản ban đầu [silaBook](https://github.com/kiencang/silaBook) hiện chỉ dùng được với Gemini, ngoài ra không kết hợp được với AI khác.
 
 silaBook-openSky ra đời để phù hợp với nhu cầu kết hợp với rất nhiều model AI hiện có trên thị trường. Một điểm lợi thế của ứng dụng này là đa phần các chức năng lõi của nó (dịch sách, tạo bảng đại từ, tạo bảng thuật ngữ, tóm tắt, chia sách) đều có thể dùng các AI không cần phải là dạng đa phương thức (multimodal), nói cách khác là chỉ cần chuyển đổi từ text -> text, chứ không cần khả năng nhìn ảnh (ảnh vẫn giữ được trong bản dịch của công cụ này, vì nó là dạng link, công cụ chỉ cần giữ nguyên link đó đúng vị trí tương ứng).
 
@@ -32,7 +32,7 @@ Không có điểm khác biệt đáng kể nào trong cách dùng ở nhánh op
 Danh sách các model quan trọng nhất có thể tìm thấy ở đây: https://openrouter.ai/discover
 
 Có thể chia thành các nhóm model AI sau:
-- (a) Nhóm các model AI có chất lượng cao nhất: Tốt nhất nhưng thường có giá rất cao;
+- (a) Nhóm các model AI có chất lượng cao nhất: Tốt nhất nhưng thường có giá rất cao (có thể lên đến 10 - 30$/M token đầu ra);
 - (b) **Nhóm các model có hiệu quả nhất cho mỗi đồng bỏ ra (Value leaders)**: Tuy không tốt nhất xét theo chất lượng thuần túy, nhưng giá lại cạnh tranh hơn nhiều;
 - (c) Nhóm các model AI có tốc độ cao nhất (Fastest models);
 - (d) Nhóm các model AI miễn phí;
@@ -40,9 +40,9 @@ Có thể chia thành các nhóm model AI sau:
 
 Với vai trò AI dịch thuật chúng ta nên tập trung vào các nhóm (a), (b), (e). Nhóm (c) tốc độ cao nhất không phải là trọng tâm trong dịch thuật. Nhóm (d) AI miễn phí các bạn có thể dùng để test, chất lượng của các model này rất khó để so sánh với các model trả phí chất lượng cao.
 
-Đặt ở khía cạnh kinh tế, khi bạn dịch nhiều (vốn là điều thường xảy ra khi dịch sách), các model nhóm (b) là đáng quan tâm nhất, chúng vẫn tiệm cận nhóm tốt nhất, nhưng giá lại rẻ hơn nhiều. Ngoài ra, dù tốc độ cao nhất không phải là mục tiêu, chúng ta cũng cần tránh dùng các AI quá chậm, vì dịch sách cần tương đối nhiều lời gọi với thao tác xử lý lớn.
+Đặt ở khía cạnh kinh tế, khi bạn dịch nhiều (vốn là điều thường xảy ra khi dịch sách), các model nhóm (b) là đáng quan tâm nhất, chúng vẫn tiệm cận nhóm tốt nhất, nhưng giá lại rẻ hơn nhiều (có thể lên đến 10 lần). Ngoài ra, dù tốc độ cao nhất không phải là mục tiêu, chúng ta cũng cần tránh dùng các AI quá chậm, vì dịch sách cần tương đối nhiều lời gọi với thao tác xử lý lớn.
 
-**Lưu ý**: OpenRouter _có phí_ nên bạn nào muốn rẻ và vẫn có chất lượng tốt thì tham khảo repo chuyên cho Gemini (https://github.com/kiencang/silaBook), dịch không quá nhiều thì thậm chí bạn không tốn đồng nào vì ngưỡng miễn phí ngày của Gemini khá lớn (hết ngưỡng miễn phí có thể đợi sang đến ngày hôm sau hoặc đổi sang tài khoản khác dịch tiếp). Chỉ bạn nào quan tâm đến việc dùng các AI khác (Claude, OpenAI, Grok, GLM, DeepSeek, v.v...) thì mới cần quan tâm đến repo này.
+**Lưu ý**: OpenRouter là dịch vụ _có phí_ nên bạn nào muốn rẻ và vẫn có chất lượng tốt thì tham khảo repo trước đây chuyên cho Gemini (https://github.com/kiencang/silaBook), dịch không quá nhiều thì thậm chí bạn không tốn đồng nào vì ngưỡng miễn phí ngày của Gemini khá lớn (hết ngưỡng miễn phí có thể đợi sang đến ngày hôm sau hoặc đổi sang tài khoản khác dịch tiếp). Chỉ bạn nào quan tâm đến việc dùng các AI khác (Claude, OpenAI, Grok, GLM, DeepSeek, v.v..) thì mới cần quan tâm đến repo này.
 
 ### Các model mặc định của ứng dụng
 A. Danh sách model AI chất lượng cao, được dùng vào việc dịch thuật.
@@ -57,7 +57,7 @@ B. Danh sách model AI tiết kiệm được dùng vào các nhiệm vụ đơn
 - `~z-ai/glm-flash-latest`: Z.ai GLM Flash Latest (đa phương thức)
 - `~deepseek/deepseek-v4-flash-latest`: DeepSeek V4 Flash Latest
 
-Danh sách trên được lựa chọn dựa trên chi phí vừa phải và mức độ thông minh ở mức đáp ứng tốt cho nhiệm vụ dịch. Bạn hoàn toàn có thể bổ sung thêm bớt các model AI khác tùy theo nhu cầu và tình hình thực tế tại thời điểm bạn sử dụng sản phẩm này. AI có tốc độ thay đổi rất nhanh, các model do vậy cập nhật thường xuyên, hãy điều chỉnh danh sách nếu bạn thấy các model khác phù hợp hơn.
+Danh sách trên được lựa chọn dựa trên chi phí vừa phải và mức độ thông minh ở mức đáp ứng tốt cho nhiệm vụ dịch. Bạn hoàn toàn có thể bổ sung, thêm bớt các model AI khác tùy theo nhu cầu & tình hình thực tế tại thời điểm bạn sử dụng sản phẩm này. AI có tốc độ thay đổi rất nhanh, các model cập nhật thường xuyên, hãy điều chỉnh danh sách nếu bạn thấy các model khác phù hợp hơn.
 
 ### Để ý đến context đầu vào tối đa với các sách có dung lượng rất lớn
 Mỗi AI đều có khả năng xử lý lượng đầu vào tối đa riêng. Đối với công cụ dịch sách này, ở phase phân tích đại từ là phase duy nhất mà nó cần nhìn lại tổng thể cả cuốn sách, nói cách khác nó sẽ đưa *toàn bộ cuốn sách* để phân tích trong luồng xử lý của nó.
