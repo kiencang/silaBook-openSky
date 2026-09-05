@@ -90,7 +90,7 @@ import { processHtmlContent, getTurndownService } from './html.util';
             </div>
 
             <div class="border border-dashed border-amber-300/80 rounded-xl p-4 mb-6 bg-amber-50/70 text-left text-[13px] text-amber-950 leading-relaxed">
-              <strong class="font-semibold text-amber-900">Lưu ý:</strong> Bạn nên sử dụng các công cụ chuyên sâu để chuyển PDF thành định dạng markdown, rồi tải tài liệu markdown đó lên ứng dụng này, điều đó vừa đỡ tốn token, vừa nhanh và ít lỗi hơn. Hãy sử dụng các công cụ như <a href="https://aistudio.baidu.com/paddleocr" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline font-medium">PaddleOCR</a> hoặc <a href="https://ocr.z.ai" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline font-medium">GLM-OCR</a>.
+              <strong class="font-semibold text-amber-900">Lưu ý:</strong> Bạn nên sử dụng các công cụ chuyên sâu để chuyển PDF thành định dạng markdown, rồi tải tài liệu markdown đó lên ứng dụng này, điều đó vừa đỡ tốn token, vừa nhanh và ít lỗi hơn. Hãy sử dụng các công cụ như <a href="https://aistudio.baidu.com/paddleocr" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline font-medium">PaddleOCR</a> hoặc <a href="https://mineru.net/" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline font-medium">MinerU</a> (nên tải phần mềm về để chuyển đổi nhanh và ổn định hơn).
             </div>
 
             <div class="flex flex-col gap-3">

@@ -9,18 +9,16 @@ export interface CustomModel {
 
 export const DEFAULT_CUSTOM_MODELS: CustomModel[] = [
   { id: '~google/gemini-flash-latest', name: 'Google Gemini Flash Latest' },
-  { id: '~openai/gpt-latest', name: 'OpenAI GPT Latest' },
-  { id: '~anthropic/claude-opus-latest', name: 'Anthropic Claude Opus Latest' },
-  { id: '~deepseek/deepseek-v4-flash-latest', name: 'DeepSeek V4 Flash Latest' },
   { id: 'openai/gpt-5.6-luna', name: 'OpenAI GPT-5.6 Luna' },
-  { id: 'meta/muse-spark-1.2', name: 'Meta Muse Spark 1.2' },
-  { id: 'z-ai/glm-5.2', name: 'Z.ai GLM 5.2' }
+  { id: 'meta/muse-spark-1.3', name: 'Meta Muse Spark 1.3' },
+  { id: '~deepseek/deepseek-v4-flash-latest', name: 'DeepSeek V4 Flash Latest' },
+  { id: '~z-ai/glm-flash-latest', name: 'Z.ai GLM Flash Latest' }
 ];
 
 export const DEFAULT_ECONOMY_MODELS: CustomModel[] = [
   { id: 'google/gemini-3.5-flash-lite', name: 'Google Gemini 3.5 Flash Lite (đa phương thức)' },
-  { id: 'deepseek/deepseek-v4-flash', name: 'DeepSeek V4 Flash' },
-  { id: 'deepseek/deepseek-v4-pro', name: 'DeepSeek V4 Pro' }
+  { id: '~z-ai/glm-flash-latest', name: 'Z.ai GLM Flash Latest (đa phương thức)' },
+  { id: '~deepseek/deepseek-v4-flash-latest', name: 'DeepSeek V4 Flash Latest' }
 ];
 
 export function getCustomModels(): CustomModel[] {
