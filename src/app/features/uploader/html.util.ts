@@ -47,10 +47,33 @@ export function preprocessHtmlStr(htmlContent: string): string {
   return doc.body.innerHTML;
 }
 
-export async function processHtmlContent(file: File): Promise<string> {
+export function extractBase64Images(htmlContent: string): { html: string, images: Record<string, string> } {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(htmlContent, 'text/html');
+  const images: Record<string, string> = {};
+  let imgCounter = 0;
+
+  const imgElements = doc.querySelectorAll('img');
+  imgElements.forEach(img => {
+    const src = img.getAttribute('src');
+    if (src && src.startsWith('data:image/') && src.includes('base64,')) {
+      const placeholderId = `HTML_IMG_${Date.now()}_${imgCounter++}`;
+      images[placeholderId] = src;
+      img.setAttribute('src', placeholderId);
+    }
+  });
+
+  return { html: doc.body.innerHTML, images };
+}
+
+export async function processHtmlContent(file: File): Promise<{ markdown: string, images?: Record<string, string> }> {
   const text = await file.text();
   const processedHtml = preprocessHtmlStr(text);
-  return turndownService.turndown(processedHtml);
+  const { html, images } = extractBase64Images(processedHtml);
+  return {
+    markdown: turndownService.turndown(html),
+    images: Object.keys(images).length > 0 ? images : undefined
+  };
 }
 
 export function getTurndownService(): TurndownService {
