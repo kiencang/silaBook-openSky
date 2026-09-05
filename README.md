@@ -44,6 +44,21 @@ Với vai trò AI dịch thuật chúng ta nên tập trung vào các nhóm (a),
 
 **Lưu ý**: OpenRouter _có phí_ nên bạn nào muốn rẻ và vẫn có chất lượng tốt thì tham khảo repo chuyên cho Gemini (https://github.com/kiencang/silaBook), dịch không quá nhiều thì thậm chí bạn không tốn đồng nào vì ngưỡng miễn phí ngày của Gemini khá lớn (hết ngưỡng miễn phí có thể đợi sang đến ngày hôm sau hoặc đổi sang tài khoản khác dịch tiếp). Chỉ bạn nào quan tâm đến việc dùng các AI khác (Claude, OpenAI, Grok, GLM, DeepSeek, v.v...) thì mới cần quan tâm đến repo này.
 
+### Các model mặc định của ứng dụng
+A. Danh sách model AI chất lượng cao, được dùng vào việc dịch thuật.
+- `~google/gemini-flash-latest`: Google Gemini Flash Latest
+- `openai/gpt-5.6-luna`: OpenAI GPT-5.6 Luna
+- `meta/muse-spark-1.3`: Meta Muse Spark 1.3
+- `~deepseek/deepseek-v4-flash-latest`: DeepSeek V4 Flash Latest
+- `~z-ai/glm-flash-latest`: Z.ai GLM Flash Latest
+
+B. Danh sách model AI tiết kiệm được dùng vào các nhiệm vụ đơn giản hơn như lọc thuật ngữ, tóm tắt.
+- `google/gemini-3.5-flash-lite`: Google Gemini 3.5 Flash Lite (đa phương thức)
+- `~z-ai/glm-flash-latest`: Z.ai GLM Flash Latest (đa phương thức)
+- `~deepseek/deepseek-v4-flash-latest`: DeepSeek V4 Flash Latest
+
+Danh sách trên được lựa chọn dựa trên chi phí vừa phải và mức độ thông minh ở mức đáp ứng tốt cho nhiệm vụ dịch. Bạn hoàn toàn có thể bổ sung thêm bớt các model AI khác tùy theo nhu cầu và tình hình thực tế tại thời điểm bạn sử dụng sản phẩm này. AI có tốc độ thay đổi rất nhanh, các model do vậy cập nhật thường xuyên, hãy điều chỉnh danh sách nếu bạn thấy các model khác phù hợp hơn.
+
 ### Để ý đến context đầu vào tối đa với các sách có dung lượng rất lớn
 Mỗi AI đều có khả năng xử lý lượng đầu vào tối đa riêng. Đối với công cụ dịch sách này, ở phase phân tích đại từ là phase duy nhất mà nó cần nhìn lại tổng thể cả cuốn sách, nói cách khác nó sẽ đưa *toàn bộ cuốn sách* để phân tích trong luồng xử lý của nó.
 
