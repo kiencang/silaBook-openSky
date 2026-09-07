@@ -1,6 +1,6 @@
 {
   "name": "silaBook-openSky",
-  "description": "Ứng dụng tối giản giúp chuyển đổi file PDF/TXT/HTML sang định dạng Markdown theo từng chương, hỗ trợ xem trước trực quan và dịch thuật từng phần với sức mạnh của Gemini.",
+  "description": "Dịch sách từ tiếng Anh sang tiếng Việt bằng bất cứ AI nào phù hợp qua cổng trung gian OpenRouter.",
   "requestFramePermissions": [],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
