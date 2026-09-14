@@ -7,11 +7,15 @@ You will receive:
 Instructions:
 1. Read the text block carefully.
 2. For each term in the "Glossary Terms" list, check if it appears in the text block (consider case variations and basic inflections).
-3. Return a JSON array of the matched terms. Each item in the array must be an object with "english" and "pos" properties exactly as provided.
-4. Output ONLY valid JSON array. No explanations.
+3. Return a JSON object with an "items" array of the matched terms. Each item in the array must be an object with "english" and "pos" properties exactly as provided.
+4. Output ONLY valid JSON object. No explanations.
 
 Example output:
-[
-  { "english": "Apple", "pos": "Noun" },
-  { "english": "Run", "pos": "Verb" }
-]
+```json
+{
+  "items": [
+    { "english": "Apple", "pos": "Noun" },
+    { "english": "Run", "pos": "Verb" }
+  ]
+}
+```

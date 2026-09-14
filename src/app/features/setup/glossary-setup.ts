@@ -120,6 +120,8 @@ import * as XLSX from 'xlsx';
               [value]="draftTable()"
               (valueChange)="onTableChange($event)"
               [disabled]="isGenerating()"
+              [exportFileName]="exportFileName()"
+              exportSheetName="Thuật ngữ"
               placeholder="Ví dụ:&#10;| Tiếng Anh | Từ loại | Tiếng Việt | Ghi chú văn cảnh |&#10;|---|---|---|---|&#10;| Hogwarts | Noun | Hogwarts | Trường đào tạo phù thủy |"
             >
               @if (store.glossaryVersions().length > 0) {
@@ -213,6 +215,12 @@ export class GlossarySetup {
 
   glossaryModel = signal<string>(this.store.glossaryTask()?.model ?? this.store.config().glossaryGenModel ?? '~google/gemini-flash-latest');
   isManuallyEdited = signal<boolean>(false);
+
+  exportFileName = computed(() => {
+    const title = this.store.bookTitle()?.trim();
+    const safeTitle = title ? title.replace(/[/\\?%*:|"<>]/g, '-').trim() : '';
+    return safeTitle ? `${safeTitle} - Bảng thuật ngữ.xlsx` : 'Bảng thuật ngữ.xlsx';
+  });
 
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
 

@@ -95,6 +95,8 @@ import { smartHardSplit } from '../splitter/splitter.util';
               [value]="draftPronounTable()"
               (valueChange)="onTableChange($event)"
               [disabled]="isGeneratingPronouns()"
+              [exportFileName]="exportFileName()"
+              exportSheetName="Đại từ"
               placeholder="Ví dụ:&#10;| Nhân vật (Original) | Giới tính | Ước lượng độ tuổi | Đặc điểm & Vai trò | Xưng hô / Tước vị (Dịch) | Ngôi thứ 3 (Narrator) | Xưng - Hô (Với người khác) | Lý do | Ghi chú |&#10;|---|---|---|---|---|---|---|---|---|&#10;| Harry Potter | Nam | Thiếu niên | Cô nhi | Cậu bé sống sót | Cậu, hắn | Với Ron: Bồ - Mình | Nội dung văn bản | Tự tin hơi bốc đồng |"
             >
               @if (store.pronounVersions().length > 0) {
@@ -188,6 +190,12 @@ export class PronounSetup {
   
   pronounModel = signal<string>(this.store.pronounTask()?.model ?? this.store.config().pronounGenModel ?? '~google/gemini-flash-latest');
   isManuallyEdited = signal<boolean>(false);
+
+  exportFileName = computed(() => {
+    const title = this.store.bookTitle()?.trim();
+    const safeTitle = title ? title.replace(/[/\\?%*:|"<>]/g, '-').trim() : '';
+    return safeTitle ? `${safeTitle} - Bảng đại từ.xlsx` : 'Bảng đại từ.xlsx';
+  });
 
   constructor() {
     if (typeof window !== 'undefined') {

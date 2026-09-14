@@ -41,14 +41,16 @@ BẠN PHẢI TRẢ VỀ DUY NHẤT MỘT CHUỖI JSON HỢP LỆ THEO ĐÚNG C�
 
 Cấu trúc JSON bắt buộc:
 ```json
-[
-  {
-    "english": "string",
-    "vietnamese": "string",
-    "pos": "string",
-    "contextNotes": "string"
-  }
-]
+{
+  "glossary": [
+    {
+      "english": "string",
+      "vietnamese": "string",
+      "pos": "string",
+      "contextNotes": "string"
+    }
+  ]
+}
 ```
 Giải thích các trường:
 - `english`: Tiếng Anh (sử dụng chữ thường - lowercase trừ phi là danh từ riêng, từ viết tắt).

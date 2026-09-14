@@ -380,15 +380,33 @@ export class OpenRouterClient {
         const parsed = JSON.parse(responseText);
         if (Array.isArray(parsed)) {
           matchedItems = parsed;
-        } else if (Array.isArray(parsed?.items)) {
-          matchedItems = parsed.items;
-        } else if (Array.isArray(parsed?.terms)) {
-          matchedItems = parsed.terms;
+        } else if (typeof parsed === 'object' && parsed !== null) {
+          const p = parsed as Record<string, unknown>;
+          if (Array.isArray(p['items'])) {
+            matchedItems = p['items'] as { english: string; pos: string }[];
+          } else if (Array.isArray(p['terms'])) {
+            matchedItems = p['terms'] as { english: string; pos: string }[];
+          } else {
+            const firstArray = Object.values(p).find(val => Array.isArray(val));
+            if (firstArray) matchedItems = firstArray as { english: string; pos: string }[];
+          }
         }
       } catch {
         const match = responseText.match(/\[[\s\S]*\]/);
         if (match) {
-          matchedItems = JSON.parse(match[0]);
+          try {
+            matchedItems = JSON.parse(match[0]);
+          } catch {}
+        }
+        if (matchedItems.length === 0) {
+          const objMatch = responseText.match(/\{[\s\S]*\}/);
+          if (objMatch) {
+            try {
+              const p = JSON.parse(objMatch[0]);
+              const firstArray = Object.values(p).find(val => Array.isArray(val));
+              if (firstArray) matchedItems = firstArray as { english: string; pos: string }[];
+            } catch {}
+          }
         }
       }
       
@@ -550,12 +568,12 @@ export class OpenRouterClient {
     finalPrompt = finalPrompt.replace('{{tên sách}}', bookTitle || 'Không rõ');
     finalPrompt = finalPrompt.replace('{{tên tác giả}}', author || 'Vô danh');
     finalPrompt = finalPrompt.replace('{{nội dung}}', text);
-    finalPrompt += '\n\nIMPORTANT: Return ONLY a JSON array of character objects with keys: originalName, gender, ageGroup, role, translatedTitles, narratorPronoun, dialoguePronouns, reasoning, notes.';
+    finalPrompt += '\n\nIMPORTANT: Return a JSON object with a "characters" array containing objects with keys: originalName, gender, ageGroup, role, translatedTitles, narratorPronoun, dialoguePronouns, reasoning, notes. Example: {"characters": [...]}';
 
     const responseText = await this.callChatCompletions(
       model,
       [
-        { role: 'system', content: psi || 'You analyze text and return character pronoun information in JSON array format.' },
+        { role: 'system', content: psi || 'You analyze text and return character pronoun information in JSON object format: {"characters": [...]}' },
         { role: 'user', content: finalPrompt }
       ],
       { jsonMode: true }
@@ -566,17 +584,41 @@ export class OpenRouterClient {
       const parsed = JSON.parse(responseText);
       if (Array.isArray(parsed)) {
         arr = parsed;
-      } else if (Array.isArray(parsed?.characters)) {
-        arr = parsed.characters;
-      } else if (Array.isArray(parsed?.pronouns)) {
-        arr = parsed.pronouns;
-      } else if (Array.isArray(parsed?.data)) {
-        arr = parsed.data;
+      } else if (typeof parsed === 'object' && parsed !== null) {
+        const p = parsed as Record<string, unknown>;
+        if (Array.isArray(p['characters'])) {
+          arr = p['characters'];
+        } else if (Array.isArray(p['pronouns'])) {
+          arr = p['pronouns'];
+        } else if (Array.isArray(p['data'])) {
+          arr = p['data'];
+        } else if (Array.isArray(p['items'])) {
+          arr = p['items'];
+        } else {
+          const firstArray = Object.values(p).find(val => Array.isArray(val));
+          if (firstArray) arr = firstArray as unknown[];
+        }
       }
     } catch {
       const match = responseText.match(/\[[\s\S]*\]/);
       if (match) {
-        arr = JSON.parse(match[0]);
+        try {
+          arr = JSON.parse(match[0]);
+        } catch {}
+      }
+      if (!Array.isArray(arr) || arr.length === 0) {
+        const objMatch = responseText.match(/\{[\s\S]*\}/);
+        if (objMatch) {
+          try {
+            const p = JSON.parse(objMatch[0]);
+            if (Array.isArray(p?.characters)) arr = p.characters;
+            else if (Array.isArray(p?.pronouns)) arr = p.pronouns;
+            else {
+              const firstArray = Object.values(p).find(val => Array.isArray(val));
+              if (firstArray) arr = firstArray as unknown[];
+            }
+          } catch {}
+        }
       }
     }
 
@@ -608,12 +650,12 @@ export class OpenRouterClient {
     finalPrompt = finalPrompt.replace('{{tên sách}}', bookTitle || 'Không rõ');
     finalPrompt = finalPrompt.replace('{{tên tác giả}}', author || 'Vô danh');
     finalPrompt = finalPrompt.replace('{{nội dung}}', text);
-    finalPrompt += '\n\nIMPORTANT: Return ONLY a JSON array of glossary objects with keys: english, pos, vietnamese, contextNotes.';
+    finalPrompt += '\n\nIMPORTANT: Return a JSON object with a "glossary" array containing objects with keys: english, pos, vietnamese, contextNotes. Example: {"glossary": [...]}';
 
     const responseText = await this.callChatCompletions(
       model,
       [
-        { role: 'system', content: gsi || 'You analyze text and return terminology in JSON array format.' },
+        { role: 'system', content: gsi || 'You analyze text and return terminology in JSON object format: {"glossary": [...]}' },
         { role: 'user', content: finalPrompt }
       ],
       { jsonMode: true }
@@ -624,17 +666,41 @@ export class OpenRouterClient {
       const parsed = JSON.parse(responseText);
       if (Array.isArray(parsed)) {
         arr = parsed;
-      } else if (Array.isArray(parsed?.terms)) {
-        arr = parsed.terms;
-      } else if (Array.isArray(parsed?.glossary)) {
-        arr = parsed.glossary;
-      } else if (Array.isArray(parsed?.items)) {
-        arr = parsed.items;
+      } else if (typeof parsed === 'object' && parsed !== null) {
+        const p = parsed as Record<string, unknown>;
+        if (Array.isArray(p['glossary'])) {
+          arr = p['glossary'];
+        } else if (Array.isArray(p['terms'])) {
+          arr = p['terms'];
+        } else if (Array.isArray(p['items'])) {
+          arr = p['items'];
+        } else if (Array.isArray(p['data'])) {
+          arr = p['data'];
+        } else {
+          const firstArray = Object.values(p).find(val => Array.isArray(val));
+          if (firstArray) arr = firstArray as unknown[];
+        }
       }
     } catch {
       const match = responseText.match(/\[[\s\S]*\]/);
       if (match) {
-        arr = JSON.parse(match[0]);
+        try {
+          arr = JSON.parse(match[0]);
+        } catch {}
+      }
+      if (!Array.isArray(arr) || arr.length === 0) {
+        const objMatch = responseText.match(/\{[\s\S]*\}/);
+        if (objMatch) {
+          try {
+            const p = JSON.parse(objMatch[0]);
+            if (Array.isArray(p?.glossary)) arr = p.glossary;
+            else if (Array.isArray(p?.terms)) arr = p.terms;
+            else {
+              const firstArray = Object.values(p).find(val => Array.isArray(val));
+              if (firstArray) arr = firstArray as unknown[];
+            }
+          } catch {}
+        }
       }
     }
 

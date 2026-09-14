@@ -23,19 +23,21 @@ BẠN PHẢI TRẢ VỀ DUY NHẤT MỘT CHUỖI JSON HỢP LỆ THEO ĐÚNG C�
 
 Cấu trúc JSON bắt buộc:
 ```json
-[
-  {
-    "originalName": "string",
-    "gender": "Male | Female | Non-binary | Unknown",
-	"ageGroup": "string",
-    "role": "string",
-    "translatedTitles": "string",
-    "narratorPronoun": "string",
-    "dialoguePronouns": "string",
-	"reasoning": "string",
-    "notes": "string"
-  }
-]
+{
+  "characters": [
+    {
+      "originalName": "string",
+      "gender": "Male | Female | Non-binary | Unknown",
+      "ageGroup": "string",
+      "role": "string",
+      "translatedTitles": "string",
+      "narratorPronoun": "string",
+      "dialoguePronouns": "string",
+      "reasoning": "string",
+      "notes": "string"
+    }
+  ]
+}
 ```
 Giải thích các trường:
 - originalName: Tên tiếng Anh gốc của nhân vật.
