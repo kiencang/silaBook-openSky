@@ -20,7 +20,7 @@ import { smartHardSplit } from '../splitter/splitter.util';
         <div>
           <h2 class="text-2xl font-bold text-zinc-900">Thiết lập Bảng Đại từ Nhân xưng (Tùy chọn)</h2>
           <p class="text-zinc-500 mt-1">Sử dụng mô hình AI mạnh để phân tích nội dung truyện giúp xây dựng bảng đại từ nhân xưng hoàn chỉnh, nhằm đảm bảo nhất quán khi dịch & phù hợp hơn với văn hóa người Việt. Đặc biệt cần thiết cho thể loại tiểu thuyết, truyện ngắn. Các loại sách khác có thể không cần thiết (click vào "Bỏ qua phần này").</p>
-          <p class="text-zinc-500 mt-2">Trong quá trình phân tích nếu hết ngưỡng dịch hoặc lỗi kết nối, bạn có thể tiếp tục bất kỳ lúc nào.</p>
+          <p class="text-zinc-500 mt-2 text-sm leading-relaxed">Trong quá trình phân tích nếu gặp lỗi kết nối, bạn có thể tiếp tục bất kỳ lúc nào. Ngoài ra bạn có thể tạo nhiều phiên bản (V1, V2,..) bảng Đại từ khác nhau từ nhiều model AI khác nhau, phiên bản nào được chọn sẽ là phiên bản được sử dụng khi dịch. Hệ thống sẽ lưu tối đa 3 phiên bản Đại từ gần nhất được tạo.</p>
         </div>
       </div>
 
