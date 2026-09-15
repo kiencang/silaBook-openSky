@@ -120,7 +120,7 @@ import { CustomModel, getCustomModels, getCustomEconomyModels } from '../../../c
             <select 
               [disabled]="store.isTranslatingAny()"
               [ngModel]="store.config().model"
-              (ngModelChange)="store.updateConfig({model: $event})"
+              (ngModelChange)="onTranslationModelChange($event)"
               class="w-full pl-3 pr-12 py-2.5 appearance-none border border-zinc-300 rounded-xl bg-zinc-50 focus:bg-white text-sm font-medium text-zinc-800 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all disabled:opacity-50 cursor-pointer truncate"
             >
               @for (m of models(); track m.id) {
@@ -138,7 +138,7 @@ import { CustomModel, getCustomModels, getCustomEconomyModels } from '../../../c
             <select 
               [disabled]="store.isTranslatingAny()"
               [ngModel]="store.config().economyModel"
-              (ngModelChange)="store.updateConfig({economyModel: $event})"
+              (ngModelChange)="onEconomyModelChange($event)"
               class="w-full pl-3 pr-12 py-2.5 appearance-none border border-zinc-300 rounded-xl bg-zinc-50 focus:bg-white text-sm font-medium text-zinc-800 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all disabled:opacity-50 cursor-pointer truncate"
             >
               @for (m of economyModels(); track m.id) {
@@ -212,11 +212,18 @@ export class TranslatorConfigComponent implements OnInit {
         this.models.set(getCustomModels());
         this.economyModels.set(getCustomEconomyModels());
         
-        if (this.models().length > 0) {
-          this.store.updateConfig({ model: this.models()[0].id });
+        const currentModel = this.store.config().model;
+        if (!this.models().some(m => m.id === currentModel)) {
+          const saved = localStorage.getItem('md-translator-last-translation-model');
+          const fallback = (saved && this.models().some(m => m.id === saved)) ? saved : this.models()[0]?.id;
+          if (fallback) this.onTranslationModelChange(fallback);
         }
-        if (this.economyModels().length > 0) {
-          this.store.updateConfig({ economyModel: this.economyModels()[0].id });
+        
+        const currentEco = this.store.config().economyModel;
+        if (!this.economyModels().some(m => m.id === currentEco)) {
+          const savedEco = localStorage.getItem('md-translator-last-economy-model');
+          const fallbackEco = (savedEco && this.economyModels().some(m => m.id === savedEco)) ? savedEco : this.economyModels()[0]?.id;
+          if (fallbackEco) this.onEconomyModelChange(fallbackEco);
         }
       });
     }
@@ -224,17 +231,37 @@ export class TranslatorConfigComponent implements OnInit {
 
   ngOnInit() {
     const currentModel = this.store.config().model;
-    if (!currentModel || !this.models().find(m => m.id === currentModel)) {
-      if (this.models().length > 0) {
-        this.store.updateConfig({ model: this.models()[0].id });
+    if (!currentModel || !this.models().some(m => m.id === currentModel)) {
+      const saved = typeof window !== 'undefined' ? localStorage.getItem('md-translator-last-translation-model') : null;
+      const fallback = (saved && this.models().some(m => m.id === saved)) ? saved : this.models()[0]?.id;
+      if (fallback) {
+        this.onTranslationModelChange(fallback);
       }
     }
     
     const currentEcoModel = this.store.config().economyModel;
-    if (!currentEcoModel || !this.economyModels().find(m => m.id === currentEcoModel)) {
-      if (this.economyModels().length > 0) {
-        this.store.updateConfig({ economyModel: this.economyModels()[0].id });
+    if (!currentEcoModel || !this.economyModels().some(m => m.id === currentEcoModel)) {
+      const savedEco = typeof window !== 'undefined' ? localStorage.getItem('md-translator-last-economy-model') : null;
+      const fallbackEco = (savedEco && this.economyModels().some(m => m.id === savedEco)) ? savedEco : this.economyModels()[0]?.id;
+      if (fallbackEco) {
+        this.onEconomyModelChange(fallbackEco);
       }
+    }
+  }
+
+  onTranslationModelChange(modelId: string) {
+    if (!modelId) return;
+    this.store.updateConfig({ model: modelId });
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('md-translator-last-translation-model', modelId);
+    }
+  }
+
+  onEconomyModelChange(modelId: string) {
+    if (!modelId) return;
+    this.store.updateConfig({ economyModel: modelId });
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('md-translator-last-economy-model', modelId);
     }
   }
   

@@ -161,6 +161,19 @@ export class BookStore {
 
   constructor() {
     if (isPlatformBrowser(this.platformId)) {
+       const lastTranslation = localStorage.getItem('md-translator-last-translation-model');
+       const lastEco = localStorage.getItem('md-translator-last-economy-model');
+       const lastPronoun = localStorage.getItem('md-translator-last-pronoun-model');
+       const lastGlossary = localStorage.getItem('md-translator-last-glossary-model');
+
+       this.config.update(c => ({
+         ...c,
+         model: lastTranslation || c.model,
+         economyModel: lastEco || c.economyModel,
+         pronounGenModel: lastPronoun || c.pronounGenModel,
+         glossaryGenModel: lastGlossary || c.glossaryGenModel
+       }));
+
        const lastId = localStorage.getItem('md-translator-last-id');
        if (lastId) {
          this.loadProject(lastId);
@@ -276,6 +289,23 @@ export class BookStore {
     this.chapters.set([]);
     this.splitSettings.set(undefined);
     this.customInstructions.set(undefined);
+
+    if (isPlatformBrowser(this.platformId)) {
+      const lastTranslation = localStorage.getItem('md-translator-last-translation-model');
+      const lastEco = localStorage.getItem('md-translator-last-economy-model');
+      const lastPronoun = localStorage.getItem('md-translator-last-pronoun-model');
+      const lastGlossary = localStorage.getItem('md-translator-last-glossary-model');
+
+      this.config.set({
+        model: lastTranslation || '~google/gemini-flash-latest',
+        translationMode: 'standard',
+        generateSummary: true,
+        economyModel: lastEco || undefined,
+        pronounGenModel: lastPronoun || undefined,
+        glossaryGenModel: lastGlossary || undefined
+      });
+    }
+
     this.phase.set(1);
   }
 
@@ -309,7 +339,20 @@ export class BookStore {
         c.status === 'translating' ? { ...c, status: 'error' as const } : c
       );
       this.chapters.set(adjustedChapters);
-      this.config.set(proj.config);
+
+      const isBrowser = isPlatformBrowser(this.platformId);
+      const fallbackTranslation = isBrowser ? localStorage.getItem('md-translator-last-translation-model') : null;
+      const fallbackEco = isBrowser ? localStorage.getItem('md-translator-last-economy-model') : null;
+      const fallbackPronoun = isBrowser ? localStorage.getItem('md-translator-last-pronoun-model') : null;
+      const fallbackGlossary = isBrowser ? localStorage.getItem('md-translator-last-glossary-model') : null;
+
+      this.config.set({
+        ...proj.config,
+        model: proj.config?.model || fallbackTranslation || '~google/gemini-flash-latest',
+        economyModel: proj.config?.economyModel || fallbackEco || undefined,
+        pronounGenModel: proj.config?.pronounGenModel || fallbackPronoun || undefined,
+        glossaryGenModel: proj.config?.glossaryGenModel || fallbackGlossary || undefined
+      });
       this.splitSettings.set(proj.splitSettings);
       this.customInstructions.set(proj.customInstructions);
       this.phase.set(proj.phase as 0 | 1 | 2 | 3 | 4 | 5);

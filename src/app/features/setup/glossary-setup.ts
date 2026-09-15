@@ -37,7 +37,7 @@ import * as XLSX from 'xlsx';
             <div class="w-full lg:w-1/2">
               <label for="glossaryModel" class="block text-xs font-semibold text-zinc-700 uppercase tracking-widest mb-2">Mô hình nhận diện</label>
               <div class="relative">
-                <select id="glossaryModel" [value]="glossaryModel()" (change)="glossaryModel.set($any($event.target).value)" [disabled]="isGenerating() || !!glossaryTask()" class="w-full pl-3 pr-12 py-2 appearance-none text-sm border-zinc-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 rounded-lg border disabled:cursor-not-allowed cursor-pointer truncate">
+                <select id="glossaryModel" [ngModel]="glossaryModel()" (ngModelChange)="onModelChange($event)" [disabled]="isGenerating() || !!glossaryTask()" class="w-full pl-3 pr-12 py-2 appearance-none text-sm border-zinc-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 rounded-lg border disabled:cursor-not-allowed cursor-pointer truncate">
                   @for (m of models(); track m.id) {
                     <option [value]="m.id">{{ m.name }}</option>
                   }
@@ -213,7 +213,7 @@ export class GlossarySetup {
   glossaryTask = this.store.glossaryTask;
   completedChunksCount = computed(() => this.glossaryTask()?.chunks.filter(c => c.status === 'completed').length || 0);
 
-  glossaryModel = signal<string>(this.store.glossaryTask()?.model ?? this.store.config().glossaryGenModel ?? '~google/gemini-flash-latest');
+  glossaryModel = signal<string>('');
   isManuallyEdited = signal<boolean>(false);
 
   exportFileName = computed(() => {
@@ -224,10 +224,40 @@ export class GlossarySetup {
 
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
 
+  onModelChange(newModel: string) {
+    if (!newModel) return;
+    this.glossaryModel.set(newModel);
+    this.store.updateConfig({ glossaryGenModel: newModel });
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('md-translator-last-glossary-model', newModel);
+    }
+  }
+
+  private resolveValidModel(preferred: string | undefined): string {
+    const list = this.models();
+    if (!list || list.length === 0) return preferred || '~google/gemini-flash-latest';
+    if (preferred && list.some(m => m.id === preferred)) {
+      return preferred;
+    }
+    return list[0].id;
+  }
+
   constructor() {
+    const savedGlobal = typeof window !== 'undefined' ? localStorage.getItem('md-translator-last-glossary-model') : null;
+    const initialCandidate = this.store.glossaryTask()?.model ?? this.store.config().glossaryGenModel ?? savedGlobal ?? '~google/gemini-flash-latest';
+    const validModel = this.resolveValidModel(initialCandidate);
+    this.glossaryModel.set(validModel);
+    if (this.store.config().glossaryGenModel !== validModel) {
+      this.store.updateConfig({ glossaryGenModel: validModel });
+    }
+
     if (typeof window !== 'undefined') {
       window.addEventListener('openrouter-models-changed', () => {
         this.models.set(getCustomModels());
+        const valid = this.resolveValidModel(this.glossaryModel());
+        if (valid !== this.glossaryModel()) {
+          this.onModelChange(valid);
+        }
       });
     }
     effect(() => {
@@ -325,7 +355,7 @@ export class GlossarySetup {
   async resumeGeneration() {
     const task = this.store.glossaryTask();
     if (task) {
-      this.glossaryModel.set(task.model);
+      this.onModelChange(task.model);
       await this.processGlossaryTask();
     }
   }

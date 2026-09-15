@@ -36,7 +36,7 @@ import { smartHardSplit } from '../splitter/splitter.util';
             <div class="w-full lg:w-1/2">
               <label for="pronounModel" class="block text-xs font-semibold text-zinc-700 uppercase tracking-widest mb-2">Mô hình nhận diện</label>
               <div class="relative">
-                <select id="pronounModel" [value]="pronounModel()" (change)="pronounModel.set($any($event.target).value)" [disabled]="isGeneratingPronouns() || !!pronounTask()" class="w-full pl-3 pr-12 py-2 appearance-none text-sm border-zinc-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 rounded-lg border disabled:cursor-not-allowed cursor-pointer truncate">
+                <select id="pronounModel" [ngModel]="pronounModel()" (ngModelChange)="onModelChange($event)" [disabled]="isGeneratingPronouns() || !!pronounTask()" class="w-full pl-3 pr-12 py-2 appearance-none text-sm border-zinc-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 rounded-lg border disabled:cursor-not-allowed cursor-pointer truncate">
                   @for (m of models(); track m.id) {
                     <option [value]="m.id">{{ m.name }}</option>
                   }
@@ -188,7 +188,7 @@ export class PronounSetup {
   pronounTask = this.store.pronounTask;
   completedChunksCount = computed(() => this.pronounTask()?.chunks.filter(c => c.status === 'completed').length || 0);
   
-  pronounModel = signal<string>(this.store.pronounTask()?.model ?? this.store.config().pronounGenModel ?? '~google/gemini-flash-latest');
+  pronounModel = signal<string>('');
   isManuallyEdited = signal<boolean>(false);
 
   exportFileName = computed(() => {
@@ -197,10 +197,40 @@ export class PronounSetup {
     return safeTitle ? `${safeTitle} - Bảng đại từ.xlsx` : 'Bảng đại từ.xlsx';
   });
 
+  onModelChange(newModel: string) {
+    if (!newModel) return;
+    this.pronounModel.set(newModel);
+    this.store.updateConfig({ pronounGenModel: newModel });
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('md-translator-last-pronoun-model', newModel);
+    }
+  }
+
+  private resolveValidModel(preferred: string | undefined): string {
+    const list = this.models();
+    if (!list || list.length === 0) return preferred || '~google/gemini-flash-latest';
+    if (preferred && list.some(m => m.id === preferred)) {
+      return preferred;
+    }
+    return list[0].id;
+  }
+
   constructor() {
+    const savedGlobal = typeof window !== 'undefined' ? localStorage.getItem('md-translator-last-pronoun-model') : null;
+    const initialCandidate = this.store.pronounTask()?.model ?? this.store.config().pronounGenModel ?? savedGlobal ?? '~google/gemini-flash-latest';
+    const validModel = this.resolveValidModel(initialCandidate);
+    this.pronounModel.set(validModel);
+    if (this.store.config().pronounGenModel !== validModel) {
+      this.store.updateConfig({ pronounGenModel: validModel });
+    }
+
     if (typeof window !== 'undefined') {
       window.addEventListener('openrouter-models-changed', () => {
         this.models.set(getCustomModels());
+        const valid = this.resolveValidModel(this.pronounModel());
+        if (valid !== this.pronounModel()) {
+          this.onModelChange(valid);
+        }
       });
     }
 
@@ -296,7 +326,7 @@ export class PronounSetup {
   async resumeGeneration() {
     const task = this.store.pronounTask();
     if (task) {
-      this.pronounModel.set(task.model);
+      this.onModelChange(task.model);
       await this.processPronounTask();
     }
   }
