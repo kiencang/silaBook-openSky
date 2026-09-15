@@ -13,6 +13,12 @@ Dịch sách từ tiếng Anh sang tiếng Việt bằng bất cứ AI nào phù
 
 silaBook-openSky được phát triển dựa trên repo (v1.0.99) đã ổn định này: https://github.com/kiencang/silaBook (cùng tác giả).
 
+## Demo
+Dưới đây là bản dịch truyện ngắn `The Gift of the Magi` của `O. Henry` được dịch bằng model `~openai/gpt-sol-latest`: https://github.com/kiencang/silaBook-openSky/blob/main/demo/ban-dich.md
+
+- Bảng đại từ: https://github.com/kiencang/silaBook-openSky/blob/main/demo/dai-tu.md
+- Bảng thuật ngữ: https://github.com/kiencang/silaBook-openSky/blob/main/demo/thuat-ngu.md
+
 ## Lý do triển khai
 Phiên bản ban đầu [silaBook](https://github.com/kiencang/silaBook) hiện chỉ dùng được với Gemini, ngoài ra không kết hợp được với AI khác.
 
