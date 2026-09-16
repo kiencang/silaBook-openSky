@@ -29,7 +29,7 @@ import { CustomModel, DEFAULT_CUSTOM_MODELS, DEFAULT_ECONOMY_MODELS, getCustomMo
         <!-- Content -->
         <div class="p-6 space-y-5 overflow-y-auto bg-white">
           <p class="text-sm text-zinc-600 leading-relaxed">
-            Ứng dụng kết nối trực tiếp với OpenRouter API, cổng trung gian này sẽ kết nối với bất cứ model AI nào mà nó có (hiện có gần 400 model). Vì dịch là nhiệm vụ khó, bạn hãy chọn các model AI chất lượng nhất trong khả năng. Ứng dụng lưu trữ sẵn một số model mặc định chất lượng cao, bạn có thể tự do điều chỉnh lại thành các model khác theo ý muốn.
+            Ứng dụng kết nối trực tiếp với OpenRouter API, cổng trung gian này sẽ kết nối với bất cứ model AI nào mà nó có (hiện có khoảng 500 model). Vì dịch là nhiệm vụ khó, bạn hãy chọn các model AI chất lượng nhất trong khả năng (tuy nhiên cũng không phải cứ có giá cao hơn là sẽ dịch tốt hơn). Ứng dụng lưu trữ sẵn một số model mặc định chất lượng tốt, bạn có thể tự do điều chỉnh lại thành các model khác theo ý muốn. Thông thường các model của Hoa Kỳ có chất lượng dịch Anh - Việt tốt hơn đáng kể các model Trung Quốc.
           </p>
           <p class="text-sm text-zinc-600 leading-relaxed mt-3">
             Một số model thuộc nhóm hàng đầu có chi phí lớn, có thể dao động từ 10 - 30$/1M token đầu ra, để kiểm soát chi phí tốt hơn, bạn nên nắm rõ giá của chúng. Hãy vào trang: <a href="https://openrouter.ai/models" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline">https://openrouter.ai/models</a>, rồi nhập mã model vào ô "Search models" để biết thông tin giá cụ thể tại thời điểm tra cứu.
@@ -277,7 +277,7 @@ import { CustomModel, DEFAULT_CUSTOM_MODELS, DEFAULT_ECONOMY_MODELS, getCustomMo
                   <span>DANH SÁCH MÔ HÌNH AI TIẾT KIỆM (TỐI ĐA 3 MODEL)</span>
                 </div>
                 <p class="text-[11px] text-zinc-500 mt-0.5 leading-relaxed">
-                  Dùng riêng cho việc chuyển đổi PDF sang Markdown, quét chia khối trước khi dịch và một số nhiệm vụ khác. Các mô hình này sử dụng Temperature cố định = 0.3 để tối ưu tính chính xác. Đối với việc chuyển đổi PDF thành markdown bắt buộc phải dùng modal đa phương thức (để có khả năng xử lý PDF scan). Để tiết kiệm nhất nên dùng các công cụ miễn phí bên ngoài để chuyển PDF thành markdown, ví dụ như <a href="https://aistudio.baidu.com/paddleocr" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline">PaddleOCR</a> hoặc <a href="https://mineru.net/" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline">MinerU</a> (nên tải phần mềm về để chuyển đổi nhanh và ổn định hơn).
+                  Dùng riêng cho việc chuyển đổi PDF sang Markdown, quét chia khối trước khi dịch và một số nhiệm vụ khác (lọc danh sách thuật ngữ, tóm tắt khối dịch trước đó). Các mô hình này sử dụng Temperature cố định = 0.3 để tối ưu tính chính xác. Đối với việc chuyển đổi PDF thành markdown bắt buộc phải dùng modal đa phương thức (để có khả năng xử lý PDF scan). Để tiết kiệm nhất nên dùng các công cụ miễn phí bên ngoài để chuyển PDF thành markdown, ví dụ như <a href="https://aistudio.baidu.com/paddleocr" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline">PaddleOCR</a> hoặc <a href="https://mineru.net/" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline">MinerU</a> (nên tải phần mềm về để chuyển đổi nhanh và ổn định hơn).
                 </p>
               </div>
             </div>
