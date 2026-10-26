@@ -36,7 +36,7 @@ import { CustomModel, DEFAULT_CUSTOM_MODELS, DEFAULT_ECONOMY_MODELS, getCustomMo
           </p>
 
           <!-- Status badge/links -->
-          <div class="flex items-center space-x-2.5 text-xs text-zinc-500 bg-zinc-50 border border-zinc-100 p-2.5 rounded-xl">
+          <div class="flex items-center justify-between text-xs text-zinc-500 bg-zinc-50 border border-zinc-100 p-2.5 rounded-xl">
             @if (hasSavedKey()) {
               <span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">
                 Đang dùng OpenRouter Key của bạn
@@ -46,9 +46,9 @@ import { CustomModel, DEFAULT_CUSTOM_MODELS, DEFAULT_ECONOMY_MODELS, getCustomMo
                 Bạn chưa nhập OpenRouter API Key
               </span>
             }
-            <span class="text-zinc-350">|</span>
-            <a href="https://openrouter.ai/keys" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:text-indigo-750 font-bold hover:underline flex items-center cursor-pointer no-underline">
-              <mat-icon class="!text-[14px] !w-3.5 !h-3.5 mr-1 text-indigo-500">help_outline</mat-icon>Nơi lấy API Key OpenRouter
+            <a href="https://openrouter.ai/keys" target="_blank" rel="noopener noreferrer" class="ml-auto text-indigo-600 hover:text-indigo-800 font-semibold hover:underline inline-flex items-center gap-1 cursor-pointer no-underline">
+              <span>Nơi lấy OpenRouter API Key</span>
+              <mat-icon class="!text-[15px] !w-4 !h-4 text-indigo-500">arrow_outward</mat-icon>
             </a>
           </div>
 
@@ -91,7 +91,7 @@ import { CustomModel, DEFAULT_CUSTOM_MODELS, DEFAULT_ECONOMY_MODELS, getCustomMo
                 DANH SÁCH MÔ HÌNH AI CHẤT LƯỢNG CAO (TỐI ĐA 9 MODEL)
               </div>
               <p class="text-[11px] text-zinc-500 mt-0.5">
-                Nhập mã model từ OpenRouter (VD: <code class="bg-zinc-100 px-1 py-0.5 rounded text-zinc-700">~google/gemini-flash-latest</code>) dùng cho dịch thuật chính thức, phân tích đại từ & từ khó. Mã model ở cột trái cần nhập tuyệt đối chính xác, nhãn tên ở cột phải tùy ý bạn đặt miễn sao dễ hiểu cho chính bạn. Bạn có thể thêm, sửa, xóa, điều chỉnh thứ tự danh sách các model AI bên dưới. Danh sách các model AI có thể tham khảo ở đây: <a href="https://openrouter.ai/discover" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline">https://openrouter.ai/discover</a>
+                Nhập mã model từ OpenRouter (VD: <code class="bg-zinc-100 px-1 py-0.5 rounded text-zinc-700">~google/gemini-flash-latest</code>) dùng cho dịch thuật chính thức, phân tích đại từ & từ khó. <strong class="font-semibold text-zinc-700">Mã model</strong> ở cột trái cần nhập tuyệt đối chính xác, <strong class="font-semibold text-zinc-700">nhãn tên (tên hiển thị)</strong> ở cột phải tùy ý bạn đặt miễn sao dễ hiểu cho chính bạn. Bạn có thể thêm, sửa, xóa, điều chỉnh thứ tự danh sách các model AI bên dưới. Danh sách các model AI có thể tham khảo ở đây: <a href="https://openrouter.ai/discover" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline">https://openrouter.ai/discover</a>
               </p>
             </div>
 
