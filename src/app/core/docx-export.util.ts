@@ -12,8 +12,12 @@ import {
   BorderStyle,
   WidthType,
   VerticalAlign,
-  FootnoteReferenceRun
+  FootnoteReferenceRun,
+  ImportedXmlComponent
 } from 'docx';
+import katex from 'katex';
+import { mml2omml } from 'mathml2omml';
+import { normalizeMathDelimiters } from './marked-setup';
 
 function convertDataUrlToUint8Array(dataUrl: string): Uint8Array {
   const parts = dataUrl.split(';base64,');
@@ -27,12 +31,57 @@ function convertDataUrlToUint8Array(dataUrl: string): Uint8Array {
   return bytes;
 }
 
+/**
+ * Chuyển đổi công thức LaTeX sang đối tượng OMML (<m:oMath> hoặc <m:oMathPara>) chuẩn của Microsoft Word
+ * thông qua chuỗi xử lý: LaTeX -> KaTeX (MathML) -> mathml2omml (OMML XML) -> ImportedXmlComponent
+ */
+function createOmmlComponentFromLatex(latex: string, displayMode = false): ImportedXmlComponent | null {
+  try {
+    const trimmed = latex.trim();
+    if (!trimmed) return null;
+
+    // 1. Render LaTeX sang MathML bằng KaTeX
+    const rawHtml = katex.renderToString(trimmed, {
+      output: 'mathml',
+      throwOnError: false,
+      strict: false,
+      displayMode
+    });
+
+    // 2. Xóa bỏ thẻ <annotation> để mathml2omml không đọc nhầm mã nguồn LaTeX thô
+    const withoutAnnotation = rawHtml.replace(/<annotation\b[^>]*>[\s\S]*?<\/annotation>/gi, '');
+    const mathMatch = withoutAnnotation.match(/<math[\s\S]*?<\/math>/i);
+    if (!mathMatch) return null;
+
+    // 3. Chuyển đổi MathML sang OMML (<m:oMath>...</m:oMath>) với disableDecode: true để giữ nguyên &lt; &gt; &amp;
+    let ommlXml = mml2omml(mathMatch[0], { disableDecode: true });
+    if (!ommlXml) return null;
+
+    // Nếu là công thức khối độc lập (displayMode), bọc trong <m:oMathPara> để Word hiển thị ở chế độ Display Equation
+    if (displayMode && !ommlXml.includes('<m:oMathPara')) {
+      ommlXml = `<m:oMathPara xmlns:m="http://schemas.openxmlformats.org/officeDocument/2006/math">${ommlXml}</m:oMathPara>`;
+    }
+
+    // 4. Parse chuỗi XML OMML thành cây đối tượng XmlComponent của thư viện docx
+    const parsedWrapper = ImportedXmlComponent.fromXmlString(ommlXml) as any;
+    if (parsedWrapper && Array.isArray(parsedWrapper.root) && parsedWrapper.root.length > 0) {
+      return parsedWrapper.root[0] as ImportedXmlComponent;
+    }
+    return parsedWrapper;
+  } catch (e) {
+    console.warn('Failed to convert LaTeX to OMML for DOCX:', e);
+    return null;
+  }
+}
+
 interface InlineToken {
   text: string;
   bold: boolean;
   italic: boolean;
   code: boolean;
   footnoteId?: number;
+  mathLatex?: string;
+  mathDisplay?: boolean;
 }
 
 export function tokenizeInline(text: string, getFootnoteId?: (k: string) => number): InlineToken[] {
@@ -78,6 +127,28 @@ export function tokenizeInline(text: string, getFootnoteId?: (k: string) => numb
           code: true
         });
         index = end + 1;
+        continue;
+      }
+    }
+
+    // Nhận diện công thức toán học $$...$$ trên cùng 1 dòng hoặc $...$ (inline)
+    if (text.startsWith('$', index)) {
+      const rest = text.substring(index);
+      // Ưu tiên kiểm tra $$...$$ trước, sau đó đến $...$ chuẩn
+      const mathMatch = rest.match(/^(\${1,2})(?!\$)((?:\\.|[^\\\n])+?(?:\\.|[^\\\n$\s]))\1/)
+        || rest.match(/^(\${1,2})(?!\$)([^\n$\s])\1/);
+      if (mathMatch) {
+        const delimiter = mathMatch[1];
+        const innerLatex = mathMatch[2].trim();
+        parts.push({
+          text: '',
+          bold: false,
+          italic: false,
+          code: false,
+          mathLatex: innerLatex,
+          mathDisplay: delimiter.length === 2
+        });
+        index += mathMatch[0].length;
         continue;
       }
     }
@@ -155,7 +226,7 @@ export function tokenizeInline(text: string, getFootnoteId?: (k: string) => numb
     let nextIndex = index;
     while (nextIndex < text.length) {
       const char = text[nextIndex];
-      if (char === '`' || char === '*' || char === '_' || char === '\\' || (getFootnoteId && char === '[' && text.startsWith('[^', nextIndex))) {
+      if (char === '`' || char === '$' || char === '*' || char === '_' || char === '\\' || (getFootnoteId && char === '[' && text.startsWith('[^', nextIndex))) {
         break;
       }
       nextIndex++;
@@ -187,19 +258,33 @@ interface RunOptions {
   color?: string;
   size?: number;
   italics?: boolean;
+  bold?: boolean;
+  font?: string;
 }
 
-function createRunsFromText(text: string, getFootnoteId?: (k: string) => number, opts?: RunOptions): (TextRun | FootnoteReferenceRun)[] {
+function createRunsFromText(text: string, getFootnoteId?: (k: string) => number, opts?: RunOptions): any[] {
   const tokens = tokenizeInline(text, getFootnoteId);
   return tokens.map(token => {
     if (token.footnoteId) {
       return new FootnoteReferenceRun(token.footnoteId);
     }
+    if (token.mathLatex !== undefined) {
+      const ommlComp = createOmmlComponentFromLatex(token.mathLatex, false);
+      if (ommlComp) {
+        return ommlComp;
+      }
+      // Fallback sang TextRun nếu công thức lỗi không thể chuyển sang OMML
+      return new TextRun({
+        text: token.mathLatex,
+        font: "Cambria Math",
+        size: opts?.size ?? 22,
+      });
+    }
     return new TextRun({
       text: token.text,
-      bold: token.bold || undefined,
+      bold: opts?.bold ?? (token.bold || undefined),
       italics: opts?.italics ?? (token.italic || undefined),
-      font: token.code ? "Consolas" : "Calibri",
+      font: token.code ? "Consolas" : (opts?.font ?? "Calibri"),
       size: token.code ? 19 : (opts?.size ?? 22),
       color: token.code ? "A855F7" : (opts?.color ?? undefined),
     });
@@ -275,6 +360,8 @@ export class DocxExporter {
     // Strip ONLY internal Markdown links (but not images) and internal HTML links before processing
     let cleanedContent = markdownContent.replace(/(^|[^!])\[([^\]]+)\]\(#[^)]*\)/g, '$1$2');
     cleanedContent = cleanedContent.replace(/<a\b[^>]*href=["']#[^"']*["'][^>]*>(.*?)<\/a>/gi, '$1');
+    // Chuẩn hóa \[...\], \(...\), và các khối $$ nhiều dòng
+    cleanedContent = normalizeMathDelimiters(cleanedContent);
 
     const activeImages: Record<string, { dataUrl: string; width: number; height: number }> = {};
     if (images) {
@@ -330,6 +417,8 @@ export class DocxExporter {
 
     let inCodeBlock = false;
     let codeBlockContent: string[] = [];
+    let inMathBlock = false;
+    let mathBlockContent: string[] = [];
 
     while (idx < lines.length) {
       const line = lines[idx];
@@ -382,6 +471,68 @@ export class DocxExporter {
 
       if (inCodeBlock) {
         codeBlockContent.push(line);
+        idx++;
+        continue;
+      }
+
+      // Xử lý khối công thức toán học độc lập trên 1 dòng: $$ ... $$
+      if (!inMathBlock && trimmedLine.startsWith('$$') && trimmedLine.endsWith('$$') && trimmedLine.length > 4) {
+        const singleLineMath = trimmedLine.slice(2, -2).trim();
+        const ommlComp = createOmmlComponentFromLatex(singleLineMath, true);
+        if (ommlComp) {
+          children.push(
+            new Paragraph({
+              children: [ommlComp],
+              alignment: AlignmentType.CENTER,
+              spacing: { before: 160, after: 160 },
+            })
+          );
+        } else {
+          children.push(
+            new Paragraph({
+              children: [new TextRun({ text: singleLineMath, font: "Cambria Math", size: 22 })],
+              alignment: AlignmentType.CENTER,
+              spacing: { before: 160, after: 160 },
+            })
+          );
+        }
+        idx++;
+        continue;
+      }
+
+      // Xử lý khối công thức toán học nhiều dòng mở/đóng bằng $$
+      if (trimmedLine === '$$') {
+        if (inMathBlock) {
+          const mathText = mathBlockContent.join('\n').trim();
+          const ommlComp = createOmmlComponentFromLatex(mathText, true);
+          if (ommlComp) {
+            children.push(
+              new Paragraph({
+                children: [ommlComp],
+                alignment: AlignmentType.CENTER,
+                spacing: { before: 160, after: 160 },
+              })
+            );
+          } else if (mathText) {
+            children.push(
+              new Paragraph({
+                children: [new TextRun({ text: mathText, font: "Cambria Math", size: 22 })],
+                alignment: AlignmentType.CENTER,
+                spacing: { before: 160, after: 160 },
+              })
+            );
+          }
+          inMathBlock = false;
+          mathBlockContent = [];
+        } else {
+          inMathBlock = true;
+        }
+        idx++;
+        continue;
+      }
+
+      if (inMathBlock) {
+        mathBlockContent.push(line);
         idx++;
         continue;
       }
@@ -445,15 +596,12 @@ export class DocxExporter {
           children.push(
             new Paragraph({
               heading: headingLevel,
-              children: [
-                new TextRun({
-                  text: text,
-                  bold: true,
-                  size: fontSize,
-                  color: color,
-                  font: "Segoe UI",
-                }),
-              ],
+              children: createRunsFromText(text, getFootnoteId, {
+                bold: true,
+                size: fontSize,
+                color: color,
+                font: "Segoe UI",
+              }),
               spacing: { before: 240, after: 120 },
             })
           );
@@ -659,3 +807,4 @@ export class DocxExporter {
     return await Packer.toBlob(doc);
   }
 }
+

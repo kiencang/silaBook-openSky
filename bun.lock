@@ -22,6 +22,7 @@
         "marked": "^18.0.3",
         "marked-footnote": "^1.4.0",
         "marked-katex-extension": "^5.1.13",
+        "mathml2omml": "^0.5.0",
         "pdf-lib": "^1.17.1",
         "pdfjs-dist": "^6.2.108",
         "rxjs": "~7.8.0",
@@ -1114,6 +1115,8 @@
     "marked-katex-extension": ["marked-katex-extension@5.1.13", "", { "peerDependencies": { "katex": ">=0.16 <0.19", "marked": ">=4 <19" } }, "sha512-+6gVygGg5at9g+YsuIQZk7XcAc6Pg1P0grEJKEWvF7DAwceZ7ZIvU0fhQe6auUqSbnPmSjJxZuICdSCdbGaFRw=="],
 
     "math-intrinsics": ["math-intrinsics@1.1.0", "", {}, "sha512-/IXtbwEk5HTPyEwyKX6hGkYXxM9nbj64B+ilVJnC/R6B0pH5G4V3b0pVbL7DBj4tkhBAppbQUlf6F6Xl9LHu1g=="],
+
+    "mathml2omml": ["mathml2omml@0.5.0", "", {}, "sha512-4eLs37a+TH+CL/M5XZZrlc75SNRJNPiZzIaeSSvH0UFCRaCdSYRHWvrlA7MUbeQks/z4sVhfg+GlcZhVVUHzqg=="],
 
     "mdn-data": ["mdn-data@2.27.1", "", {}, "sha512-9Yubnt3e8A0OKwxYSXyhLymGW4sCufcLG6VdiDdUGVkPhpqLxlvP5vl1983gQjJl3tqbrM731mjaZaP68AgosQ=="],
 

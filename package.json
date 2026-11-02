@@ -28,6 +28,7 @@
     "marked": "^18.0.3",
     "marked-footnote": "^1.4.0",
     "marked-katex-extension": "^5.1.13",
+    "mathml2omml": "^0.5.0",
     "pdf-lib": "^1.17.1",
     "pdfjs-dist": "^6.2.108",
     "rxjs": "~7.8.0",
