@@ -99,5 +99,9 @@ silaBook-openSky cũng như người phát triển nó không đưa ra bất k�
 *   **[Marked & marked-footnote](https://marked.js.org/)**: Chuyển Markdown sang cấu trúc HTML, có hỗ trợ ghi chú chân trang (footnotes).
 *   **[Turndown](https://github.com/mixmark-io/turndown)**: Chuyển đổi ngược các định dạng HTML thành cú pháp Markdown.
 
-### 4. Lưu trữ cục bộ
+### 4. Hiển thị công thức toán
+*   **KaTeX**: Thư viện xử lý và hiển thị công thức toán do Khan Academy phát triển, ưu điểm là tốc độ cao. Đóng vai trò là engine chuyển đổi các công thức toán học LaTeX (có thể xuất hiện trong tài liệu) sang định dạng XML chuẩn MathML để hiển thị ở giao diện web (HTML).
+*   **marked-katex-extension**: Là tiện ích mở rộng cho thư viện marked đã tồn tại trước đó, phục vụ cho mục đích tìm kiếm LaTeX và gọi KaTeX để chuyển đổi thành MathML.
+
+### 5. Lưu trữ cục bộ
 *   **[idb (IndexedDB Wrapper)](https://github.com/jakearchibald/idb)**: Thư viện wrap IndexedDB, hỗ trợ xử lý các tác vụ liên quan đến IndexedDB tốt hơn. Toàn bộ dữ liệu sách được lưu cục bộ tại trình duyệt là thông qua IndexedDB.
