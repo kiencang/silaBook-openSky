@@ -119,6 +119,18 @@ code {
   background-color: #f4f4f4;
   padding: 2px 4px;
   border-radius: 3px;
+}
+math {
+  font-family: "Cambria Math", "Latin Modern Math", "STIX Two Math", math, serif;
+}
+math[display="block"], .katex-display math {
+  display: block;
+  margin: 1em auto;
+  text-align: center;
+  overflow-x: auto;
+}
+annotation, annotation-xml {
+  display: none !important;
 }`);
 
     zip.file('OEBPS/nav.xhtml', `<?xml version="1.0" encoding="utf-8"?>
@@ -166,7 +178,7 @@ code {
     <item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/>
     <item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>
     <item id="style" href="stylesheet.css" media-type="text/css"/>
-    <item id="section1" href="section1.xhtml" media-type="application/xhtml+xml"/>
+    <item id="section1" href="section1.xhtml" media-type="application/xhtml+xml"${htmlContent.includes('<math') ? ' properties="mathml"' : ''}/>
 ${imageManifestItems}  </manifest>
   <spine toc="ncx">
     <itemref idref="nav"/>
