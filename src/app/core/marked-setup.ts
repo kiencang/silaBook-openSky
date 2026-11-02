@@ -40,13 +40,16 @@ export function normalizeMathDelimiters(markdown: string): string {
     return `$${trimmed}$`;
   });
 
-  // 3. Chuẩn hóa các khối $$...$$ có nhiều dòng nhưng viết liền (VD: $$a = b\nc = d$$)
+  // 3. Chuẩn hóa các khối $$...$$ có nhiều dòng hoặc đứng độc lập trên 1 dòng
   // thành dạng chuẩn của marked-katex-extension ($$\n...\n$$)
   text = text.replace(/\$\$([\s\S]*?)\$\$/g, (match, inner) => {
     if (inner.includes('\n')) {
       return `\n$$\n${inner.trim()}\n$$\n`;
     }
     return match;
+  });
+  text = text.replace(/^[ \t]*\$\$([^\n$]+?)\$\$[ \t]*$/gm, (_match, inner) => {
+    return `\n$$\n${inner.trim()}\n$$\n`;
   });
 
   // Khôi phục lại các khối code

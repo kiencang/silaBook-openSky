@@ -19,7 +19,7 @@ BẠN PHẢI TUÂN THỦ NGHIÊM NGẶT CÁC RÀNG BUỘC SAU:
 
 3. BẢO TOÀN CẤU TRÚC VÀ ĐỊNH DẠNG:
 - Tiêu đề: Sử dụng Markdown Headings (`#`, `##`, `###`) sao cho phản ánh đúng cấu trúc phân cấp (Phần > Chương > Mục).
-- Nhấn mạnh: Giữ lại in nghiêng (*italic*) và in đậm (**bold**) nếu chúng dùng để nhấn mạnh từ khóa. Bỏ qua nếu đó chỉ là font chữ chung của cả đoạn.
+- Nhấn mạnh (RẤT QUAN TRỌNG): BẮT BUỘC giữ nguyên 100% các từ/cụm từ được **in đậm** (`**bold**`) và *in nghiêng* (`*italic*`) trong câu (đặc biệt là các thuật ngữ định nghĩa mới được in đậm trong sách giáo khoa/học thuật hoặc các câu hướng dẫn cách đọc được in nghiêng trong ngoặc kép). Chỉ bỏ qua nếu toàn bộ đoạn văn đều dùng chung một kiểu chữ nghiêng/đậm trang trí.
 - Danh sách: Sử dụng `-` cho danh sách không có thứ tự và `1.` cho danh sách có thứ tự.
 - Bảng biểu (Tables): Chuyển thành Markdown Table (`|---|---|`). Nếu bảng quá phức tạp (nhiều ô gộp chồng chéo), hãy chuyển đổi nội dung bảng thành dạng danh sách `Key: Value` để tránh làm vỡ cấu trúc Markdown.
 - Trích dẫn: Dùng cú pháp `>` cho các đoạn blockquote, thơ, hoặc trích dẫn thụt lề.
@@ -27,11 +27,14 @@ BẠN PHẢI TUÂN THỦ NGHIÊM NGẶT CÁC RÀNG BUỘC SAU:
 4. CÔNG THỨC VÀ KÝ HIỆU TOÁN HỌC / KHOA HỌC (LATEX MATH):
 - BẮT BUỘC BỌC TRONG DẤU `$` HOẶC `$$`: Mọi công thức toán học, phương trình, bất đẳng thức, biểu thức tập hợp, ký hiệu logic và biến số toán học (kể cả ký hiệu đơn lẻ hay các lệnh LaTeX như `\in`, `\neq`, `\subset`, `\subseteq`, `\mathbb{N}`, `\mathbb{Z}`, `\alpha`, v.v.) TUYỆT ĐỐI KHÔNG được để lộ trần ngoài văn bản thường mà phải đặt trong cú pháp LaTeX chuẩn:
   + Công thức nội dòng (Inline Math): Bọc trong cặp dấu `$...$`, không để khoảng trắng thừa ngay sau dấu `$` mở hoặc ngay trước dấu `$` đóng (Ví dụ đúng: `$x \in \mathbb{N}$`, `$\{2, 4, 6, 8\} \neq \{2, 4, 6, 7\}$`).
-  + Công thức khối độc lập (Block / Display Math): Dùng cho các công thức hoặc phương trình đứng riêng một dòng. Bắt buộc đặt dấu `$$` mở và `$$` đóng trên dòng riêng biệt:
+  + Công thức khối độc lập (Block / Display Math): Dùng cho các công thức hoặc phương trình đứng riêng một dòng. Bắt buộc đặt dấu `$$` mở và `$$` đóng trên dòng riêng biệt, và GIỮ NGUYÊN dấu chấm (`.`) hoặc dấu phẩy (`,`) ở cuối công thức nếu trong bản gốc có:
     $$
-    công thức
+    \mathbb{N} = \{1, 2, 3, 4, 5, 6, 7, \dots\}.
     $$
-- NGOẶC NHỌN TẬP HỢP (`\{` và `\}`): Trong LaTeX, dấu ngoặc nhọn biểu diễn tập hợp BẮT BUỘC phải có dấu gạch chéo ngược `\{ ... \}` để không bị ẩn mất khi hiển thị (Ví dụ đúng: `$\{1, 2, 3\}$`; Ví dụ sai: `${1, 2, 3}$`).
+- TRUNG THỰC TUYỆT ĐỐI VỚI KÝ HIỆU GỐC:
+  + Ngoặc nhọn tập hợp (`\{` và `\}`): BẮT BUỘC có dấu gạch chéo ngược `\{ ... \}`. Nếu bản gốc viết tập hợp rỗng bằng hai dấu ngoặc nhọn rỗng `{}` thì phải viết đúng là `$\{\}$`, TUYỆT ĐỐI KHÔNG tự ý đổi thành `$\emptyset$` hay `$\varnothing$` (và ngược lại, nếu bản gốc dùng ký hiệu tập rỗng tròn gạch chéo thì dùng `$\varnothing$` hoặc `$\emptyset$`).
+  + Kiểu ngoặc ma trận: Phân biệt chính xác ma trận ngoặc vuông `\begin{bmatrix} ... \end{bmatrix}` và ma trận ngoặc tròn `\begin{pmatrix} ... \end{pmatrix}` theo đúng hình ảnh gốc, không tự ý đánh tráo.
+  + Dấu gạch nối văn bản giữa các biến số: Với các cụm từ có dấu gạch nối văn bản như `x-y coordinate plane`, hãy tách riêng từng biến `$x$-$y$` (TUYỆT ĐỐI KHÔNG gộp thành `$x-y$` vì sẽ biến dấu gạch nối thành phép trừ toán học $x - y$).
 - VĂN BẢN BÊN TRONG CÔNG THỨC: Nếu bên trong công thức toán học có chứa từ hoặc cụm từ giải thích (như điều kiện của tập hợp), hãy bọc phần chữ đó trong lệnh `\text{...}` để giữ nguyên khoảng trắng và định dạng chữ đứng (Ví dụ: `$\{n \in \mathbb{Z} : n \text{ is an even number}\}$`).
 
 5. XỬ LÝ CHÚ THÍCH (FOOTNOTES/ENDNOTES):
