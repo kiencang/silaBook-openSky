@@ -7,7 +7,7 @@
 Dịch sách từ tiếng Anh sang tiếng Việt bằng bất cứ AI nào phù hợp qua cổng trung gian **[OpenRouter](https://openrouter.ai/)**.
 
 - **Link web**: https://silabook-opensky.wpsila.com
-- **Link app trên AI Studio**: https://aistudio.google.com/apps/6d89987c-21e6-4c75-921a-5fbf0e78cfa2?showPreview=true&showAssistant=true&fullscreenApplet=true (mọi người có thể remix về, và vibe coding thêm nếu muốn).
+- **Link app trên AI Studio**: https://aistudio.google.com/apps/6d89987c-21e6-4c75-921a-5fbf0e78cfa2?showPreview=true&showAssistant=true&fullscreenApplet=true (mọi người có thể Remix về, và vibe coding thêm nếu muốn).
 
 Ứng dụng web không cần đăng nhập, tạo tài khoản. Chỉ cần nhập API Key của OpenRouter là dùng được ngay. API Key được lưu cục bộ tại trình duyệt của người dùng, do vậy bạn chỉ nên dùng nó trên máy tính cá nhân của riêng bạn.
 
@@ -32,23 +32,21 @@ Phần duy nhất cần AI đa phương thức là chuyển PDF thành markdown,
 Gemini có bộ chặn lọc nội dung khá gắt gao, điều này là cần thiết để tránh xử lý các nội dung có tiềm ẩn nguy cơ nguy hiểm hoặc gây hại, tuy nhiên mức độ chặn nhầm của nó là có, đặc biệt với thể loại tiểu thuyết với nhiều tình tiết hư cấu dễ gây hiểu nhầm. Các AI khác có mức chặn, hạn chế thấp hơn có thể hữu ích trong trường hợp này.
 
 ## Cách dùng
-Không có điểm khác biệt đáng kể nào trong cách dùng ở nhánh openSky này với bản gốc. Chỉ có điểm khác duy nhất ở phần nhập API Key và bổ sung các model AI theo nhu cầu. Công cụ hướng dẫn rất chi tiết trong phần sử dụng tương ứng. Thao tác thêm mới các model, điều chỉnh một vài thông số cũng rất đơn giản. Nói chung nếu bạn đã từng dùng bản gốc thì nhánh openSky này gần như không phải học thêm gì nhiều.
+Không có điểm khác biệt đáng kể nào trong cách dùng ở nhánh `openSky` này với bản gốc. Chỉ có điểm khác duy nhất ở phần nhập API Key & bổ sung các model AI theo nhu cầu. Công cụ hướng dẫn rất chi tiết trong phần sử dụng tương ứng. Thao tác thêm mới các model, điều chỉnh một vài thông số cũng rất đơn giản. Nói chung nếu bạn đã từng dùng bản gốc thì nhánh openSky này gần như không phải học thêm gì nhiều.
 
 ## Các model AI
 Danh sách các model quan trọng nhất có thể tìm thấy ở đây: https://openrouter.ai/discover
 
 Có thể chia thành các nhóm model AI sau:
 - (a) Nhóm các model AI có chất lượng cao nhất: Tốt nhất nhưng thường có giá rất cao (có thể lên đến 10 - 30$/M token đầu ra);
-- (b) **Nhóm các model có hiệu quả nhất cho mỗi đồng bỏ ra (Value leaders)**: Tuy không tốt nhất xét theo chất lượng thuần túy, nhưng giá lại cạnh tranh hơn nhiều;
+- (b) **Nhóm các model có hiệu quả nhất cho mỗi đồng bỏ ra (Value leaders)**: Tuy không tốt nhất xét theo chất lượng thuần túy, nhưng giá cả lại cạnh tranh hơn nhiều;
 - (c) Nhóm các model AI có tốc độ cao nhất (Fastest models);
 - (d) Nhóm các model AI miễn phí;
-- (e) Nhóm các model AI sử dụng bí danh (để luôn dùng model mới nhất & tránh phải cập nhật tên model liên tục): ví dụ các bí danh như `~anthropic/claude-opus-latest` là để chỉ model Claude bản mới nhất;
+- (e) Nhóm các model AI sử dụng bí danh (để luôn dùng model mới nhất & tránh phải cập nhật tên model liên tục): ví dụ các bí danh như `~anthropic/claude-opus-latest` là để chỉ model Claude bản mới nhất thuộc dòng Opus;
 
-Với vai trò AI dịch thuật chúng ta nên tập trung vào các nhóm (a), (b), (e). Nhóm (c) tốc độ cao nhất không phải là trọng tâm trong dịch thuật. Nhóm (d) AI miễn phí các bạn có thể dùng để test, chất lượng của các model này rất khó để so sánh với các model trả phí chất lượng cao.
+Với vai trò AI dịch thuật chúng ta nên tập trung vào các nhóm (a), (b), (e). Nhóm (c) tốc độ cao nhất không phải là trọng tâm trong dịch thuật, lý do chính thường là vì tốc độ rất cao hay đi kèm với chất lượng chỉ ở mức trung bình. Nhóm (d) AI miễn phí các bạn có thể dùng để test, chất lượng của các model này rất khó để so sánh với các model trả phí chất lượng cao, ngoài ra một nguyên nhân khác cũng đáng lưu tâm, hầu hết các model miễn phí đều chậm.
 
-Đặt ở khía cạnh kinh tế, khi bạn dịch nhiều (vốn là điều thường xảy ra khi dịch sách), các model nhóm (b) là đáng quan tâm nhất, chúng vẫn tiệm cận nhóm tốt nhất, nhưng giá lại rẻ hơn nhiều (có thể lên đến 10 lần). Ngoài ra, dù tốc độ cao nhất không phải là mục tiêu, chúng ta cũng cần tránh dùng các AI quá chậm, vì dịch sách cần tương đối nhiều lời gọi với thao tác xử lý lớn.
-
-**Lưu ý**: OpenRouter là dịch vụ _có phí_ nên bạn nào muốn rẻ và vẫn có chất lượng tốt thì tham khảo repo trước đây chuyên cho Gemini (https://github.com/kiencang/silaBook), dịch không quá nhiều thì thậm chí bạn không tốn đồng nào vì ngưỡng miễn phí ngày của Gemini khá lớn (hết ngưỡng miễn phí có thể đợi sang đến ngày hôm sau hoặc đổi sang tài khoản khác dịch tiếp). Chỉ bạn nào quan tâm đến việc dùng các AI khác (Claude, OpenAI, Grok, GLM, DeepSeek, v.v..) thì mới cần quan tâm đến repo này.
+Đặt ở khía cạnh kinh tế, khi bạn dịch nhiều (vốn là điều thường xảy ra khi dịch sách), **các model nhóm (b) là đáng quan tâm nhất**, chúng vẫn tiệm cận nhóm tốt nhất, nhưng giá lại rẻ hơn nhiều (có thể lên đến 10 lần). Ngoài ra, dù tốc độ cao nhất không phải là mục tiêu, chúng ta cũng cần tránh dùng các AI quá chậm, vì dịch sách cần tương đối nhiều lời gọi với thao tác xử lý lớn.
 
 ### Các model mặc định của ứng dụng
 A. Danh sách model AI chất lượng cao, được dùng vào việc dịch thuật.
