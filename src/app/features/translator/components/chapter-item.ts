@@ -1,4 +1,4 @@
-import { Component, input, model, output, inject, signal, effect, OnInit, OnDestroy } from '@angular/core';
+import { Component, input, model, output, inject, signal, computed, effect, OnInit, OnDestroy } from '@angular/core';
 
 @Component({
   selector: 'app-translating-skeleton',
@@ -204,7 +204,7 @@ import { getCustomEconomyModels } from '../../../core/openrouter';
           <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-zinc-100">
             <div class="p-6">
               <h5 class="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-4">Bản gốc (Markdown)</h5>
-              <div class="prose prose-sm max-w-none text-zinc-700" [innerHTML]="parseMarkdown(chapter().originalText, 'c' + index() + '-o')"></div>
+              <div class="prose prose-sm max-w-none text-zinc-700" [innerHTML]="parsedOriginalHtml()"></div>
             </div>
             <div class="p-6 bg-zinc-50 relative">
               <div class="flex items-center justify-between mb-4">
@@ -231,7 +231,7 @@ import { getCustomEconomyModels } from '../../../core/openrouter';
                   <span class="text-sm">Đây là nội dung bản quyền / metadata, nội dung sẽ được giữ nguyên bản gốc khi xuất file.</span>
                 </div>
               } @else if (chapter().translatedText) {
-                <div class="prose prose-sm max-w-none text-zinc-900" [innerHTML]="parseMarkdown(chapter().translatedText, 'c' + index() + '-t')"></div>
+                <div class="prose prose-sm max-w-none text-zinc-900" [innerHTML]="parsedTranslatedHtml()"></div>
               } @else if (chapter().status === 'translating') {
                 <app-translating-skeleton />
               } @else {
@@ -299,7 +299,7 @@ import { getCustomEconomyModels } from '../../../core/openrouter';
                  [class]="getContentClass(readerStore.prefs().theme)" 
                  [style.font-size.px]="readerStore.prefs().fontSize"
                  [style.font-family]="getFontFamily(readerStore.prefs().fontFamily)"
-                 [innerHTML]="parseMarkdown(chapter().translatedText, 'c' + index() + '-t')"></div>
+                 [innerHTML]="parsedTranslatedHtml()"></div>
 
             <div class="mt-24 pt-8 border-t border-zinc-200/50 flex flex-col sm:flex-row items-center justify-between gap-4 max-w-2xl mx-auto pb-12">
               @if (prevTranslatedChapterIndex() !== -1) {
@@ -376,7 +376,7 @@ import { getCustomEconomyModels } from '../../../core/openrouter';
                      [class]="getContentClass(readerStore.prefs().theme)"
                      [style.font-size.px]="readerStore.prefs().fontSize"
                      [style.font-family]="getFontFamily(readerStore.prefs().fontFamily)"
-                     [innerHTML]="parseMarkdown(chapter().originalText, 'c' + index() + '-o')"></div>
+                     [innerHTML]="parsedOriginalHtml()"></div>
               </div>
             </div>
 
@@ -393,7 +393,7 @@ import { getCustomEconomyModels } from '../../../core/openrouter';
                      [class]="getContentClass(readerStore.prefs().theme)"
                      [style.font-size.px]="readerStore.prefs().fontSize"
                      [style.font-family]="getFontFamily(readerStore.prefs().fontFamily)"
-                     [innerHTML]="parseMarkdown(chapter().translatedText, 'c' + index() + '-t')"></div>
+                     [innerHTML]="parsedTranslatedHtml()"></div>
               </div>
             </div>
           </div>
@@ -442,7 +442,7 @@ import { getCustomEconomyModels } from '../../../core/openrouter';
               </button>
             </div>
             <div class="p-6 overflow-y-auto flex-1 bg-white">
-               <div class="prose prose-sm max-w-none text-zinc-700" [innerHTML]="parseMarkdown(activeSummary(), chapter().id + '-sum')"></div>
+               <div class="prose prose-sm max-w-none text-zinc-700" [innerHTML]="parsedActiveSummaryHtml()"></div>
             </div>
           </div>
         </div>
@@ -464,7 +464,7 @@ import { getCustomEconomyModels } from '../../../core/openrouter';
               </button>
             </div>
             <div class="p-6 overflow-y-auto flex-1 bg-white">
-               <div class="prose prose-sm max-w-none text-zinc-700" [innerHTML]="parseMarkdown(activeContextSummary(), chapter().id + '-csum')"></div>
+               <div class="prose prose-sm max-w-none text-zinc-700" [innerHTML]="parsedActiveContextSummaryHtml()"></div>
             </div>
           </div>
         </div>
@@ -597,6 +597,19 @@ export class ChapterItemComponent {
   isClosingContextSummaryModal = signal(false);
   activeContextSummary = signal('');
   activeContextSummaryTitle = signal('');
+
+  parsedOriginalHtml = computed(() =>
+    this.parseMarkdown(this.chapter().originalText, 'c' + this.index() + '-o')
+  );
+  parsedTranslatedHtml = computed(() =>
+    this.parseMarkdown(this.chapter().translatedText, 'c' + this.index() + '-t')
+  );
+  parsedActiveSummaryHtml = computed(() =>
+    this.parseMarkdown(this.activeSummary(), this.chapter().id + '-sum')
+  );
+  parsedActiveContextSummaryHtml = computed(() =>
+    this.parseMarkdown(this.activeContextSummary(), this.chapter().id + '-csum')
+  );
 
   showPronounModal = signal(false);
   isClosingPronounModal = signal(false);
