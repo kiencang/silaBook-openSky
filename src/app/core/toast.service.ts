@@ -55,8 +55,12 @@ export class ToastService {
     PRONOUNS_SUCCESS: 'Tạo bảng xưng hô thành công!',
     PRONOUNS_ERROR: (err: string) => `Lỗi tạo bảng đại từ: ${err}`,
 
+    // -- API Key & Kết nối --
+    MISSING_API_KEY: 'Vui lòng cấu hình OPENROUTER API KEY CÁ NHÂN (nút "Nhập API Key" ở góc trái dưới cùng màn hình) trước khi sử dụng tính năng này.',
+
     // -- Dịch thuật --
     TRANSLATION_COMPLETED: 'Dịch hoàn tất toàn bộ!',
+    TRANSLATION_STOPPED_CRITICAL: 'Tiến trình dịch tự động đã dừng lại do lỗi nghiêm trọng (ví dụ: hết tín dụng OpenRouter, vượt giới hạn Rate Limit hoặc sai API Key).',
     TRANSLATION_ERROR: (title: string, err: string) => `Dịch thất bại đối với ${title}: ${err}`
   };
 

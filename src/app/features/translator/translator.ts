@@ -208,7 +208,7 @@ export class Translator {
 
   async translateSingle(chapter: Chapter): Promise<boolean> {
     if (!hasSecureApiKey()) {
-      this.toast.error('Vui lòng thêm GEMINI API KEY CÁ NHÂN (biểu tượng chìa khóa ở góc trái dưới cùng màn hình) trước khi dịch.');
+      this.toast.error(this.toast.Messages.MISSING_API_KEY);
       return false;
     }
 
@@ -322,7 +322,7 @@ export class Translator {
 
   async executeTranslateAll(forceAll: boolean) {
     if (!hasSecureApiKey()) {
-      this.toast.error('Vui lòng thêm GEMINI API KEY CÁ NHÂN (biểu tượng chìa khóa ở góc trái dưới cùng màn hình) trước khi dịch chức năng này.');
+      this.toast.error(this.toast.Messages.MISSING_API_KEY);
       this.confirmAction.set('none');
       return;
     }
@@ -354,7 +354,7 @@ export class Translator {
         const shouldContinue = await this.translateSingle(chapter);
         if (!shouldContinue) {
           this.stopRequested.set(true);
-          this.toast.error('Tiến trình dịch tự động đã dừng lại do lỗi nghiêm trọng (ví dụ: hết Quota miễn phí hoặc sai API Key).');
+          this.toast.error(this.toast.Messages.TRANSLATION_STOPPED_CRITICAL);
           break;
         }
       }

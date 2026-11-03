@@ -50,6 +50,7 @@ export interface Chapter {
   title: string;
   originalText: string;
   wordCount: number;
+  tokenCount?: number;
   translatedText?: string;
   status: 'pending' | 'translating' | 'done' | 'error';
   versions?: TranslationVersion[];
@@ -140,12 +141,11 @@ export class BookStore {
   readonly isAnalyzingSplits = signal<boolean>(false);
   readonly chapters = signal<Chapter[]>([]);
   readonly estimatedEnglishWords = computed(() => this.chapters().filter(c => !c.excludeFromTranslation).reduce((sum, c) => sum + (c.wordCount || 0), 0));
-  readonly estimatedEnglishTokens = computed(() => {
-    const valid = this.chapters().filter(c => !c.excludeFromTranslation);
-    if (valid.length === 0) return 0;
-    const combined = valid.map(c => (c.title || '') + '\n' + (c.originalText || '')).join('\n\n');
-    return countTokensWithTiktoken(combined);
-  });
+  readonly estimatedEnglishTokens = computed(() =>
+    this.chapters()
+      .filter(c => !c.excludeFromTranslation)
+      .reduce((sum, c) => sum + (c.tokenCount ?? countTokensWithTiktoken((c.title || '') + '\n' + (c.originalText || ''))), 0)
+  );
   readonly estimatedVietnameseWords = computed(() => Math.round(this.estimatedEnglishWords() * 1.45));
   readonly estimatedVietnameseTokens = computed(() => Math.round(this.estimatedEnglishTokens() * 1.25));
   readonly hasAnyTranslation = computed(() => this.chapters().filter(c => !c.excludeFromTranslation).some(c => !!c.translatedText));
@@ -335,9 +335,11 @@ export class BookStore {
       this.pronounTask.set(proj.pronounTask);
       this.glossaryTask.set(proj.glossaryTask);
       
-      const adjustedChapters = proj.chapters.map((c: Chapter) => 
-        c.status === 'translating' ? { ...c, status: 'error' as const } : c
-      );
+      const adjustedChapters = proj.chapters.map((c: Chapter) => ({
+        ...c,
+        status: c.status === 'translating' ? ('error' as const) : c.status,
+        tokenCount: c.tokenCount ?? countTokensWithTiktoken((c.title || '') + '\n' + (c.originalText || ''))
+      }));
       this.chapters.set(adjustedChapters);
 
       const isBrowser = isPlatformBrowser(this.platformId);
@@ -454,13 +456,17 @@ export class BookStore {
   }
 
   setChapters(chs: Chapter[]) {
-    this.chapters.set(chs);
+    const withTokens = chs.map(c => ({
+      ...c,
+      tokenCount: c.tokenCount ?? countTokensWithTiktoken((c.title || '') + '\n' + (c.originalText || ''))
+    }));
+    this.chapters.set(withTokens);
     this.phase.set(3);
     if (isPlatformBrowser(this.platformId)) {
        const id = this.currentProjectId();
        if (id) {
-          this.db.saveAllChapters(id, chs);
-          this.db.updateProjectStats(id, chs);
+          this.db.saveAllChapters(id, withTokens);
+          this.db.updateProjectStats(id, withTokens);
        }
     }
   }

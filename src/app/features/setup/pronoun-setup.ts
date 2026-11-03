@@ -295,7 +295,7 @@ export class PronounSetup {
 
   async startGeneration() {
     if (!hasSecureApiKey()) {
-      this.toast.error('Vui lòng thêm GEMINI API KEY CÁ NHÂN (biểu tượng chìa khóa ở góc trái dưới cùng màn hình) trước khi sử dụng tính năng này.');
+      this.toast.error(this.toast.Messages.MISSING_API_KEY);
       return;
     }
 

@@ -68,7 +68,7 @@ export class Home {
       
       if (typeof window !== 'undefined') {
         if (!hasSecureApiKey()) {
-          this.toast.error('Bạn cần nhập API Key để dịch, nó là button nằm bên trái ở chân trang.');
+          this.toast.error(this.toast.Messages.MISSING_API_KEY);
         }
       }
 
