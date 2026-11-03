@@ -221,7 +221,11 @@ export class OpenRouterClient {
   private async callChatCompletions(
     model: string,
     messages: { role: 'system' | 'user' | 'assistant'; content: string | unknown[] }[],
-    options: { jsonMode?: boolean; temperature?: number } = {}
+    options: {
+      jsonMode?: boolean;
+      jsonSchema?: { name: string; strict?: boolean; schema: Record<string, unknown> };
+      temperature?: number;
+    } = {}
   ): Promise<string> {
     await loadSecureApiKey();
     const apiKey = this.getApiKey();
@@ -230,33 +234,67 @@ export class OpenRouterClient {
     }
 
     const reasoningEffort = getReasoningEffort();
-    const payload: Record<string, unknown> = {
-      model: model || '~google/gemini-flash-latest',
-      messages,
-      temperature: options.temperature ?? getQualityTemperature()
+    const buildPayload = (responseFormat?: Record<string, unknown>): Record<string, unknown> => {
+      const p: Record<string, unknown> = {
+        model: model || '~google/gemini-flash-latest',
+        messages,
+        temperature: options.temperature ?? getQualityTemperature()
+      };
+
+      if (reasoningEffort !== 'none') {
+        p['reasoning'] = {
+          effort: reasoningEffort,
+          exclude: true
+        };
+      }
+
+      if (responseFormat) {
+        p['response_format'] = responseFormat;
+      }
+
+      return p;
     };
 
-    if (reasoningEffort !== 'none') {
-      payload['reasoning'] = {
-        effort: reasoningEffort,
-        exclude: true
+    const sendRequest = async (payload: Record<string, unknown>): Promise<Response> => {
+      return fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'HTTP-Referer': 'https://silabook-opensky.wpsila.com',
+          'X-Title': 'silaBook openSky',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+    };
+
+    let initialFormat: Record<string, unknown> | undefined;
+    if (options.jsonSchema) {
+      initialFormat = {
+        type: 'json_schema',
+        json_schema: {
+          name: options.jsonSchema.name,
+          strict: options.jsonSchema.strict ?? true,
+          schema: options.jsonSchema.schema
+        }
       };
+    } else if (options.jsonMode) {
+      initialFormat = { type: 'json_object' };
     }
 
-    if (options.jsonMode) {
-      payload['response_format'] = { type: 'json_object' };
-    }
+    let res = await sendRequest(buildPayload(initialFormat));
 
-    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'HTTP-Referer': 'https://silabook-opensky.wpsila.com',
-        'X-Title': 'silaBook openSky',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(payload)
-    });
+    // Cơ chế Smart Fallback: Nếu model/provider trên OpenRouter không hỗ trợ json_schema (báo lỗi 400/422),
+    // tự động hạ cấp về json_object (hoặc bỏ response_format nếu json_object cũng bị từ chối)
+    if (!res.ok && options.jsonSchema && (res.status === 400 || res.status === 422)) {
+      console.warn(`Model ${model} không hỗ trợ json_schema, tự động chuyển sang json_object fallback...`);
+      res = await sendRequest(buildPayload({ type: 'json_object' }));
+      if (!res.ok && (res.status === 400 || res.status === 422)) {
+        res = await sendRequest(buildPayload(undefined));
+      }
+    } else if (!res.ok && options.jsonMode && !options.jsonSchema && (res.status === 400 || res.status === 422)) {
+      res = await sendRequest(buildPayload(undefined));
+    }
 
     if (!res.ok) {
       let errText = '';
@@ -372,7 +410,33 @@ export class OpenRouterClient {
           { role: 'system', content: si },
           { role: 'user', content: prompt }
         ],
-        { jsonMode: true, temperature: 0.3 }
+        {
+          jsonMode: true,
+          temperature: 0.3,
+          jsonSchema: {
+            name: 'filter_glossary',
+            strict: true,
+            schema: {
+              type: 'object',
+              properties: {
+                items: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      english: { type: 'string' },
+                      pos: { type: 'string' }
+                    },
+                    required: ['english', 'pos'],
+                    additionalProperties: false
+                  }
+                }
+              },
+              required: ['items'],
+              additionalProperties: false
+            }
+          }
+        }
       );
 
       let matchedItems: { english: string; pos: string }[] = [];
@@ -576,7 +640,52 @@ export class OpenRouterClient {
         { role: 'system', content: psi || 'You analyze text and return character pronoun information in JSON object format: {"characters": [...]}' },
         { role: 'user', content: finalPrompt }
       ],
-      { jsonMode: true }
+      {
+        jsonMode: true,
+        jsonSchema: {
+          name: 'pronouns_extraction',
+          strict: true,
+          schema: {
+            type: 'object',
+            properties: {
+              characters: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    originalName: { type: 'string' },
+                    gender: {
+                      type: 'string',
+                      enum: ['Male', 'Female', 'Non-binary', 'Unknown']
+                    },
+                    ageGroup: { type: 'string' },
+                    role: { type: 'string' },
+                    translatedTitles: { type: 'string' },
+                    narratorPronoun: { type: 'string' },
+                    dialoguePronouns: { type: 'string' },
+                    reasoning: { type: 'string' },
+                    notes: { type: 'string' }
+                  },
+                  required: [
+                    'originalName',
+                    'gender',
+                    'ageGroup',
+                    'role',
+                    'translatedTitles',
+                    'narratorPronoun',
+                    'dialoguePronouns',
+                    'reasoning',
+                    'notes'
+                  ],
+                  additionalProperties: false
+                }
+              }
+            },
+            required: ['characters'],
+            additionalProperties: false
+          }
+        }
+      }
     );
 
     let arr: unknown[] = [];
@@ -658,7 +767,34 @@ export class OpenRouterClient {
         { role: 'system', content: gsi || 'You analyze text and return terminology in JSON object format: {"glossary": [...]}' },
         { role: 'user', content: finalPrompt }
       ],
-      { jsonMode: true }
+      {
+        jsonMode: true,
+        jsonSchema: {
+          name: 'glossary_extraction',
+          strict: true,
+          schema: {
+            type: 'object',
+            properties: {
+              glossary: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    english: { type: 'string' },
+                    vietnamese: { type: 'string' },
+                    pos: { type: 'string' },
+                    contextNotes: { type: 'string' }
+                  },
+                  required: ['english', 'vietnamese', 'pos', 'contextNotes'],
+                  additionalProperties: false
+                }
+              }
+            },
+            required: ['glossary'],
+            additionalProperties: false
+          }
+        }
+      }
     );
 
     let arr: unknown[] = [];
@@ -739,7 +875,43 @@ export class OpenRouterClient {
         { role: 'system', content: si || 'You analyze book content and output JSON configuration.' },
         { role: 'user', content: finalPrompt }
       ],
-      { jsonMode: true, temperature: 0.3 }
+      {
+        jsonMode: true,
+        temperature: 0.3,
+        jsonSchema: {
+          name: 'book_analysis',
+          strict: true,
+          schema: {
+            type: 'object',
+            properties: {
+              splitOptions: {
+                type: 'object',
+                properties: {
+                  recommendedOption: {
+                    type: 'string',
+                    enum: ['keyword', 'regex', 'standalone']
+                  },
+                  recommendedKeywords: {
+                    type: 'array',
+                    items: { type: 'string' }
+                  },
+                  recommendedRegex: { type: 'string' },
+                  reason: { type: 'string' }
+                },
+                required: [
+                  'recommendedOption',
+                  'recommendedKeywords',
+                  'recommendedRegex',
+                  'reason'
+                ],
+                additionalProperties: false
+              }
+            },
+            required: ['splitOptions'],
+            additionalProperties: false
+          }
+        }
+      }
     );
 
     if (result.startsWith('```json')) {
