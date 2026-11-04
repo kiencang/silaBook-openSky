@@ -18,6 +18,12 @@ Dưới đây là bản dịch truyện ngắn `The Gift of the Magi` của `O. 
 - Bảng đại từ: https://github.com/kiencang/silaBook-openSky/blob/main/demo/dai-tu.md
 - Bảng thuật ngữ: https://github.com/kiencang/silaBook-openSky/blob/main/demo/thuat-ngu.md
 
+## Một số lưu ý khi dùng với API Key trả phí
+- Không chia sẻ API Key trả phí với người dùng khác, vì bạn sẽ bị tốn chi phí;
+- Luôn thiết lập ngưỡng cho API Key bạn dùng để tránh chi tiêu quá mức, ví dụ thiết lập ngưỡng chi tiêu tối đa 300 ngàn đồng/tháng;
+- Nên dùng ứng dụng này trên các trình duyệt đáng tin cậy, tốt nhất là Chrome, Firefox hoặc Edge. Ngoài ra nên hạn chế các addon cài trên trình duyệt;
+- Tải sách về dịch từ các nguồn uy tín;
+
 ## Lý do triển khai
 Phiên bản ban đầu [silaBook](https://github.com/kiencang/silaBook) hiện chỉ dùng được với Gemini, ngoài ra không kết hợp được với AI khác.
 
