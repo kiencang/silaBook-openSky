@@ -181,7 +181,7 @@ export async function saveSecureApiKey(plainKey: string): Promise<void> {
   const encrypted = await encryptApiKey(trimmed);
   if (typeof window !== 'undefined') {
     localStorage.setItem('user_openrouter_api_key', encrypted);
-    localStorage.setItem('user_gemini_api_key', encrypted);
+    localStorage.removeItem('user_gemini_api_key');
   }
 }
 
@@ -203,7 +203,12 @@ export function removeSecureApiKey(): void {
 export async function loadSecureApiKey(): Promise<string> {
   if (typeof window === 'undefined') return '';
 
-  const rawSaved = localStorage.getItem('user_openrouter_api_key') || localStorage.getItem('user_gemini_api_key');
+  // Dọn dẹp khóa dư thừa từ thiết kế cũ nếu còn tồn tại trên trình duyệt người dùng
+  if (localStorage.getItem('user_gemini_api_key') !== null) {
+    localStorage.removeItem('user_gemini_api_key');
+  }
+
+  const rawSaved = localStorage.getItem('user_openrouter_api_key');
   if (!rawSaved || !rawSaved.trim()) {
     cachedDecryptedKey = null;
     return '';
@@ -226,7 +231,7 @@ export async function loadSecureApiKey(): Promise<string> {
 export function hasSecureApiKey(): boolean {
   if (cachedDecryptedKey && cachedDecryptedKey.trim()) return true;
   if (typeof window !== 'undefined') {
-    const raw = localStorage.getItem('user_openrouter_api_key') || localStorage.getItem('user_gemini_api_key');
+    const raw = localStorage.getItem('user_openrouter_api_key');
     return !!(raw && raw.trim());
   }
   return false;

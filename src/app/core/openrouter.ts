@@ -189,7 +189,7 @@ export class OpenRouterClient {
     if (cached) return cached;
 
     if (typeof window !== 'undefined') {
-      const userKey = localStorage.getItem('user_openrouter_api_key') || localStorage.getItem('user_gemini_api_key');
+      const userKey = localStorage.getItem('user_openrouter_api_key');
       if (userKey && userKey.trim()) {
         const trimmed = userKey.trim();
         if (!trimmed.startsWith('enc:v1:')) {
@@ -197,7 +197,7 @@ export class OpenRouterClient {
         }
       }
     }
-    return (typeof process !== 'undefined' && (process.env['OPENROUTER_API_KEY'] || process.env['GEMINI_API_KEY'])) || '';
+    return (typeof process !== 'undefined' && process.env['OPENROUTER_API_KEY']) || '';
   }
 
   private async loadPromptText(url: string): Promise<string | null> {

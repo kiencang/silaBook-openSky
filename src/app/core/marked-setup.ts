@@ -69,6 +69,91 @@ export function stripMathMlAnnotation(html: string): string {
   return html.replace(/<annotation\b[^>]*>[\s\S]*?<\/annotation>/gi, '');
 }
 
+/**
+ * Escape các ký tự đặc biệt trong giá trị thuộc tính HTML (id, src, alt, title)
+ * nhằm ngăn chặn Attribute Breakout Injection trong custom renderer.
+ */
+function escapeAttr(val: string | null | undefined): string {
+  if (!val) return '';
+  return val
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+const DANGEROUS_TAGS = [
+  'script',
+  'iframe',
+  'object',
+  'embed',
+  'applet',
+  'form',
+  'meta',
+  'base',
+  'link',
+  'style',
+  'template',
+  'noscript',
+  'frame',
+  'frameset',
+].join(',');
+
+const URL_ATTRIBUTES = new Set(['href', 'src', 'xlink:href', 'action', 'formaction']);
+const SAFE_DATA_IMAGE_RE = /^data:image\/(png|jpeg|jpg|gif|webp)[;,]/i;
+
+/**
+ * Lọc sạch mã độc XSS (HTML Sanitization) bằng bộ phân tích DOMParser gốc của trình duyệt:
+ * - Xóa hoàn toàn các thẻ nguy hiểm (script, iframe, object, style, link, meta, form...)
+ * - Xóa 100% thuộc tính sự kiện (on*) và srcdoc
+ * - Chặn giao thức thực thi mã (javascript:, vbscript:, data:) sau khi đã loại bỏ ký tự ẩn/khoảng trắng,
+ *   nhưng vẫn giữ nguyên vẹn ảnh Base64 hợp lệ (png, jpeg, jpg, gif, webp), KaTeX MathML và Footnote ID.
+ */
+export function sanitizeHtml(html: string): string {
+  if (!html) return '';
+  if (typeof DOMParser === 'undefined') {
+    return html;
+  }
+
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+
+  // 1. Loại bỏ toàn bộ các thẻ có khả năng thực thi mã hoặc làm lệch cấu trúc trang
+  doc.body.querySelectorAll(DANGEROUS_TAGS).forEach((el) => el.remove());
+
+  // 2. Quét mọi phần tử còn lại để lọc sạch thuộc tính nguy hiểm
+  const allElements = doc.body.querySelectorAll('*');
+  for (let i = 0; i < allElements.length; i++) {
+    const el = allElements[i];
+    const attrs = el.attributes;
+    // Duyệt ngược từ cuối về đầu vì chúng ta có thể xóa thuộc tính ngay trong vòng lặp
+    for (let j = attrs.length - 1; j >= 0; j--) {
+      const attrName = attrs[j].name.toLowerCase();
+      const attrVal = attrs[j].value;
+
+      // Xóa mọi thuộc tính sự kiện (onerror, onload, onclick, ontoggle...) và srcdoc
+      if (attrName.startsWith('on') || attrName === 'srcdoc') {
+        el.removeAttribute(attrs[j].name);
+        continue;
+      }
+
+      // Kiểm tra các thuộc tính chứa đường dẫn URI
+      if (URL_ATTRIBUTES.has(attrName) || attrName.endsWith(':href')) {
+        // Loại bỏ toàn bộ khoảng trắng và ký tự điều khiển ASCII (0x00 - 0x1F) để chống lách luật (vd: "java\tscript:")
+        const normalizedUri = attrVal.replace(/[\s\x00-\x1f]+/g, '').toLowerCase();
+        if (
+          normalizedUri.startsWith('javascript:') ||
+          normalizedUri.startsWith('vbscript:') ||
+          (normalizedUri.startsWith('data:') && !SAFE_DATA_IMAGE_RE.test(normalizedUri))
+        ) {
+          el.removeAttribute(attrs[j].name);
+        }
+      }
+    }
+  }
+
+  return doc.body.innerHTML;
+}
+
 export function getConfiguredMarked() {
   if (!isConfigured) {
     marked.use(
@@ -86,7 +171,7 @@ export function getConfiguredMarked() {
           return normalizeMathDelimiters(markdown);
         },
         postprocess(html: string) {
-          return stripMathMlAnnotation(html);
+          return sanitizeHtml(stripMathMlAnnotation(html));
         }
       },
       renderer: {
@@ -109,7 +194,7 @@ export function getConfiguredMarked() {
             // Generate basic slug if no ID exists (default markdown behavior)
             id = parsedText.toLowerCase().replace(/<[^>]+>/g, '').replace(/[^\w-]+/g, '-');
           }
-          return `<h${token.depth} id="${id}">${parsedText}</h${token.depth}>\n`;
+          return `<h${token.depth} id="${escapeAttr(id)}">${parsedText}</h${token.depth}>\n`;
         },
         image(token) {
           let href = token.href;
@@ -117,9 +202,9 @@ export function getConfiguredMarked() {
              href = window.__SILA_IMAGES__[href];
           }
            // Use marked original logic or simple img tag
-           let out = `<img src="${href}" alt="${token.text}"`;
+           let out = `<img src="${escapeAttr(href)}" alt="${escapeAttr(token.text)}"`;
            if (token.title) {
-             out += ` title="${token.title}"`;
+             out += ` title="${escapeAttr(token.title)}"`;
            }
            out += ' class="max-w-full h-auto rounded-lg" />';
            return out;
@@ -130,4 +215,5 @@ export function getConfiguredMarked() {
   }
   return marked;
 }
+
 
