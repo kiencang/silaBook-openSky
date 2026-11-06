@@ -177,12 +177,14 @@ export function sanitizeHtml(html: string): string {
 
 function createPandocKatexExtension(options: katex.KatexOptions = {}) {
   const renderMath = (text: string, displayMode: boolean, newlineAfter: boolean) => {
-    return (
-      katex.renderToString(text, {
-        ...options,
-        displayMode,
-      }) + (newlineAfter ? '\n' : '')
-    );
+    let rendered = katex.renderToString(text, {
+      ...options,
+      displayMode,
+    });
+    if (displayMode) {
+      rendered = rendered.replace(/<math\b(?![^>]*\bdisplay=)/i, '<math display="block"');
+    }
+    return rendered + (newlineAfter ? '\n' : '');
   };
 
   return {
@@ -316,17 +318,31 @@ export function getConfiguredMarked() {
           );
         },
         image(token) {
-          let href = token.href;
-          if (typeof window !== 'undefined' && window.__SILA_IMAGES__ && window.__SILA_IMAGES__[href]) {
-             href = window.__SILA_IMAGES__[href];
+          let href = token.href || '';
+          if (typeof window !== 'undefined' && window.__SILA_IMAGES__) {
+            const imgDict = window.__SILA_IMAGES__;
+            if (imgDict[href]) {
+              href = imgDict[href];
+            } else {
+              const lowerHref = href.toLowerCase();
+              const normHref = href.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+              for (const [k, v] of Object.entries(imgDict)) {
+                if (
+                  k.toLowerCase() === lowerHref ||
+                  (normHref && k.replace(/[^a-zA-Z0-9]/g, '').toLowerCase() === normHref)
+                ) {
+                  href = v;
+                  break;
+                }
+              }
+            }
           }
-           // Use marked original logic or simple img tag
-           let out = `<img src="${escapeAttr(href)}" alt="${escapeAttr(token.text)}"`;
-           if (token.title) {
-             out += ` title="${escapeAttr(token.title)}"`;
-           }
-           out += ' class="max-w-full h-auto rounded-lg" />';
-           return out;
+          let out = `<img src="${escapeAttr(href)}" alt="${escapeAttr(token.text)}"`;
+          if (token.title) {
+            out += ` title="${escapeAttr(token.title)}"`;
+          }
+          out += ' class="max-w-full h-auto rounded-lg" />';
+          return out;
         }
       }
     });
