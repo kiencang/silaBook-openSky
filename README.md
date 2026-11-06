@@ -33,6 +33,8 @@ Hệ quả của việc này là bạn có thể dùng rất nhiều AI chất l
 
 Phần duy nhất cần AI đa phương thức là chuyển PDF thành markdown, tuy nhiên chúng tôi cũng không khuyến khích bạn sử dụng AI để làm việc này, dù AI làm khá tốt (và ứng dụng có tích hợp sẵn khả năng chuyển đổi). Lý do là vì hiện có nhiều công cụ miễn phí chất lượng cao xử lý rất tốt nhiệm vụ đó, ví dụ như [PaddleOCR](https://aistudio.baidu.com/paddleocr) hoặc [MinerU](https://mineru.net/).
 
+**Lưu ý khi dùng PaddleOCR hoặc MinerU**: Các ứng dụng chuyển đổi file miễn phí như thế này có thể thu thập dữ liệu của người dùng, do vậy đối với các tài liệu riêng tư hoặc có bản quyền nên cẩn trọng.
+
 ### Giảm khả năng bị chặn dịch
 Gemini có bộ chặn lọc nội dung khá gắt gao, điều này là cần thiết để tránh xử lý các nội dung có tiềm ẩn nguy cơ nguy hiểm hoặc gây hại, tuy nhiên mức độ chặn nhầm của nó là có, đặc biệt với thể loại tiểu thuyết với nhiều tình tiết hư cấu dễ gây hiểu nhầm. Các AI khác có mức chặn, hạn chế thấp hơn có thể hữu ích trong trường hợp này.
 
