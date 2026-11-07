@@ -45,6 +45,8 @@ export class ToastService {
     // -- Export --
     EXPORT_HTML_SUCCESS: 'Đã xuất file bản dịch HTML thành công!',
     EXPORT_HTML_ERROR: 'Có lỗi xảy ra khi xuất file HTML',
+    EXPORT_EPUB_SUCCESS: 'Đã xuất file bản dịch EPUB thành công!',
+    EXPORT_DOCX_SUCCESS: 'Đã xuất file bản dịch DOCX thành công!',
     DOWNLOAD_MARKDOWN_SUCCESS: 'Đã tải về file Markdown thành công!',
     DOWNLOAD_MARKDOWN_ERROR: 'Có lỗi xảy ra khi tải file Markdown',
 

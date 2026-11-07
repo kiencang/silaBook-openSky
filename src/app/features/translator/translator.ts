@@ -26,7 +26,7 @@ import { ChapterItemComponent } from './components/chapter-item';
         <div class="p-4 bg-indigo-50/50 border border-indigo-100 rounded-xl flex gap-3 text-sm text-indigo-900 w-full">
           <mat-icon class="text-indigo-500 shrink-0">lightbulb</mat-icon>
           <div>
-            <p>Nếu bạn đã tạo bảng "Thuật ngữ - Từ khó" hoặc/và bảng "Đại từ nhân xưng", nhớ tích hợp chúng vào trong quá trình dịch bằng cách tick tùy chọn "Kích hoạt..."</p>
+            <p>Nếu bạn đã tạo bảng "Thuật ngữ - Từ khó" hoặc/và bảng "Đại từ nhân xưng", nhớ tích hợp chúng vào trong quá trình dịch bằng cách tick tùy chọn "Kích hoạt..." (mặc định ứng dụng sẽ tự động tick cho bạn nếu nó phát hiện các bảng đó đã được tạo).</p>
           </div>
         </div>
       </div>

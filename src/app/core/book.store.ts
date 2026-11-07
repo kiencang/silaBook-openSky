@@ -710,7 +710,7 @@ ${OFFLINE_READER_SCRIPT}
   async exportProjectToEpub(project?: Project) {
     if (!isPlatformBrowser(this.platformId)) return;
 
-    this.toastService.success('Đang tạo bản EPUB để tải...');
+    this.toastService.info('Đang tạo bản EPUB để tải...');
     try {
       const name = project ? project.name : this.currentProjectName();
       const chaps = project ? project.chapters : this.chapters();
@@ -740,6 +740,7 @@ ${OFFLINE_READER_SCRIPT}
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
+      this.toastService.success(this.toastService.Messages.EXPORT_EPUB_SUCCESS);
     } catch (e: unknown) {
       console.error('Error exporting to EPUB:', e);
       this.toastService.error('Lỗi khi tạo file EPUB');
@@ -749,7 +750,7 @@ ${OFFLINE_READER_SCRIPT}
   async exportProjectToDocx(project?: Project) {
     if (!isPlatformBrowser(this.platformId)) return;
 
-    this.toastService.success('Đang tạo bản DOCX để tải...');
+    this.toastService.info('Đang tạo bản DOCX để tải...');
     try {
       const name = project ? project.name : this.currentProjectName();
       const chaps = project ? project.chapters : this.chapters();
@@ -779,6 +780,7 @@ ${OFFLINE_READER_SCRIPT}
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
+      this.toastService.success(this.toastService.Messages.EXPORT_DOCX_SUCCESS);
     } catch (e: unknown) {
       console.error('Error exporting to DOCX:', e);
       this.toastService.error('Lỗi khi tạo file DOCX');
