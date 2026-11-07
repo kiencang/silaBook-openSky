@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, OnInit, Output, EventEmitter } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, OnDestroy, Output, EventEmitter } from '@angular/core';
 import { DbService, Project } from '../../core/db';
 import { BookStore } from '../../core/book.store';
 import { ToastService } from '../../core/toast.service';
@@ -159,7 +159,7 @@ import { DatePipe } from '@angular/common';
     </div>
   `
 })
-export class ProjectModal implements OnInit {
+export class ProjectModal implements OnInit, OnDestroy {
   db = inject(DbService);
   store = inject(BookStore);
   toast = inject(ToastService);
@@ -192,15 +192,23 @@ export class ProjectModal implements OnInit {
   
   @Output() closeModal = new EventEmitter<void>();
 
-  private projectWorker = new Worker(new URL('./project.worker', import.meta.url), { type: 'module' });
+  private projectWorker: Worker | null = null;
   private workerId = 0;
 
+  private getProjectWorker(): Worker {
+    if (!this.projectWorker) {
+      this.projectWorker = new Worker(new URL('./project.worker', import.meta.url), { type: 'module' });
+    }
+    return this.projectWorker;
+  }
+
   private runProjectWorkerTask(type: string, payload: unknown): Promise<{ jsonStr?: string; project?: Project; error?: string; [key: string]: unknown }> {
+    const worker = this.getProjectWorker();
     return new Promise((resolve, reject) => {
       const id = ++this.workerId;
       const handler = (event: MessageEvent) => {
         if (event.data.id === id) {
-          this.projectWorker.removeEventListener('message', handler);
+          worker.removeEventListener('message', handler);
           if (event.data.type === 'SUCCESS') {
             resolve(event.data.payload);
           } else {
@@ -208,8 +216,8 @@ export class ProjectModal implements OnInit {
           }
         }
       };
-      this.projectWorker.addEventListener('message', handler);
-      this.projectWorker.postMessage({ type, payload, id });
+      worker.addEventListener('message', handler);
+      worker.postMessage({ type, payload, id });
     });
   }
 
@@ -222,6 +230,13 @@ export class ProjectModal implements OnInit {
 
   ngOnInit() {
     this.loadProjects();
+  }
+
+  ngOnDestroy() {
+    if (this.projectWorker) {
+      this.projectWorker.terminate();
+      this.projectWorker = null;
+    }
   }
 
   async loadProjects() {

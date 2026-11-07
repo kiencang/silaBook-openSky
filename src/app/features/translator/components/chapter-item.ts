@@ -1027,9 +1027,19 @@ ${htmlBody}
       
       const newWindow = window.open(url, '_blank');
       if (!newWindow) {
+        URL.revokeObjectURL(url);
         this.toast.error('Vui lòng cho phép popup để nhận PDF');
         return;
       }
+      let revoked = false;
+      const cleanupUrl = () => {
+        if (!revoked) {
+          revoked = true;
+          URL.revokeObjectURL(url);
+        }
+      };
+      newWindow.addEventListener('afterprint', () => setTimeout(cleanupUrl, 1000), { once: true });
+      setTimeout(cleanupUrl, 60000);
       this.toast.success('Đang tạo bản PDF chuẩn bị tải...');
     } catch (e: unknown) {
       console.error('Error opening PDF print:', e);

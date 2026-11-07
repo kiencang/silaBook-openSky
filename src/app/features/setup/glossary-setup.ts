@@ -4,7 +4,7 @@ import { BookStore } from '../../core/book.store';
 import { ToastService } from '../../core/toast.service';
 import { hasSecureApiKey } from '../../core/crypto-storage.util';
 import { GeminiClient, parseGeminiError, isQuotaError } from '../../core/gemini';
-import { CustomModel, getCustomModels } from '../../core/openrouter';
+import { CustomModel, getCustomModels, escapeMarkdownCell } from '../../core/openrouter';
 import { MatIconModule } from '@angular/material/icon';
 import { FormsModule } from '@angular/forms';
 import { MarkdownTableEditorComponent } from '../../shared/components/markdown-table-editor.component';
@@ -423,7 +423,7 @@ export class GlossarySetup {
         if (deduplicatedGlossary.length > 0) {
           result = '| Tiếng Anh | Từ loại | Tiếng Việt | Ghi chú văn cảnh |\n|---|---|---|---|\n';
           for (const pt of deduplicatedGlossary) {
-            result += `| ${pt.english || ''} | ${pt.pos || ''} | ${pt.vietnamese || ''} | ${pt.contextNotes || ''} |\n`;
+            result += `| ${escapeMarkdownCell(pt.english)} | ${escapeMarkdownCell(pt.pos)} | ${escapeMarkdownCell(pt.vietnamese)} | ${escapeMarkdownCell(pt.contextNotes)} |\n`;
           }
         }
 
@@ -543,10 +543,10 @@ export class GlossarySetup {
           const row = json[i];
           if (!row || row.length === 0) continue;
           
-          const eng = row[engIdx] ? String(row[engIdx]).trim().replace(/\|/g, '-') : '';
-          const pos = row[posIdx] ? String(row[posIdx]).trim().replace(/\|/g, '-') : '';
-          const vi = row[viIdx] ? String(row[viIdx]).trim().replace(/\|/g, '-') : '';
-          const note = row[noteIdx] ? String(row[noteIdx]).trim().replace(/\|/g, '-') : '';
+          const eng = row[engIdx] ? escapeMarkdownCell(row[engIdx]) : '';
+          const pos = row[posIdx] ? escapeMarkdownCell(row[posIdx]) : '';
+          const vi = row[viIdx] ? escapeMarkdownCell(row[viIdx]) : '';
+          const note = row[noteIdx] ? escapeMarkdownCell(row[noteIdx]) : '';
 
           if (!eng && !pos && !vi && !note) continue; // Bỏ qua dòng hoàn toàn trống
 

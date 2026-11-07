@@ -1,4 +1,4 @@
-import { getConfiguredMarked } from './marked-setup';
+import { parseMarkdownWithImages } from './marked-setup';
 
 function escapeXml(val: string | null | undefined): string {
   if (!val) return '';
@@ -167,22 +167,12 @@ export class EpubExporter {
       zip.file(`OEBPS/${img.fileName}`, base64Clean || '', { base64: true });
     });
 
-    const marked = getConfiguredMarked();
-    let oldImages: Record<string, string> | undefined;
-    if (typeof window !== 'undefined') {
-      oldImages = window.__SILA_IMAGES__;
-      const mappedImages: Record<string, string> = {};
-      allImages.forEach((img) => {
-        mappedImages[img.key] = img.fileName;
-      });
-      window.__SILA_IMAGES__ = mappedImages;
-    }
+    const mappedImages: Record<string, string> = {};
+    allImages.forEach((img) => {
+      mappedImages[img.key] = img.fileName;
+    });
 
-    const rawHtmlContent = await marked.parse(markdownContent);
-
-    if (typeof window !== 'undefined') {
-      window.__SILA_IMAGES__ = oldImages;
-    }
+    const rawHtmlContent = parseMarkdownWithImages(markdownContent, mappedImages);
 
     const { xhtml: htmlContent, tocEntries } =
       convertHtmlToStrictXhtmlAndExtractToc(rawHtmlContent);

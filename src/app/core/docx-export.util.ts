@@ -576,9 +576,10 @@ function parseMarkdownTable(tableLines: string[], getFootnoteId?: (k: string) =>
 
   for (let rIndex = 0; rIndex < rowsData.length; rIndex++) {
     const line = rowsData[rIndex];
-    const cols = line.split('|').map(s => s.trim());
-    if (line.startsWith('|')) cols.shift();
-    if (line.endsWith('|')) cols.pop();
+    const safeLine = line.replace(/\$([^$\n]+)\$/g, m => m.replace(/(?<!\\)\|/g, '\\|'));
+    const cols = safeLine.split(/(?<!\\)\|/).map(s => s.trim().replace(/\\\|/g, '|'));
+    if (safeLine.startsWith('|')) cols.shift();
+    if (safeLine.endsWith('|') && !safeLine.endsWith('\\|')) cols.pop();
 
     const cells = cols.map(colText => {
       return new TableCell({
@@ -701,11 +702,19 @@ export class DocxExporter {
     // Strip ONLY internal Markdown links (but not images) and internal HTML links before processing
     let cleanedContent = markdownContent.replace(/(^|[^!])\[([^\]]+)\]\(#[^)]*\)/g, '$1$2');
     cleanedContent = cleanedContent.replace(/<a\b[^>]*href=["']#[^"']*["'][^>]*>(.*?)<\/a>/gi, '$1');
-    cleanedContent = cleanedContent.replace(/<br\s*\/?>/gi, '\n');
+    // Tự động chuyển đổi các bảng HTML (<table>...</table>) thành Bảng Markdown (| ... |) trước khi xử lý <br>
+    cleanedContent = convertHtmlTablesToMarkdown(cleanedContent);
+    // Chuyển <br> trong dòng bảng Markdown thành khoảng trắng để không làm đứt hàng bảng, còn ngoài bảng thì chuyển thành \n
+    cleanedContent = cleanedContent
+      .split('\n')
+      .map(line =>
+        line.trim().startsWith('|')
+          ? line.replace(/<br\s*\/?>/gi, ' ')
+          : line.replace(/<br\s*\/?>/gi, '\n')
+      )
+      .join('\n');
     // Chuẩn hóa \[...\], \(...\), và các khối $$ nhiều dòng
     cleanedContent = normalizeMathDelimiters(cleanedContent);
-    // Tự động chuyển đổi các bảng HTML (<table>...</table>) thành Bảng Markdown (| ... |)
-    cleanedContent = convertHtmlTablesToMarkdown(cleanedContent);
 
     const activeImages: Record<string, { dataUrl: string; width: number; height: number }> = {};
     if (images) {

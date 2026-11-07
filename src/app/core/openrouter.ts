@@ -7,6 +7,11 @@ export interface CustomModel {
   name: string;
 }
 
+export function escapeMarkdownCell(val: unknown): string {
+  if (val === null || val === undefined) return '';
+  return String(val).trim().replace(/\\?\|/g, '\\|').replace(/\r?\n/g, '<br>');
+}
+
 export const DEFAULT_CUSTOM_MODELS: CustomModel[] = [
   { id: '~google/gemini-flash-latest', name: 'Google Gemini Flash Latest' },
   { id: 'openai/gpt-5.6-luna', name: 'OpenAI GPT-5.6 Luna' },
@@ -374,14 +379,14 @@ export class OpenRouterClient {
       const lines = glossaryTable.split('\n').filter(l => l.trim().startsWith('|'));
       if (lines.length <= 2) return { text: glossaryTable, usedCount: 0, totalCount: 0 };
 
-      const headers = lines[0].split('|').map(h => h.trim()).filter(h => h);
+      const headers = lines[0].split(/(?<!\\)\|/).map(h => h.trim()).filter(h => h);
       if (headers.length < 4 || headers[0] !== 'Tiếng Anh') return { text: glossaryTable, usedCount: 0, totalCount: 0 };
 
       const fullGlossary: { english: string; pos: string; vietnamese: string; notes: string }[] = [];
       const compactList: { english: string; pos: string }[] = [];
       
       for (let i = 2; i < lines.length; i++) {
-        const cells = lines[i].split('|').map(c => c.trim());
+        const cells = lines[i].split(/(?<!\\)\|/).map(c => c.trim().replace(/\\\|/g, '|'));
         if (cells.length >= 5) {
            const english = cells[1];
            const pos = cells[2];
@@ -400,8 +405,8 @@ export class OpenRouterClient {
         prompt = "Glossary Terms:\n{{danh sách thuật ngữ}}\n\nText Block:\n{{nội dung cần dịch}}";
       }
       
-      prompt = prompt.replace('{{danh sách thuật ngữ}}', JSON.stringify(compactList));
-      prompt = prompt.replace('{{nội dung cần dịch}}', text);
+      prompt = prompt.replace('{{danh sách thuật ngữ}}', () => JSON.stringify(compactList));
+      prompt = prompt.replace('{{nội dung cần dịch}}', () => text);
       prompt += '\nReturn JSON format: {"items": [{"english": "...", "pos": "..."}]}';
 
       const responseText = await this.callChatCompletions(
@@ -485,7 +490,7 @@ export class OpenRouterClient {
       
       let resultTable = '| Tiếng Anh | Từ loại | Tiếng Việt | Ghi chú văn cảnh |\n|---|---|---|---|\n';
       for (const item of filteredGlossary) {
-        resultTable += `| ${item.english} | ${item.pos} | ${item.vietnamese} | ${item.notes} |\n`;
+        resultTable += `| ${escapeMarkdownCell(item.english)} | ${escapeMarkdownCell(item.pos)} | ${escapeMarkdownCell(item.vietnamese)} | ${escapeMarkdownCell(item.notes)} |\n`;
       }
       
       return { text: resultTable, usedCount: filteredGlossary.length, totalCount: fullGlossary.length };
@@ -506,10 +511,10 @@ export class OpenRouterClient {
         prompt = "Raw Pronoun Table:\n{{bảng đại từ}}\n\nFull Book Content:\n{{nội dung}}\n\nPlease normalize it.";
       }
       
-      prompt = prompt.replace('{{tên sách}}', bookTitle || 'Không rõ');
-      prompt = prompt.replace('{{tên tác giả}}', author || 'Vô danh');
-      prompt = prompt.replace('{{bảng đại từ}}', rawPronounTable);
-      prompt = prompt.replace('{{nội dung}}', text);
+      prompt = prompt.replace('{{tên sách}}', () => bookTitle || 'Không rõ');
+      prompt = prompt.replace('{{tên tác giả}}', () => author || 'Vô danh');
+      prompt = prompt.replace('{{bảng đại từ}}', () => rawPronounTable);
+      prompt = prompt.replace('{{nội dung}}', () => text);
 
       let result = await this.callChatCompletions(model, [
         { role: 'system', content: si },
@@ -572,38 +577,38 @@ export class OpenRouterClient {
     let finalPrompt = await this.loadPromptText(promptFileName) || '';
     
     if (finalPrompt) {
-      finalPrompt = finalPrompt.replace('{{tên sách}}', bookTitle || 'Không rõ');
-      finalPrompt = finalPrompt.replace('{{tên tác giả}}', author || 'Vô danh');
+      finalPrompt = finalPrompt.replace('{{tên sách}}', () => bookTitle || 'Không rõ');
+      finalPrompt = finalPrompt.replace('{{tên tác giả}}', () => author || 'Vô danh');
       
       if (usePronouns && pronounTable) {
         const pronounBlock = `<pronouns_rules>\n**Bảng đại từ nhân xưng:**\n${pronounTable}\n\n*LƯU Ý: Ở trên là Bảng đại từ nhân xưng tham chiếu. Bạn BẮT BUỘC phải sử dụng cấu trúc xưng hô này cho cách người kể chuyện gọi nhân vật (ngôi thứ 3) và trong các cuộc hội thoại thông thường. TUY NHIÊN, bạn được phép điều chỉnh linh hoạt cách xưng hô (ngôi thứ 1 & 2) nếu bối cảnh cảm xúc của câu chuyện thực sự đòi hỏi sự chuyển đổi.*\n</pronouns_rules>`;
-        finalPrompt = finalPrompt.replace('{{đại từ nhân xưng}}', pronounBlock);
+        finalPrompt = finalPrompt.replace('{{đại từ nhân xưng}}', () => pronounBlock);
       } else {
         finalPrompt = finalPrompt.replace('{{đại từ nhân xưng}}', '');
       }
 
       if (activeGlossary) {
         const glossaryBlock = `<glossary_rules>\n**Bảng thuật ngữ / Từ khó:**\n${activeGlossary}\n\n*LƯU Ý: Bảng thuật ngữ trên đây là một DANH SÁCH THAM KHẢO quan trọng, NHƯNG bạn hãy áp dụng LINH HOẠT các thuật ngữ này vào bản dịch để đảm bảo tính thống nhất chuyên môn/từ ngữ toàn cục của cuốn sách. Điều cần ghi nhớ là đừng ép buộc áp dụng một cách cứng nhắc nếu ngữ cảnh cụ thể của đoạn văn hoàn toàn khác.*\n</glossary_rules>`;
-        finalPrompt = finalPrompt.replace('{{thuật ngữ}}', glossaryBlock);
+        finalPrompt = finalPrompt.replace('{{thuật ngữ}}', () => glossaryBlock);
       } else {
         finalPrompt = finalPrompt.replace('{{thuật ngữ}}', '');
       }
 
       if (contextSummary) {
          const contextBlock = `<previous_chunk_handoff>\n**Tóm tắt bối cảnh từ phần trước để tham khảo:**\n${contextSummary}\n\n*LƯU Ý: Đây là thông tin nối tiếp từ khối văn bản trước (diễn biến sự kiện, trạng thái nhân vật, hoặc luồng logic/lập luận, **cùng với sắc thái/giọng điệu chung**). Hãy dùng nó để nắm bắt ngữ cảnh nhằm đảm bảo tính liền mạch cho bản dịch, đặc biệt là duy trì đúng giọng điệu và cảm xúc. TUYỆT ĐỐI KHÔNG lặp lại nội dung tóm tắt này vào phần bản dịch.*\n</previous_chunk_handoff>`;
-         finalPrompt = finalPrompt.replace('{{tóm tắt bối cảnh}}', contextBlock);
+         finalPrompt = finalPrompt.replace('{{tóm tắt bối cảnh}}', () => contextBlock);
       } else {
          finalPrompt = finalPrompt.replace('{{tóm tắt bối cảnh}}', '');
       }
 
       if (customInstructions) {
          const instructionsBlock = `<custom_instructions>\n**Chỉ thị bổ sung khi dịch:**\n${customInstructions}\n</custom_instructions>`;
-         finalPrompt = finalPrompt.replace('{{chỉ thị bổ sung}}', instructionsBlock);
+         finalPrompt = finalPrompt.replace('{{chỉ thị bổ sung}}', () => instructionsBlock);
       } else {
          finalPrompt = finalPrompt.replace('{{chỉ thị bổ sung}}', '');
       }
 
-      finalPrompt = finalPrompt.replace('{{nội dung cần dịch}}', '\n' + text);
+      finalPrompt = finalPrompt.replace('{{nội dung cần dịch}}', () => '\n' + text);
       finalPrompt = finalPrompt.replace(/\n\s*\n\s*\n/g, '\n\n');
     } else {
       finalPrompt = `Translate the following text into Vietnamese. Maintain original Markdown structure:\n\n${text}`;
@@ -629,9 +634,9 @@ export class OpenRouterClient {
 
     let finalPrompt = pp || `Hãy phân tích đoạn văn bản nguồn dưới đây và lập Bảng đại từ nhân xưng chuẩn xác nhất.\n\n<metadata>\n- Tên sách: {{tên sách}}\n- Tác giả: {{tên tác giả}}\n</metadata>\n\n<source_text>\n{{nội dung}}\n</source_text>`;
     
-    finalPrompt = finalPrompt.replace('{{tên sách}}', bookTitle || 'Không rõ');
-    finalPrompt = finalPrompt.replace('{{tên tác giả}}', author || 'Vô danh');
-    finalPrompt = finalPrompt.replace('{{nội dung}}', text);
+    finalPrompt = finalPrompt.replace('{{tên sách}}', () => bookTitle || 'Không rõ');
+    finalPrompt = finalPrompt.replace('{{tên tác giả}}', () => author || 'Vô danh');
+    finalPrompt = finalPrompt.replace('{{nội dung}}', () => text);
     finalPrompt += '\n\nIMPORTANT: Return a JSON object with a "characters" array containing objects with keys: originalName, gender, ageGroup, role, translatedTitles, narratorPronoun, dialoguePronouns, reasoning, notes. Example: {"characters": [...]}';
 
     const responseText = await this.callChatCompletions(
@@ -743,7 +748,7 @@ export class OpenRouterClient {
     if (arr.length > 0) {
       let md = '| Nhân vật (Original) | Giới tính | Ước lượng độ tuổi | Đặc điểm & Vai trò | Xưng hô / Tước vị (Dịch) | Ngôi thứ 3 (Narrator) | Xưng - Hô (Với người khác) | Lý do | Ghi chú |\n|---|---|---|---|---|---|---|---|---|\n';
       for (const pt of arr) {
-        md += `| ${pt.originalName || ''} | ${pt.gender || ''} | ${pt.ageGroup || ''} | ${pt.role || ''} | ${pt.translatedTitles || ''} | ${pt.narratorPronoun || ''} | ${pt.dialoguePronouns || ''} | ${pt.reasoning || ''} | ${pt.notes || ''} |\n`;
+        md += `| ${escapeMarkdownCell(pt.originalName)} | ${escapeMarkdownCell(pt.gender)} | ${escapeMarkdownCell(pt.ageGroup)} | ${escapeMarkdownCell(pt.role)} | ${escapeMarkdownCell(pt.translatedTitles)} | ${escapeMarkdownCell(pt.narratorPronoun)} | ${escapeMarkdownCell(pt.dialoguePronouns)} | ${escapeMarkdownCell(pt.reasoning)} | ${escapeMarkdownCell(pt.notes)} |\n`;
       }
       return md;
     }
@@ -756,9 +761,9 @@ export class OpenRouterClient {
 
     let finalPrompt = gp || `Hãy phân tích nội dung và trích xuất Bảng thuật ngữ chuyên ngành/Từ khó dịch tiếng Anh - Việt.\n\n<metadata>\n- Tên sách: {{tên sách}}\n- Tác giả: {{tên tác giả}}\n</metadata>\n\n<source_text>\n{{nội dung}}\n</source_text>`;
     
-    finalPrompt = finalPrompt.replace('{{tên sách}}', bookTitle || 'Không rõ');
-    finalPrompt = finalPrompt.replace('{{tên tác giả}}', author || 'Vô danh');
-    finalPrompt = finalPrompt.replace('{{nội dung}}', text);
+    finalPrompt = finalPrompt.replace('{{tên sách}}', () => bookTitle || 'Không rõ');
+    finalPrompt = finalPrompt.replace('{{tên tác giả}}', () => author || 'Vô danh');
+    finalPrompt = finalPrompt.replace('{{nội dung}}', () => text);
     finalPrompt += '\n\nIMPORTANT: Return a JSON object with a "glossary" array containing objects with keys: english, pos, vietnamese, contextNotes. Example: {"glossary": [...]}';
 
     const responseText = await this.callChatCompletions(
@@ -852,7 +857,7 @@ export class OpenRouterClient {
     if (arr.length > 0) {
       let md = '| Tiếng Anh | Từ loại | Tiếng Việt | Ghi chú văn cảnh |\n|---|---|---|---|\n';
       for (const pt of arr) {
-        md += `| ${pt.english || ''} | ${pt.pos || ''} | ${pt.vietnamese || ''} | ${pt.contextNotes || ''} |\n`;
+        md += `| ${escapeMarkdownCell(pt.english)} | ${escapeMarkdownCell(pt.pos)} | ${escapeMarkdownCell(pt.vietnamese)} | ${escapeMarkdownCell(pt.contextNotes)} |\n`;
       }
       return md;
     }
@@ -865,9 +870,9 @@ export class OpenRouterClient {
 
     let finalPrompt = p || `Phân tích văn bản và trả về JSON cấu hình theo yêu cầu.\n\n<source_text>\n{{nội dung}}\n</source_text>`;
     
-    finalPrompt = finalPrompt.replace('{{tên sách}}', bookTitle || 'Không rõ');
-    finalPrompt = finalPrompt.replace('{{tên tác giả}}', author || 'Vô danh');
-    finalPrompt = finalPrompt.replace('{{nội dung}}', text);
+    finalPrompt = finalPrompt.replace('{{tên sách}}', () => bookTitle || 'Không rõ');
+    finalPrompt = finalPrompt.replace('{{tên tác giả}}', () => author || 'Vô danh');
+    finalPrompt = finalPrompt.replace('{{nội dung}}', () => text);
 
     let result = await this.callChatCompletions(
       model,
@@ -935,7 +940,7 @@ export class OpenRouterClient {
       const systemInstruction = si || 'You are an expert summarizer. Provide a concise context summary in Vietnamese for the next chapter.';
       const promptTemplate = p || 'Hãy tóm tắt nội dung bản dịch dưới đây để làm thông tin bối cảnh (context) cho việc dịch phần tiếp theo:\n\n{{nội dung}}';
       
-      const finalPrompt = promptTemplate.replace('{{nội dung}}', translatedText);
+      const finalPrompt = promptTemplate.replace('{{nội dung}}', () => translatedText);
 
       const result = await this.callChatCompletions(model, [
         { role: 'system', content: systemInstruction },

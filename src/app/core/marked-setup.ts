@@ -9,6 +9,8 @@ declare global {
 }
 
 let isConfigured = false;
+let hasImagesOverride = false;
+let activeImagesOverride: Record<string, string> | undefined = undefined;
 
 /**
  * Biểu thức chính quy chuẩn Pandoc `tex_math_dollars`:
@@ -319,8 +321,12 @@ export function getConfiguredMarked() {
         },
         image(token) {
           let href = token.href || '';
-          if (typeof window !== 'undefined' && window.__SILA_IMAGES__) {
-            const imgDict = window.__SILA_IMAGES__;
+          const imgDict = hasImagesOverride
+            ? activeImagesOverride
+            : typeof window !== 'undefined'
+              ? window.__SILA_IMAGES__
+              : undefined;
+          if (imgDict) {
             if (imgDict[href]) {
               href = imgDict[href];
             } else {
@@ -349,6 +355,23 @@ export function getConfiguredMarked() {
     isConfigured = true;
   }
   return marked;
+}
+
+export function parseMarkdownWithImages(
+  markdown: string,
+  imagesMap?: Record<string, string>
+): string {
+  const markedInstance = getConfiguredMarked();
+  const prevHasOverride = hasImagesOverride;
+  const prevOverride = activeImagesOverride;
+  hasImagesOverride = true;
+  activeImagesOverride = imagesMap;
+  try {
+    return markedInstance.parse(markdown) as string;
+  } finally {
+    hasImagesOverride = prevHasOverride;
+    activeImagesOverride = prevOverride;
+  }
 }
 
 

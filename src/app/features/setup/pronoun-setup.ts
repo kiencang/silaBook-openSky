@@ -4,7 +4,7 @@ import { BookStore } from '../../core/book.store';
 import { ToastService } from '../../core/toast.service';
 import { hasSecureApiKey } from '../../core/crypto-storage.util';
 import { GeminiClient, parseGeminiError, isQuotaError } from '../../core/gemini';
-import { CustomModel, getCustomModels } from '../../core/openrouter';
+import { CustomModel, getCustomModels, escapeMarkdownCell } from '../../core/openrouter';
 import { MatIconModule } from '@angular/material/icon';
 import { FormsModule } from '@angular/forms';
 import { MarkdownTableEditorComponent } from '../../shared/components/markdown-table-editor.component';
@@ -379,7 +379,7 @@ export class PronounSetup {
         if (allPronounItems.length > 0) {
           rawResult = '| Nhân vật (Original) | Giới tính | Ước lượng độ tuổi | Đặc điểm & Vai trò | Xưng hô / Tước vị (Dịch) | Ngôi thứ 3 (Narrator) | Xưng - Hô (Với người khác) | Lý do | Ghi chú |\n|---|---|---|---|---|---|---|---|---|\n';
           for (const pt of allPronounItems) {
-            rawResult += `| ${pt.originalName || ''} | ${pt.gender || ''} | ${pt.ageGroup || ''} | ${pt.role || ''} | ${pt.translatedTitles || ''} | ${pt.narratorPronoun || ''} | ${pt.dialoguePronouns || ''} | ${pt.reasoning || ''} | ${pt.notes || ''} |\n`;
+            rawResult += `| ${escapeMarkdownCell(pt.originalName)} | ${escapeMarkdownCell(pt.gender)} | ${escapeMarkdownCell(pt.ageGroup)} | ${escapeMarkdownCell(pt.role)} | ${escapeMarkdownCell(pt.translatedTitles)} | ${escapeMarkdownCell(pt.narratorPronoun)} | ${escapeMarkdownCell(pt.dialoguePronouns)} | ${escapeMarkdownCell(pt.reasoning)} | ${escapeMarkdownCell(pt.notes)} |\n`;
           }
         }
 

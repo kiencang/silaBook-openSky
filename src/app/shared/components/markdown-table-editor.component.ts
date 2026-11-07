@@ -372,9 +372,9 @@ export class MarkdownTableEditorComponent {
       }
       let cleaned = line;
       if (cleaned.startsWith('|')) cleaned = cleaned.substring(1);
-      if (cleaned.endsWith('|')) cleaned = cleaned.substring(0, cleaned.length - 1);
+      if (cleaned.endsWith('|') && !cleaned.endsWith('\\|')) cleaned = cleaned.substring(0, cleaned.length - 1);
       
-      const cells = cleaned.split('|').map(c => c.trim().replace(/<br\s*\/?>/gi, '\n'));
+      const cells = cleaned.split(/(?<!\\)\|/).map(c => c.trim().replace(/\\\|/g, '|').replace(/<br\s*\/?>/gi, '\n'));
       parsedRows.push(cells);
     }
     
@@ -396,7 +396,7 @@ export class MarkdownTableEditorComponent {
     let newTableStr = '';
     
     // Header
-    const headers = data[0].map(h => h.replace(/\n/g, '<br>'));
+    const headers = data[0].map(h => h.replace(/\\?\|/g, '\\|').replace(/\r?\n/g, '<br>'));
     newTableStr += '| ' + headers.join(' | ') + ' |\n';
     
     // Delimiter
@@ -404,8 +404,8 @@ export class MarkdownTableEditorComponent {
     
     // Body
     for (let i = 1; i < data.length; i++) {
-        // Escape newlines in cells
-        const row = data[i].map(c => c.replace(/\n/g, '<br>'));
+        // Escape pipes and newlines in cells
+        const row = data[i].map(c => c.replace(/\\?\|/g, '\\|').replace(/\r?\n/g, '<br>'));
         newTableStr += '| ' + row.join(' | ') + ' |\n';
     }
 

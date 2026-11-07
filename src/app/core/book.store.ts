@@ -2,7 +2,7 @@ import { Injectable, signal, effect, PLATFORM_ID, inject, untracked, computed } 
 import { isPlatformBrowser } from '@angular/common';
 import { DbService, Project, ProjectMeta, SplitSettings } from './db';
 import { ToastService } from './toast.service';
-import { getConfiguredMarked } from './marked-setup';
+import { parseMarkdownWithImages } from './marked-setup';
 import { EpubExporter } from './epub-export.util';
 import { DocxExporter } from './docx-export.util';
 import { OFFLINE_READER_SCRIPT, OFFLINE_READER_STYLES, OFFLINE_READER_TOOLBAR_HTML, PRINT_PDF_STYLES } from './html-export.util';
@@ -285,7 +285,10 @@ export class BookStore {
     
     this.fileName.set(null);
     this.rawMarkdown.set(null);
+    this.images.set(undefined);
     this.pdfTask.set(undefined);
+    this.pronounTask.set(undefined);
+    this.glossaryTask.set(undefined);
     this.chapters.set([]);
     this.splitSettings.set(undefined);
     this.customInstructions.set(undefined);
@@ -376,9 +379,13 @@ export class BookStore {
     this.glossaryVersions.set([]);
     this.activeGlossaryVersionId.set(undefined);
     this.useGlossary.set(false);
+    this.fileName.set(null);
+    this.rawMarkdown.set(null);
+    this.images.set(undefined);
     this.pdfTask.set(undefined);
     this.pronounTask.set(undefined);
     this.glossaryTask.set(undefined);
+    this.chapters.set([]);
     this.splitSettings.set(undefined);
     this.customInstructions.set(undefined);
     this.phase.set(0);
@@ -564,6 +571,8 @@ export class BookStore {
     this.rawMarkdown.set(null);
     this.images.set(undefined);
     this.pdfTask.set(undefined);
+    this.pronounTask.set(undefined);
+    this.glossaryTask.set(undefined);
     this.chapters.set([]);
   }
 
@@ -572,10 +581,7 @@ export class BookStore {
 
     const name = project ? project.name : this.currentProjectName();
     const chaps = project ? project.chapters : this.chapters();
-    const tempImages = window.__SILA_IMAGES__;
-    if (project) {
-      window.__SILA_IMAGES__ = project.images;
-    }
+    const imagesInfo = project ? project.images : this.images();
 
     let combinedMarkdown = '';
     for (let i = 0; i < chaps.length; i++) {
@@ -590,14 +596,7 @@ export class BookStore {
     }
 
     try {
-      let htmlBody = '';
-      try {
-        htmlBody = await getConfiguredMarked().parse(combinedMarkdown);
-      } finally {
-        if (project) {
-          window.__SILA_IMAGES__ = tempImages;
-        }
-      }
+      const htmlBody = parseMarkdownWithImages(combinedMarkdown, imagesInfo);
       const htmlDoc = `<!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -628,9 +627,19 @@ ${htmlBody}
       
       const newWindow = window.open(url, '_blank');
       if (!newWindow) {
+        URL.revokeObjectURL(url);
         this.toastService.error('Vui lòng cho phép popup để nhận PDF');
         return;
       }
+      let revoked = false;
+      const cleanupUrl = () => {
+        if (!revoked) {
+          revoked = true;
+          URL.revokeObjectURL(url);
+        }
+      };
+      newWindow.addEventListener('afterprint', () => setTimeout(cleanupUrl, 1000), { once: true });
+      setTimeout(cleanupUrl, 60000);
       this.toastService.success('Đang tạo bản PDF chuẩn bị tải...');
     } catch (e: unknown) {
       console.error('Error opening PDF print:', e);
@@ -643,10 +652,8 @@ ${htmlBody}
 
     const name = project ? project.name : this.currentProjectName();
     const chaps = project ? project.chapters : this.chapters();
-    const tempImages = window.__SILA_IMAGES__;
-    if (project) {
-      window.__SILA_IMAGES__ = project.images;
-    }
+    const projectId = project ? project.id : this.currentProjectId();
+    const imagesInfo = project ? project.images : this.images();
 
     let combinedMarkdown = '';
     for (let i = 0; i < chaps.length; i++) {
@@ -661,20 +668,13 @@ ${htmlBody}
     }
 
     try {
-      let htmlBody = '';
-      try {
-        htmlBody = await getConfiguredMarked().parse(combinedMarkdown);
-      } finally {
-        if (project) {
-          window.__SILA_IMAGES__ = tempImages;
-        }
-      }
+      const htmlBody = parseMarkdownWithImages(combinedMarkdown, imagesInfo);
       const htmlDoc = `<!DOCTYPE html>
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="x-sila-project-id" content="${this.currentProjectId()}">
+<meta name="x-sila-project-id" content="${projectId}">
 <meta name="x-sila-chapter-id" content="full">
 <title>${name}_silaBook_vi</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Lexend:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -728,7 +728,7 @@ ${OFFLINE_READER_SCRIPT}
       }
 
       // EPUB images
-      const imagesInfo = project && project.images ? project.images : window.__SILA_IMAGES__;
+      const imagesInfo = project ? project.images : this.images();
 
       const blob = await EpubExporter.generateEpub(name || 'Untitled', combinedMarkdown, imagesInfo);
       
@@ -767,7 +767,7 @@ ${OFFLINE_READER_SCRIPT}
       }
 
       // DOCX images
-      const imagesInfo = project && project.images ? project.images : window.__SILA_IMAGES__;
+      const imagesInfo = project ? project.images : this.images();
 
       const blob = await DocxExporter.generateDocx(name || 'Untitled', combinedMarkdown, imagesInfo);
       

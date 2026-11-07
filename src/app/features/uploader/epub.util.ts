@@ -51,7 +51,13 @@ export async function processEpubContent(file: File, turndownService: TurndownSe
   const opfDoc = parser.parseFromString(opfXml, 'application/xml');
   const allOpfElements = Array.from(opfDoc.getElementsByTagName('*'));
   
-  // 3. Get manifest items
+  // 3. Get manifest items & detect cover image ID (EPUB 2 <meta name="cover"> / EPUB 3 properties="cover-image")
+  const metaCoverEl = allOpfElements.find(
+    el => el.localName === 'meta' && el.getAttribute('name')?.toLowerCase() === 'cover'
+  );
+  const coverMetaItemId = metaCoverEl?.getAttribute('content') || '';
+  let coverPlaceholderId: string | undefined;
+
   const manifestItems = allOpfElements.filter(el => el.localName === 'item');
   const itemsMap = new Map<string, string>(); // id -> href
   
@@ -63,6 +69,7 @@ export async function processEpubContent(file: File, turndownService: TurndownSe
     const id = item.getAttribute('id');
     const href = item.getAttribute('href');
     const mediaType = item.getAttribute('media-type');
+    const properties = item.getAttribute('properties') || '';
     
     if (id && href) itemsMap.set(id, href);
     
@@ -90,6 +97,13 @@ export async function processEpubContent(file: File, turndownService: TurndownSe
             // Lưu key phụ để tra cứu dễ hơn
             const rawFilename = href.split('/').pop();
             if (rawFilename) hrefToImgId.set(rawFilename, placeholderId);
+
+            const isCoverItem =
+              properties.split(/\s+/).includes('cover-image') ||
+              (!!id && !!coverMetaItemId && id === coverMetaItemId);
+            if (isCoverItem && !coverPlaceholderId) {
+              coverPlaceholderId = placeholderId;
+            }
           } catch (e) {
             console.warn(`Lỗi load ảnh: ${href}`, e);
           }
@@ -131,11 +145,31 @@ export async function processEpubContent(file: File, turndownService: TurndownSe
         // Replace image src and rewrite internal links in HTML
         const pDoc = parser.parseFromString(processedHtml, 'text/html');
 
+        // Chuyển đổi các thẻ <image> (thường nằm trong <svg> ở trang bìa EPUB) sang thẻ <img> chuẩn
+        const svgImages = Array.from(pDoc.querySelectorAll('image'));
+        for (const svgImg of svgImages) {
+          const imgHref =
+            svgImg.getAttribute('xlink:href') ||
+            svgImg.getAttribute('href') ||
+            svgImg.getAttributeNS('http://www.w3.org/1999/xlink', 'href') ||
+            svgImg.getAttribute('src');
+          if (imgHref) {
+            const newImg = pDoc.createElement('img');
+            newImg.setAttribute('src', imgHref);
+            const parentSvg = svgImg.closest('svg');
+            if (parentSvg && !(parentSvg.textContent || '').trim()) {
+              parentSvg.replaceWith(newImg);
+            } else {
+              svgImg.replaceWith(newImg);
+            }
+          }
+        }
+
         // Remove manual internal link generation, Turndown will strip them and keep text only.
 
         const imgs = Array.from(pDoc.getElementsByTagName('img'));
         for (const img of imgs) {
-           const src = img.getAttribute('src');
+           const src = img.getAttribute('src') || img.getAttribute('xlink:href') || img.getAttribute('href');
            if (src) {
                const htmlDirPath = decodedHref.substring(0, decodedHref.lastIndexOf('/') + 1);
                const parts = (htmlDirPath + src).split('/');
@@ -169,6 +203,11 @@ export async function processEpubContent(file: File, turndownService: TurndownSe
         // Fallback 5: Bắt lỗi từng tệp HTML, không chết nguyên EPUB
         console.warn(`Lỗi khi trích xuất trang ${filePath}`, err);
       }
+  }
+
+  // Nếu ảnh bìa chỉ được khai báo trong OPF (meta cover / properties="cover-image") mà không nằm trong trang spine nào
+  if (coverPlaceholderId && fullMarkdown && !fullMarkdown.includes(coverPlaceholderId)) {
+    fullMarkdown = `![](${coverPlaceholderId})\n\n---\n\n` + fullMarkdown;
   }
   
   if (!fullMarkdown) {
