@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, effect, OnInit, OnDestroy } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { FormsModule } from '@angular/forms';
 import { BookStore } from '../../../core/book.store';
@@ -200,13 +200,31 @@ import { CustomModel, getCustomModels, getCustomEconomyModels } from '../../../c
     </div>
   `
 })
-export class TranslatorConfigComponent implements OnInit {
+export class TranslatorConfigComponent implements OnInit, OnDestroy {
   store = inject(BookStore);
   models = signal<CustomModel[]>(getCustomModels());
   economyModels = signal<CustomModel[]>(getCustomEconomyModels());
   isCustomInstructionsExpanded = signal(!!this.store.customInstructions());
+  private lastSyncedProjectId: string | null = this.store.currentProjectId();
 
   constructor() {
+    effect(() => {
+      const projectId = this.store.currentProjectId();
+      const customInstr = this.store.customInstructions() || '';
+
+      if (projectId !== this.lastSyncedProjectId) {
+        this.lastSyncedProjectId = projectId;
+        clearTimeout(this.countTimeout);
+        this.instructionText.set(customInstr);
+        this.displayedWordCount.set(this.countWords(customInstr));
+        this.isCustomInstructionsExpanded.set(!!customInstr);
+      } else if (customInstr !== this.instructionText()) {
+        clearTimeout(this.countTimeout);
+        this.instructionText.set(customInstr);
+        this.displayedWordCount.set(this.countWords(customInstr));
+      }
+    });
+
     if (typeof window !== 'undefined') {
       window.addEventListener('openrouter-models-changed', () => {
         this.models.set(getCustomModels());
@@ -247,6 +265,10 @@ export class TranslatorConfigComponent implements OnInit {
         this.onEconomyModelChange(fallbackEco);
       }
     }
+  }
+
+  ngOnDestroy() {
+    clearTimeout(this.countTimeout);
   }
 
   onTranslationModelChange(modelId: string) {
