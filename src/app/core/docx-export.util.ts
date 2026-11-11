@@ -262,11 +262,13 @@ function createOmmlComponentFromLatex(latex: string, displayMode = false): Impor
     }
 
     // 5. Parse chuỗi XML OMML thành cây đối tượng XmlComponent của thư viện docx
-    const parsedWrapper = ImportedXmlComponent.fromXmlString(ommlXml) as any;
+    const parsedWrapper = ImportedXmlComponent.fromXmlString(ommlXml) as unknown as {
+      root?: ImportedXmlComponent[];
+    };
     if (parsedWrapper && Array.isArray(parsedWrapper.root) && parsedWrapper.root.length > 0) {
-      return parsedWrapper.root[0] as ImportedXmlComponent;
+      return parsedWrapper.root[0];
     }
-    return parsedWrapper;
+    return parsedWrapper as unknown as ImportedXmlComponent;
   } catch (e) {
     console.warn('Failed to convert LaTeX to OMML for DOCX:', e);
     return null;
@@ -532,7 +534,11 @@ interface RunOptions {
   font?: string;
 }
 
-function createRunsFromText(text: string, getFootnoteId?: (k: string) => number, opts?: RunOptions): any[] {
+function createRunsFromText(
+  text: string,
+  getFootnoteId?: (k: string) => number,
+  opts?: RunOptions
+): (TextRun | FootnoteReferenceRun | ImportedXmlComponent)[] {
   const tokens = tokenizeInline(text, getFootnoteId);
   return tokens.map(token => {
     if (token.footnoteId) {
@@ -743,7 +749,7 @@ export class DocxExporter {
       return imgData || null;
     };
 
-    const children: any[] = [];
+    const children: (Paragraph | Table)[] = [];
     
     const linesRaw = cleanedContent.split('\n');
     const lines: string[] = [];
@@ -924,7 +930,7 @@ export class DocxExporter {
           
           text = text.replace(/\s*\{#[^}]+\}\s*$/, '');
           
-          let headingLevel: any = HeadingLevel.HEADING_1;
+          let headingLevel: (typeof HeadingLevel)[keyof typeof HeadingLevel] = HeadingLevel.HEADING_1;
           let fontSize = 36;
           let color = "1F497D";
 

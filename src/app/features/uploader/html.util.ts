@@ -51,19 +51,78 @@ export function extractBase64Images(htmlContent: string): { html: string, images
   const parser = new DOMParser();
   const doc = parser.parseFromString(htmlContent, 'text/html');
   const images: Record<string, string> = {};
+  const timestamp = Date.now();
   let imgCounter = 0;
 
   const imgElements = doc.querySelectorAll('img');
   imgElements.forEach(img => {
-    const src = img.getAttribute('src');
-    if (src && src.startsWith('data:image/') && src.includes('base64,')) {
-      const placeholderId = `HTML_IMG_${Date.now()}_${imgCounter++}`;
-      images[placeholderId] = src;
+    const src = img.getAttribute('src')?.trim();
+    if (src && /^data:image\/[a-zA-Z0-9+.-]+;base64,/i.test(src)) {
+      const placeholderId = `HTML_IMG_${timestamp}_${imgCounter++}`;
+      images[placeholderId] = src.replace(/\s+/g, '');
       img.setAttribute('src', placeholderId);
     }
   });
 
   return { html: doc.body.innerHTML, images };
+}
+
+export function extractBase64FromMarkdown(markdownContent: string): { markdown: string, images?: Record<string, string> } {
+  if (!markdownContent || !/data:image\/[a-zA-Z0-9+.-]+;base64,/i.test(markdownContent)) {
+    return { markdown: markdownContent };
+  }
+
+  const images: Record<string, string> = {};
+  const timestamp = Date.now();
+  let imgCounter = 0;
+
+  // 1. Tách ảnh Base64 dạng cú pháp Markdown: ![alt](data:image/...;base64,...)
+  let processed = markdownContent.replace(
+    /!\[([^\]]*)\]\(\s*<?(data:image\/[a-zA-Z0-9+.-]+;base64,[A-Za-z0-9+/=\s]+?)>?(?:\s+(["'][^"']*["']))?\s*\)/gi,
+    (_match, alt: string, rawDataUrl: string, titlePart?: string) => {
+      const cleanDataUrl = rawDataUrl.replace(/\s+/g, '');
+      const placeholderId = `MD_IMG_${timestamp}_${imgCounter++}`;
+      images[placeholderId] = cleanDataUrl;
+      const titleSuffix = titlePart ? ` ${titlePart}` : '';
+      return `![${alt || ''}](${placeholderId}${titleSuffix})`;
+    }
+  );
+
+  // 2. Gỡ thẻ <p> hoặc <div> chỉ bọc duy nhất thẻ <img ... data:image/...> để tránh rò rỉ thẻ HTML thô khi xuất DOCX
+  processed = processed.replace(
+    /<(p|div)\b[^>]*>\s*(<img\b[^>]*?\bsrc\s*=\s*["']data:image\/[a-zA-Z0-9+.-]+;base64,[\s\S]*?>)\s*<\/\1>/gi,
+    (_match, _tag: string, innerImg: string) => `\n\n${innerImg}\n\n`
+  );
+
+  // 3. Tách ảnh Base64 dạng thẻ HTML <img ... src="data:image/...;base64,..." ...> nhúng trong Markdown/TXT
+  processed = processed.replace(
+    /<img\b([^>]*?)\bsrc\s*=\s*(["'])\s*(data:image\/[a-zA-Z0-9+.-]+;base64,[A-Za-z0-9+/=\s]+?)\s*\2([^>]*?)>/gi,
+    (_match, beforeSrc: string, _quote: string, rawDataUrl: string, afterSrc: string) => {
+      const cleanDataUrl = rawDataUrl.replace(/\s+/g, '');
+      const placeholderId = `MD_IMG_${timestamp}_${imgCounter++}`;
+      images[placeholderId] = cleanDataUrl;
+      const attrs = `${beforeSrc} ${afterSrc}`;
+      const altMatch = attrs.match(/\balt\s*=\s*(["'])(.*?)\1/i);
+      const alt = altMatch ? altMatch[2] : '';
+      return `![${alt}](${placeholderId})`;
+    }
+  );
+
+  // 4. Tách ảnh Base64 dạng định nghĩa tham chiếu Markdown: [ref]: data:image/...;base64,...
+  processed = processed.replace(
+    /^(\s*\[[^\]]+\]:\s*)<?(data:image\/[a-zA-Z0-9+.-]+;base64,[A-Za-z0-9+/=\s]+?)>?(?=\s|$)/gim,
+    (_match, prefix: string, rawDataUrl: string) => {
+      const cleanDataUrl = rawDataUrl.replace(/\s+/g, '');
+      const placeholderId = `MD_IMG_${timestamp}_${imgCounter++}`;
+      images[placeholderId] = cleanDataUrl;
+      return `${prefix}${placeholderId}`;
+    }
+  );
+
+  return {
+    markdown: processed,
+    images: Object.keys(images).length > 0 ? images : undefined
+  };
 }
 
 export async function processHtmlContent(file: File): Promise<{ markdown: string, images?: Record<string, string> }> {

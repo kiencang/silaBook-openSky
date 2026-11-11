@@ -123,14 +123,53 @@ const DANGEROUS_TAGS = [
 ].join(',');
 
 const URL_ATTRIBUTES = new Set(['href', 'src', 'xlink:href', 'action', 'formaction']);
-const SAFE_DATA_IMAGE_RE = /^data:image\/(png|jpeg|jpg|gif|webp)[;,]/i;
+const SAFE_DATA_IMAGE_RE = /^data:image\/(png|jpeg|jpg|gif|webp|svg\+xml)[;,]/i;
+
+function resolvePlaceholderImgSrc(rawHref: string): string {
+  if (!rawHref) return '';
+  let href = rawHref;
+  const imgDict = hasImagesOverride
+    ? activeImagesOverride
+    : typeof window !== 'undefined'
+      ? window.__SILA_IMAGES__
+      : undefined;
+  if (imgDict) {
+    if (imgDict[href]) {
+      href = imgDict[href];
+    } else {
+      const lowerHref = href.toLowerCase();
+      const normHref = href.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+      for (const [k, v] of Object.entries(imgDict)) {
+        if (
+          k.toLowerCase() === lowerHref ||
+          (normHref && k.replace(/[^a-zA-Z0-9]/g, '').toLowerCase() === normHref)
+        ) {
+          href = v;
+          break;
+        }
+      }
+    }
+  }
+  return href;
+}
+
+function extractNormalizedUriPrefix(val: string, maxLen = 64): string {
+  let result = '';
+  for (let i = 0; i < val.length && result.length < maxLen; i++) {
+    const code = val.charCodeAt(i);
+    if (code > 0x1f && !/\s/.test(val[i])) {
+      result += val[i].toLowerCase();
+    }
+  }
+  return result;
+}
 
 /**
  * Lọc sạch mã độc XSS (HTML Sanitization) bằng bộ phân tích DOMParser gốc của trình duyệt:
  * - Xóa hoàn toàn các thẻ nguy hiểm (script, iframe, object, style, link, meta, form...)
  * - Xóa 100% thuộc tính sự kiện (on*) và srcdoc
  * - Chặn giao thức thực thi mã (javascript:, vbscript:, data:) sau khi đã loại bỏ ký tự ẩn/khoảng trắng,
- *   nhưng vẫn giữ nguyên vẹn ảnh Base64 hợp lệ (png, jpeg, jpg, gif, webp), KaTeX MathML và Footnote ID.
+ *   nhưng vẫn giữ nguyên vẹn ảnh Base64 hợp lệ (png, jpeg, jpg, gif, webp, svg+xml), KaTeX MathML và Footnote ID.
  */
 export function sanitizeHtml(html: string): string {
   if (!html) return '';
@@ -143,10 +182,9 @@ export function sanitizeHtml(html: string): string {
   // 1. Loại bỏ toàn bộ các thẻ có khả năng thực thi mã hoặc làm lệch cấu trúc trang
   doc.body.querySelectorAll(DANGEROUS_TAGS).forEach((el) => el.remove());
 
-  // 2. Quét mọi phần tử còn lại để lọc sạch thuộc tính nguy hiểm
-  const allElements = doc.body.querySelectorAll('*');
-  for (let i = 0; i < allElements.length; i++) {
-    const el = allElements[i];
+  // 2. Quét mọi phần tử còn lại để lọc sạch thuộc tính nguy hiểm (trước khi lắp chuỗi Base64 lớn)
+  const allElements = Array.from(doc.body.querySelectorAll('*'));
+  for (const el of allElements) {
     const attrs = el.attributes;
     // Duyệt ngược từ cuối về đầu vì chúng ta có thể xóa thuộc tính ngay trong vòng lặp
     for (let j = attrs.length - 1; j >= 0; j--) {
@@ -159,20 +197,33 @@ export function sanitizeHtml(html: string): string {
         continue;
       }
 
-      // Kiểm tra các thuộc tính chứa đường dẫn URI
+      // Kiểm tra các thuộc tính chứa đường dẫn URI bằng cách chỉ quét tối đa 64 ký tự đầu tiên (O(1))
       if (URL_ATTRIBUTES.has(attrName) || attrName.endsWith(':href')) {
-        // Loại bỏ toàn bộ khoảng trắng và ký tự điều khiển ASCII (0x00 - 0x1F) để chống lách luật (vd: "java\tscript:")
-        const normalizedUri = attrVal.replace(/[\s\x00-\x1f]+/g, '').toLowerCase();
+        const normalizedPrefix = extractNormalizedUriPrefix(attrVal, 64);
         if (
-          normalizedUri.startsWith('javascript:') ||
-          normalizedUri.startsWith('vbscript:') ||
-          (normalizedUri.startsWith('data:') && !SAFE_DATA_IMAGE_RE.test(normalizedUri))
+          normalizedPrefix.startsWith('javascript:') ||
+          normalizedPrefix.startsWith('vbscript:') ||
+          (normalizedPrefix.startsWith('data:') && !SAFE_DATA_IMAGE_RE.test(normalizedPrefix))
         ) {
           el.removeAttribute(attrs[j].name);
         }
       }
     }
   }
+
+  // 3. Khôi phục ảnh từ kho lưu trữ (images) ở bước cuối cùng sau khi đã lọc bảo mật xong
+  doc.body.querySelectorAll('img').forEach((img) => {
+    const src = img.getAttribute('src')?.trim();
+    if (src && !src.startsWith('data:') && !src.startsWith('http://') && !src.startsWith('https://')) {
+      const resolved = resolvePlaceholderImgSrc(src);
+      if (resolved !== src) {
+        const prefix = extractNormalizedUriPrefix(resolved, 64);
+        if (!prefix.startsWith('data:') || SAFE_DATA_IMAGE_RE.test(prefix)) {
+          img.setAttribute('src', resolved);
+        }
+      }
+    }
+  });
 
   return doc.body.innerHTML;
 }
@@ -321,27 +372,10 @@ export function getConfiguredMarked() {
         },
         image(token) {
           let href = token.href || '';
-          const imgDict = hasImagesOverride
-            ? activeImagesOverride
-            : typeof window !== 'undefined'
-              ? window.__SILA_IMAGES__
-              : undefined;
-          if (imgDict) {
-            if (imgDict[href]) {
-              href = imgDict[href];
-            } else {
-              const lowerHref = href.toLowerCase();
-              const normHref = href.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-              for (const [k, v] of Object.entries(imgDict)) {
-                if (
-                  k.toLowerCase() === lowerHref ||
-                  (normHref && k.replace(/[^a-zA-Z0-9]/g, '').toLowerCase() === normHref)
-                ) {
-                  href = v;
-                  break;
-                }
-              }
-            }
+          // Trong môi trường trình duyệt có DOMParser, giữ nguyên mã giữ chỗ ngắn (SILA_IMG_..., MD_IMG_...)
+          // để bước sanitizeHtml chạy tức thì và tự lắp chuỗi Base64 ở bước cuối cùng.
+          if (typeof DOMParser === 'undefined') {
+            href = resolvePlaceholderImgSrc(href);
           }
           let out = `<img src="${escapeAttr(href)}" alt="${escapeAttr(token.text)}"`;
           if (token.title) {

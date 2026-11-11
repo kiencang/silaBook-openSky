@@ -1,4 +1,4 @@
-import { Component, input, model, output, inject, signal, computed, effect, OnInit, OnDestroy } from '@angular/core';
+import { Component, input, model, output, inject, signal, computed, effect, OnDestroy } from '@angular/core';
 
 @Component({
   selector: 'app-translating-skeleton',
@@ -113,17 +113,30 @@ import { getCustomEconomyModels } from '../../../core/openrouter';
                 <div class="flex items-center gap-2">
                   <span class="text-xs font-medium text-zinc-500 mr-2">Phiên bản:</span>
                   @for (v of chapter().versions; track v.versionNumber) {
-                    <button 
-                      (click)="store.selectVersion(chapter().id, v.versionNumber)"
-                      [class.bg-indigo-100]="chapter().activeVersionNumber === v.versionNumber"
-                      [class.text-indigo-700]="chapter().activeVersionNumber === v.versionNumber"
-                      [class.font-semibold]="chapter().activeVersionNumber === v.versionNumber"
-                      [class.bg-zinc-100]="chapter().activeVersionNumber !== v.versionNumber"
-                      [class.text-zinc-600]="chapter().activeVersionNumber !== v.versionNumber"
-                      class="px-2 py-1.5 min-w-[36px] rounded-md text-xs font-medium transition-colors hover:bg-zinc-200"
-                    >
-                      v{{ v.versionNumber }}
-                    </button>
+                    <div class="relative group">
+                      <button 
+                        (click)="store.selectVersion(chapter().id, v.versionNumber)"
+                        [class.bg-indigo-100]="chapter().activeVersionNumber === v.versionNumber"
+                        [class.text-indigo-700]="chapter().activeVersionNumber === v.versionNumber"
+                        [class.font-semibold]="chapter().activeVersionNumber === v.versionNumber"
+                        [class.bg-zinc-100]="chapter().activeVersionNumber !== v.versionNumber"
+                        [class.text-zinc-600]="chapter().activeVersionNumber !== v.versionNumber"
+                        class="tooltip-trigger px-2 py-1.5 min-w-[36px] rounded-md text-xs font-medium transition-colors hover:bg-zinc-200"
+                      >
+                        v{{ v.versionNumber }}
+                      </button>
+                      @if (v.versionNumber === 1) {
+                        <div class="pointer-events-none absolute top-full left-1/2 -translate-x-1/2 mt-2 w-72 sm:w-80 px-3 py-2 bg-zinc-900 text-white text-xs font-normal leading-relaxed rounded-lg shadow-lg whitespace-normal text-left opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-30">
+                          Đây là bản dịch đầu tiên (v1) của phần này, bạn có quyền tạo các bản dịch khác để tạo các phiên bản khác của bản dịch. Ví dụ bạn có thể điều chỉnh model dùng để dịch, chỉnh sửa bảng thuật ngữ rồi dịch lại phần này hoặc dịch lại toàn cuốn sách. Có tối đa 3 phiên bản dịch gần nhất của mỗi phần được lưu lại.
+                          <span class="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-zinc-900"></span>
+                        </div>
+                      } @else if (chapter().activeVersionNumber === v.versionNumber) {
+                        <div class="pointer-events-none absolute top-full left-1/2 -translate-x-1/2 mt-2 w-72 sm:w-80 px-3 py-2 bg-zinc-900 text-white text-xs font-normal leading-relaxed rounded-lg shadow-lg whitespace-normal text-left opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-30">
+                          Bạn đang đọc phiên bản này, phiên bản nào được bạn chọn sẽ là phiên bản được xuất ra khi tải file về, bạn có thể chọn bất cứ phiên bản nào mình muốn.
+                          <span class="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-zinc-900"></span>
+                        </div>
+                      }
+                    </div>
                   }
                 </div>
                 @if (getActiveVersion(chapter()); as activeV) {
@@ -594,7 +607,7 @@ import { getCustomEconomyModels } from '../../../core/openrouter';
     </div>
   `
 })
-export class ChapterItemComponent {
+export class ChapterItemComponent implements OnDestroy {
   store = inject(BookStore);
   toast = inject(ToastService);
   readerStore = inject(ReaderStore);

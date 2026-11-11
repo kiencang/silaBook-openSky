@@ -169,8 +169,16 @@ export async function processEpubContent(file: File, turndownService: TurndownSe
 
         const imgs = Array.from(pDoc.getElementsByTagName('img'));
         for (const img of imgs) {
-           const src = img.getAttribute('src') || img.getAttribute('xlink:href') || img.getAttribute('href');
+           const rawSrc = img.getAttribute('src') || img.getAttribute('xlink:href') || img.getAttribute('href');
+           const src = rawSrc?.trim();
            if (src) {
+               if (/^data:image\/[a-zA-Z0-9+.-]+;base64,/i.test(src)) {
+                  const placeholderId = `SILA_IMG_${imgCounter++}`;
+                  imagesStore[placeholderId] = src.replace(/\s+/g, '');
+                  img.setAttribute('src', placeholderId);
+                  continue;
+               }
+
                const htmlDirPath = decodedHref.substring(0, decodedHref.lastIndexOf('/') + 1);
                const parts = (htmlDirPath + src).split('/');
                const finalParts: string[] = [];

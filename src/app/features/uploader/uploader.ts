@@ -9,7 +9,7 @@ import { CustomModel, getCustomEconomyModels } from '../../core/openrouter';
 import { MatIconModule } from '@angular/material/icon';
 import { PdfService } from './pdf.service';
 import { processEpubContent } from './epub.util';
-import { processHtmlContent, getTurndownService } from './html.util';
+import { processHtmlContent, getTurndownService, extractBase64FromMarkdown } from './html.util';
 
 @Component({
   selector: 'app-uploader',
@@ -46,11 +46,11 @@ import { processHtmlContent, getTurndownService } from './html.util';
             </div>
 
             <div class="text-left mb-8">
-              <label class="block text-sm font-medium text-zinc-700 mb-2">
+              <label for="pdf-model-select" class="block text-sm font-medium text-zinc-700 mb-2">
                 Chọn model chuyển đổi định dạng PDF (*)
               </label>
               <div class="relative w-full">
-                <select [(ngModel)]="pdfModel" (ngModelChange)="onModelChange()" class="w-full px-4 pr-10 py-3 rounded-xl border border-zinc-200 bg-zinc-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors appearance-none font-normal text-base cursor-pointer truncate">
+                <select id="pdf-model-select" [(ngModel)]="pdfModel" (ngModelChange)="onModelChange()" class="w-full px-4 pr-10 py-3 rounded-xl border border-zinc-200 bg-zinc-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors appearance-none font-normal text-base cursor-pointer truncate">
                   @for (m of economyModels(); track m.id) {
                     <option [value]="m.id">{{ m.name }}</option>
                   }
@@ -214,7 +214,7 @@ import { processHtmlContent, getTurndownService } from './html.util';
                     Giới hạn xử lý tối đa: <span class="font-medium text-zinc-500">1M Tokens</span> hoặc theo dung lượng file.
                   </p>
                   <p class="text-xs text-zinc-900 font-medium tracking-tight">Nên ưu tiên định dạng EPUB, HTML hoặc Markdown nếu có thể.</p>
-                  <div class="mt-3 p-3 bg-zinc-100/50 rounded-xl border border-zinc-200/60 max-w-xl w-full mx-auto cursor-default" (click)="$event.stopPropagation()">
+                  <div class="mt-3 p-3 bg-zinc-100/50 rounded-xl border border-zinc-200/60 max-w-xl w-full mx-auto cursor-default" role="presentation" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
                     <p class="text-xs text-zinc-500 leading-relaxed mb-2.5">
                       Để giữ lại hình ảnh trong bản dịch, vui lòng sử dụng định dạng <strong>EPUB</strong>, <strong>HTML</strong> hoặc <strong>Markdown</strong>. Nếu bạn chỉ có file PDF, bạn có thể chuyển đổi nhanh chóng qua link Baidu bên dưới (chọn model PaddleOCR-VL-1.6 để có chất lượng chuyển đổi cao nhất), <button (click)="showVideo.set(true)" class="text-indigo-600 hover:text-indigo-700 hover:underline focus:outline-none">xem video hướng dẫn</button>:
                     </p>
@@ -239,8 +239,8 @@ import { processHtmlContent, getTurndownService } from './html.util';
     </div>
 
     @if (showVideo()) {
-      <div class="fixed inset-0 z-50 flex items-center justify-center bg-zinc-900/80 backdrop-blur-sm p-4" (click)="showVideo.set(false)">
-        <div class="relative w-full max-w-5xl aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl ring-1 ring-white/10" (click)="$event.stopPropagation()">
+      <div class="fixed inset-0 z-50 flex items-center justify-center bg-zinc-900/80 backdrop-blur-sm p-4" tabindex="-1" (click)="showVideo.set(false)" (keydown.escape)="showVideo.set(false)">
+        <div class="relative w-full max-w-5xl aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl ring-1 ring-white/10" role="presentation" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
           <button (click)="showVideo.set(false)" class="absolute top-4 right-4 z-10 w-10 h-10 flex items-center justify-center bg-black/50 hover:bg-black/80 text-white rounded-full transition-colors backdrop-blur-md">
             <mat-icon class="!w-6 !h-6 !text-[24px]">close</mat-icon>
           </button>
@@ -515,7 +515,8 @@ export class Uploader {
 
       if (file.name.toLowerCase().endsWith('.txt') || file.name.toLowerCase().endsWith('.md')) {
         const text = await file.text();
-        this.store.setMarkdown(text, file.name);
+        const result = extractBase64FromMarkdown(text);
+        this.store.setMarkdown(result.markdown, file.name, result.images);
       } else if (file.name.toLowerCase().endsWith('.html') || file.name.toLowerCase().endsWith('.htm')) {
         const result = await processHtmlContent(file);
         this.store.setMarkdown(result.markdown, file.name, result.images);

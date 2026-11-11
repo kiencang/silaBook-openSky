@@ -134,10 +134,10 @@ import { CustomModel, DEFAULT_CUSTOM_MODELS, DEFAULT_ECONOMY_MODELS, getCustomMo
             <!-- Reasoning Effort Setting -->
             <div class="bg-indigo-50/50 p-3.5 rounded-xl border border-indigo-100 space-y-2.5">
               <div class="flex items-center justify-between gap-2">
-                <label class="text-xs font-bold text-indigo-950 flex items-center gap-1.5">
+                <span class="text-xs font-bold text-indigo-950 flex items-center gap-1.5">
                   <mat-icon class="!text-[16px] !w-4 !h-4 text-indigo-600">psychology</mat-icon>
                   <span>Mức độ tư duy suy luận (Reasoning Effort)</span>
-                </label>
+                </span>
               </div>
 
               <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5 bg-indigo-100/60 p-1 rounded-xl">

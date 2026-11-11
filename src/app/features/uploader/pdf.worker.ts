@@ -61,7 +61,9 @@ addEventListener('message', async ({ data }) => {
       for (let i = start; i <= end; i++) {
         const page = await pdf.getPage(i);
         const textContentPage = await page.getTextContent();
-        const pageText = textContentPage.items.map((item: any) => item.str).join(' ');
+        const pageText = textContentPage.items
+          .map((item: unknown) => (item && typeof item === 'object' && 'str' in item ? String((item as { str: unknown }).str) : ''))
+          .join(' ');
         textContent += pageText + '\n\n';
       }
       

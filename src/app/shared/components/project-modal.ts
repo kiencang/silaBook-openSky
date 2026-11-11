@@ -166,7 +166,7 @@ import { DatePipe } from '@angular/common';
                   </div>
 
                   @if (getProgress(p)?.percentage === 100) {
-                    <div class="flex flex-wrap items-center gap-2 mt-1 pt-3 border-t border-dashed border-zinc-200" (click)="$event.stopPropagation()">
+                    <div class="flex flex-wrap items-center gap-2 mt-1 pt-3 border-t border-dashed border-zinc-200" role="presentation" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
                       <span class="text-xs font-medium text-zinc-500 mr-1">Download</span>
                       <div class="relative group/epub">
                         <button (click)="exportProjectToEpub(p, $event)" class="px-2 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded text-xs font-semibold transition-colors border border-indigo-200 shadow-sm flex items-center gap-1">

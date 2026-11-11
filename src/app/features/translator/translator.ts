@@ -367,11 +367,20 @@ export class Translator {
       return;
     }
 
+    let autoExpandedChapterId: string | null = null;
     try {
       for (const chapter of toTranslate) {
         if (this.stopRequested()) {
           this.toast.info('Đã dừng dịch thuật hàng loạt theo yêu cầu.');
           break;
+        }
+        if (autoExpandedChapterId && autoExpandedChapterId !== chapter.id) {
+          this.expanded[autoExpandedChapterId] = false;
+          autoExpandedChapterId = null;
+        }
+        const wasAlreadyExpanded = !!this.expanded[chapter.id];
+        if (!wasAlreadyExpanded) {
+          autoExpandedChapterId = chapter.id;
         }
         // Do it sequentially to avoid rate limiting
         const shouldContinue = await this.translateSingle(chapter);

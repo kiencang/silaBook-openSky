@@ -336,6 +336,7 @@ export class OpenRouterClient {
   }
 
   async countTokens(base64OrText: string, mimeType = 'text/plain', _model = '~google/gemini-flash-latest'): Promise<number> {
+    void _model;
     if (mimeType !== 'text/plain' && (mimeType === 'application/pdf' || base64OrText.startsWith('data:') || base64OrText.length > 50000)) {
       // Base64 estimation (~ 1 token per 3 bytes of raw base64 data)
       return Math.round(base64OrText.length / 4);
@@ -465,7 +466,9 @@ export class OpenRouterClient {
         if (match) {
           try {
             matchedItems = JSON.parse(match[0]);
-          } catch {}
+          } catch {
+            // Ignore fallback JSON parse error
+          }
         }
         if (matchedItems.length === 0) {
           const objMatch = responseText.match(/\{[\s\S]*\}/);
@@ -474,7 +477,9 @@ export class OpenRouterClient {
               const p = JSON.parse(objMatch[0]);
               const firstArray = Object.values(p).find(val => Array.isArray(val));
               if (firstArray) matchedItems = firstArray as { english: string; pos: string }[];
-            } catch {}
+            } catch {
+              // Ignore fallback JSON parse error
+            }
           }
         }
       }
@@ -718,7 +723,9 @@ export class OpenRouterClient {
       if (match) {
         try {
           arr = JSON.parse(match[0]);
-        } catch {}
+        } catch {
+          // Ignore fallback JSON parse error
+        }
       }
       if (!Array.isArray(arr) || arr.length === 0) {
         const objMatch = responseText.match(/\{[\s\S]*\}/);
@@ -731,7 +738,9 @@ export class OpenRouterClient {
               const firstArray = Object.values(p).find(val => Array.isArray(val));
               if (firstArray) arr = firstArray as unknown[];
             }
-          } catch {}
+          } catch {
+            // Ignore fallback JSON parse error
+          }
         }
       }
     }
@@ -827,7 +836,9 @@ export class OpenRouterClient {
       if (match) {
         try {
           arr = JSON.parse(match[0]);
-        } catch {}
+        } catch {
+          // Ignore fallback JSON parse error
+        }
       }
       if (!Array.isArray(arr) || arr.length === 0) {
         const objMatch = responseText.match(/\{[\s\S]*\}/);
@@ -840,7 +851,9 @@ export class OpenRouterClient {
               const firstArray = Object.values(p).find(val => Array.isArray(val));
               if (firstArray) arr = firstArray as unknown[];
             }
-          } catch {}
+          } catch {
+            // Ignore fallback JSON parse error
+          }
         }
       }
     }
