@@ -41,7 +41,9 @@ import { DatePipe } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { BookStore, Chapter, TranslationVersion } from '../../../core/book.store';
 import { ToastService } from '../../../core/toast.service';
-import { getConfiguredMarked } from '../../../core/marked-setup';
+import { getConfiguredMarked, parseMarkdownWithImages } from '../../../core/marked-setup';
+import { EpubExporter } from '../../../core/epub-export.util';
+import { DocxExporter } from '../../../core/docx-export.util';
 import { ReaderStore } from '../../../core/reader.store';
 import { GeminiClient } from '../../../core/gemini';
 import { OFFLINE_READER_SCRIPT, OFFLINE_READER_STYLES, OFFLINE_READER_TOOLBAR_HTML, PRINT_PDF_STYLES } from '../../../core/html-export.util';
@@ -212,19 +214,62 @@ import { getCustomEconomyModels } from '../../../core/openrouter';
               <div class="flex items-center justify-between min-h-[28px] mb-4">
                 <h5 class="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Bản dịch</h5>
                 @if (chapter().translatedText) {
-                  <div class="flex items-center gap-2">
-                    <button (click)="downloadPdf()" class="tooltip-trigger flex items-center justify-center p-1.5 text-zinc-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors" title="Tải xuống PDF">
-                      <mat-icon class="!w-4 !h-4 !text-[16px]">picture_as_pdf</mat-icon>
-                    </button>
-                    <button (click)="downloadHtml()" class="tooltip-trigger flex items-center justify-center p-1.5 text-zinc-400 hover:text-green-600 hover:bg-green-50 rounded-md transition-colors" title="Tải xuống HTML">
-                      <mat-icon class="!w-4 !h-4 !text-[16px]">html</mat-icon>
-                    </button>
-                    <button (click)="openBilingualFullscreen()" class="tooltip-trigger flex items-center justify-center p-1.5 text-zinc-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors" title="Đọc song ngữ">
-                      <mat-icon class="!w-4 !h-4 !text-[16px]">vertical_split</mat-icon>
-                    </button>
-                    <button (click)="openFullscreen()" class="tooltip-trigger flex items-center justify-center p-1.5 text-zinc-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors" title="Đọc toàn màn hình">
-                      <mat-icon class="!w-4 !h-4 !text-[16px]">fullscreen</mat-icon>
-                    </button>
+                  <div class="flex items-center gap-1.5">
+                    <div class="relative group">
+                      <button (click)="downloadEpub()" class="tooltip-trigger flex items-center justify-center p-1.5 text-zinc-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors">
+                        <mat-icon class="!w-4 !h-4 !text-[16px]">menu_book</mat-icon>
+                      </button>
+                      <div class="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1.5 bg-zinc-900 text-white text-xs font-medium rounded-lg shadow-md whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-30">
+                        Tải xuống EPUB
+                        <span class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-zinc-900"></span>
+                      </div>
+                    </div>
+                    <div class="relative group">
+                      <button (click)="downloadDocx()" class="tooltip-trigger flex items-center justify-center p-1.5 text-zinc-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors">
+                        <mat-icon class="!w-4 !h-4 !text-[16px]">description</mat-icon>
+                      </button>
+                      <div class="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1.5 bg-zinc-900 text-white text-xs font-medium rounded-lg shadow-md whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-30">
+                        Tải xuống DOCX
+                        <span class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-zinc-900"></span>
+                      </div>
+                    </div>
+                    <div class="relative group">
+                      <button (click)="downloadPdf()" class="tooltip-trigger flex items-center justify-center p-1.5 text-zinc-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors">
+                        <mat-icon class="!w-4 !h-4 !text-[16px]">picture_as_pdf</mat-icon>
+                      </button>
+                      <div class="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1.5 bg-zinc-900 text-white text-xs font-medium rounded-lg shadow-md whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-30">
+                        Tải xuống PDF
+                        <span class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-zinc-900"></span>
+                      </div>
+                    </div>
+                    <div class="relative group">
+                      <button (click)="downloadHtml()" class="tooltip-trigger flex items-center justify-center p-1.5 text-zinc-400 hover:text-green-600 hover:bg-green-50 rounded-md transition-colors">
+                        <mat-icon class="!w-4 !h-4 !text-[16px]">html</mat-icon>
+                      </button>
+                      <div class="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1.5 bg-zinc-900 text-white text-xs font-medium rounded-lg shadow-md whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-30">
+                        Tải xuống HTML
+                        <span class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-zinc-900"></span>
+                      </div>
+                    </div>
+                    <span class="w-px h-4 bg-zinc-200 mx-0.5"></span>
+                    <div class="relative group">
+                      <button (click)="openBilingualFullscreen()" class="tooltip-trigger flex items-center justify-center p-1.5 text-zinc-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors">
+                        <mat-icon class="!w-4 !h-4 !text-[16px]">vertical_split</mat-icon>
+                      </button>
+                      <div class="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1.5 bg-zinc-900 text-white text-xs font-medium rounded-lg shadow-md whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-30">
+                        Đọc song ngữ
+                        <span class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-zinc-900"></span>
+                      </div>
+                    </div>
+                    <div class="relative group">
+                      <button (click)="openFullscreen()" class="tooltip-trigger flex items-center justify-center p-1.5 text-zinc-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors">
+                        <mat-icon class="!w-4 !h-4 !text-[16px]">fullscreen</mat-icon>
+                      </button>
+                      <div class="pointer-events-none absolute bottom-full right-0 mb-2 px-2.5 py-1.5 bg-zinc-900 text-white text-xs font-medium rounded-lg shadow-md whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-30">
+                        Đọc toàn màn hình
+                        <span class="absolute top-full right-2.5 border-4 border-transparent border-t-zinc-900"></span>
+                      </div>
+                    </div>
                   </div>
                 }
               </div>
@@ -988,6 +1033,60 @@ export class ChapterItemComponent {
     }
   }
 
+  async downloadEpub() {
+    const text = this.chapter().translatedText;
+    if (!text) return;
+
+    this.toast.info('Đang tạo bản EPUB để tải...');
+    try {
+      const prefix = 'c' + this.index() + '-t';
+      const processed = text.replace(/\[\^([^\]]+)\]/g, `[^${prefix}-$1]`);
+      const title = this.chapter().title || `Phần ${this.index() + 1}`;
+      const docTitle = `${this.store.currentProjectName()}_${title}`;
+
+      const blob = await EpubExporter.generateEpub(docTitle, processed, this.store.images());
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${docTitle}_silaBook_vi.epub`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      this.toast.success(this.toast.Messages.EXPORT_EPUB_SUCCESS);
+    } catch (e: unknown) {
+      console.error('Error exporting chapter to EPUB:', e);
+      this.toast.error('Có lỗi xảy ra khi tải xuống EPUB.');
+    }
+  }
+
+  async downloadDocx() {
+    const text = this.chapter().translatedText;
+    if (!text) return;
+
+    this.toast.info('Đang tạo bản DOCX để tải...');
+    try {
+      const prefix = 'c' + this.index() + '-t';
+      const processed = text.replace(/\[\^([^\]]+)\]/g, `[^${prefix}-$1]`);
+      const title = this.chapter().title || `Phần ${this.index() + 1}`;
+      const docTitle = `${this.store.currentProjectName()}_${title}`;
+
+      const blob = await DocxExporter.generateDocx(docTitle, processed, this.store.images());
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${docTitle}_silaBook_vi.docx`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      this.toast.success(this.toast.Messages.EXPORT_DOCX_SUCCESS);
+    } catch (e: unknown) {
+      console.error('Error exporting chapter to DOCX:', e);
+      this.toast.error('Có lỗi xảy ra khi tải xuống DOCX.');
+    }
+  }
+
   downloadPdf() {
     const text = this.chapter().translatedText;
     if (!text) return;
@@ -995,7 +1094,7 @@ export class ChapterItemComponent {
     try {
       const prefix = 'c' + this.index() + '-t';
       const processed = text.replace(/\[\^([^\]]+)\]/g, `[^${prefix}-$1]`);
-      const htmlBody = getConfiguredMarked().parse(processed);
+      const htmlBody = parseMarkdownWithImages(processed, this.store.images());
       const title = this.chapter().title || `Phần ${this.index() + 1}`;
       const htmlDoc = `<!DOCTYPE html>
 <html lang="vi">
@@ -1054,7 +1153,7 @@ ${htmlBody}
     try {
       const prefix = 'c' + this.index() + '-t';
       const processed = text.replace(/\[\^([^\]]+)\]/g, `[^${prefix}-$1]`);
-      const htmlBody = getConfiguredMarked().parse(processed);
+      const htmlBody = parseMarkdownWithImages(processed, this.store.images());
       const title = this.chapter().title || `Phần ${this.index() + 1}`;
       const htmlDoc = `<!DOCTYPE html>
 <html lang="vi">

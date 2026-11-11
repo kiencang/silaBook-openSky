@@ -160,13 +160,6 @@ export class EpubExporter {
       });
     }
 
-    allImages.forEach((img) => {
-      const base64Clean = img.dataUrl.includes('base64,')
-        ? img.dataUrl.split('base64,')[1]
-        : img.dataUrl.split(',')[1];
-      zip.file(`OEBPS/${img.fileName}`, base64Clean || '', { base64: true });
-    });
-
     const mappedImages: Record<string, string> = {};
     allImages.forEach((img) => {
       mappedImages[img.key] = img.fileName;
@@ -176,6 +169,18 @@ export class EpubExporter {
 
     const { xhtml: htmlContent, tocEntries } =
       convertHtmlToStrictXhtmlAndExtractToc(rawHtmlContent);
+
+    // Chỉ đính kèm những bức ảnh thực sự được tham chiếu trong nội dung xuất ra
+    const usedImages = allImages.filter(
+      (img) => htmlContent.includes(img.fileName) || rawHtmlContent.includes(img.fileName)
+    );
+
+    usedImages.forEach((img) => {
+      const base64Clean = img.dataUrl.includes('base64,')
+        ? img.dataUrl.split('base64,')[1]
+        : img.dataUrl.split(',')[1];
+      zip.file(`OEBPS/${img.fileName}`, base64Clean || '', { base64: true });
+    });
 
     zip.file(
       'OEBPS/section1.xhtml',
@@ -282,7 +287,7 @@ ${navListItems}
 
     const uuid = this.generateUuid();
     let imageManifestItems = '';
-    allImages.forEach((img) => {
+    usedImages.forEach((img) => {
       imageManifestItems += `    <item id="${escapeXml(img.id)}" href="${escapeXml(img.fileName)}" media-type="${img.mediaType}"/>\n`;
     });
 
