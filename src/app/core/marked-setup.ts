@@ -200,10 +200,12 @@ export function sanitizeHtml(html: string): string {
       // Kiểm tra các thuộc tính chứa đường dẫn URI bằng cách chỉ quét tối đa 64 ký tự đầu tiên (O(1))
       if (URL_ATTRIBUTES.has(attrName) || attrName.endsWith(':href')) {
         const normalizedPrefix = extractNormalizedUriPrefix(attrVal, 64);
+        const isImgSrc = el.tagName.toUpperCase() === 'IMG' && attrName === 'src';
         if (
           normalizedPrefix.startsWith('javascript:') ||
           normalizedPrefix.startsWith('vbscript:') ||
-          (normalizedPrefix.startsWith('data:') && !SAFE_DATA_IMAGE_RE.test(normalizedPrefix))
+          (normalizedPrefix.startsWith('data:') &&
+            (!isImgSrc || !SAFE_DATA_IMAGE_RE.test(normalizedPrefix)))
         ) {
           el.removeAttribute(attrs[j].name);
         }
