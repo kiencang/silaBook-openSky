@@ -298,12 +298,14 @@ export class TranslatorConfigComponent implements OnInit, OnDestroy {
 
   onInstructionChange(text: string) {
     let newText = text;
-    let wordCount = this.countWords(newText);
-     
+    const wordCount = this.countWords(newText);
+
     if (wordCount > 100) {
-        const words = newText.trim().split(/\s+/);
-        newText = words.slice(0, 100).join(' ');
-        wordCount = 100;
+      const matches = Array.from(newText.matchAll(/\S+/g));
+      if (matches.length > 100) {
+        const lastWordMatch = matches[99];
+        newText = newText.slice(0, (lastWordMatch.index ?? 0) + lastWordMatch[0].length);
+      }
     }
 
     this.instructionText.set(newText);

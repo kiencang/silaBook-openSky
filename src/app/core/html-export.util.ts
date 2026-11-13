@@ -1,3 +1,13 @@
+export function escapeHtmlText(val: string | null | undefined): string {
+  if (!val) return '';
+  return val
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 export const PRINT_PDF_STYLES = `
 body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;

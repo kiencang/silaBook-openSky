@@ -2,7 +2,6 @@ import { Component, input, model, signal, computed, effect } from '@angular/core
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
-import * as XLSX from 'xlsx';
 
 @Component({
   selector: 'app-markdown-table-editor',
@@ -233,10 +232,11 @@ export class MarkdownTableEditorComponent {
     this.currentPage.set(clamped);
   }
 
-  exportToExcel() {
+  async exportToExcel() {
     const data = this.tableData();
     if (data.length === 0) return;
 
+    const XLSX = await import('xlsx');
     let filename = this.exportFileName() || 'danh_sach.xlsx';
     if (!filename.toLowerCase().endsWith('.xlsx')) {
       filename += '.xlsx';

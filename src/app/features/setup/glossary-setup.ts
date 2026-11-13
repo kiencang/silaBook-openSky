@@ -9,7 +9,6 @@ import { MatIconModule } from '@angular/material/icon';
 import { FormsModule } from '@angular/forms';
 import { MarkdownTableEditorComponent } from '../../shared/components/markdown-table-editor.component';
 import { smartHardSplit } from '../splitter/splitter.util';
-import * as XLSX from 'xlsx';
 
 @Component({
   selector: 'app-glossary-setup',
@@ -472,7 +471,8 @@ export class GlossarySetup {
     this.store.phase.set(5);
   }
 
-  downloadTemplate() {
+  async downloadTemplate() {
+    const XLSX = await import('xlsx');
     const ws_data = [
       ['Tiếng Anh', 'Từ loại', 'Tiếng Việt', 'Ghi chú văn cảnh'],
       ['Defenestration', 'Noun', 'Sự ném qua cửa sổ', '(Không bắt buộc) Hành động ném ai đó hoặc thứ gì đó ra ngoài cửa sổ'],
@@ -507,8 +507,9 @@ export class GlossarySetup {
     }
 
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       try {
+        const XLSX = await import('xlsx');
         const data = new Uint8Array(e.target?.result as ArrayBuffer);
         const workbook = XLSX.read(data, { type: 'array' });
         const firstSheetName = workbook.SheetNames[0];
