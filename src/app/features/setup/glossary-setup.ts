@@ -20,7 +20,7 @@ import { smartHardSplit } from '../splitter/splitter.util';
         <div>
           <h2 class="text-2xl font-bold text-zinc-900">Thiết lập Bảng Thuật Ngữ / Từ Khó (Tùy chọn)</h2>
           <p class="text-zinc-500 mt-1">Sử dụng mô hình AI mạnh để quét cuốn sách và trích xuất bảng thuật ngữ/từ khó dịch. Giúp bản dịch có chất lượng cao và thống nhất hơn, đặc biệt cần thiết với sách khó dịch. Mặc dù đây là tùy chọn, không bắt buộc, nhưng khi tạo thường cho kết quả tốt hơn với bất kỳ thể loại sách nào.</p>
-          <p class="text-zinc-500 mt-2 text-sm leading-relaxed">Việc phân tích đầy đủ cả cuốn sách thường tốn thời gian từ 3 - 10 phút, tùy độ dài & tùy model AI. Bạn có thể chọn bất kỳ model AI nào phù hợp với nhu cầu. Ngoài ra bạn có thể tạo nhiều phiên bản (V1, V2,..) bảng Từ khó khác nhau từ nhiều model AI khác nhau, phiên bản nào được chọn sẽ là phiên bản được sử dụng khi dịch. Hệ thống sẽ lưu tối đa 3 phiên bản Từ khó gần nhất được tạo.</p>
+          <p class="text-zinc-500 mt-2 text-sm leading-relaxed">Việc phân tích đầy đủ cả cuốn sách thường tốn thời gian từ 3 - 10 phút, tùy độ dài & tùy model AI. Bạn có thể chọn bất kỳ model AI nào phù hợp với nhu cầu. Ngoài ra bạn có thể tạo nhiều phiên bản (V1, V2,...) bảng Từ khó khác nhau từ nhiều model AI khác nhau, phiên bản nào được chọn sẽ là phiên bản được sử dụng khi dịch. Hệ thống sẽ lưu tối đa 3 phiên bản Từ khó gần nhất được tạo.</p>
         </div>
       </div>
 
@@ -454,7 +454,7 @@ export class GlossarySetup {
       this.store.addGlossaryVersion(this.draftTable(), model, source);
       this.store.saveGlossaryConf(true);
       this.isManuallyEdited.set(false);
-      this.toast.success('Đã lưu version mới');
+      this.toast.success('Đã lưu phiên bản mới!');
     }
   }
 

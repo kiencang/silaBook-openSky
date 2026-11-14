@@ -29,7 +29,7 @@ export class ToastService {
    */
   readonly Messages = {
     // -- Lỗi tải file --
-    FILE_INVALID_FORMAT: 'Định dạng file không được hỗ trợ. Vui lòng tải lên file TXT, HTML hoặc PDF.',
+    FILE_INVALID_FORMAT: 'Định dạng file không được hỗ trợ. Vui lòng tải lên file EPUB, HTML, PDF, TXT hoặc Markdown (.md).',
     FILE_TOO_LARGE: (limitMB: number, ext: string) => `Dung lượng file vượt giới hạn (${limitMB}MB đối với file .${ext}). Vui lòng chọn file nhẹ hơn.`,
     FILE_PROCESS_SUCCESS: 'Xử lý file thành công!',
     FILE_PROCESS_ERROR: (msg: string) => `Lỗi khi xử lý file: ${msg}`,

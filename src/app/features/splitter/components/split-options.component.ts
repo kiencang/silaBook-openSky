@@ -15,7 +15,7 @@ import { MatIconModule } from '@angular/material/icon';
       <div class="flex flex-col md:flex-row gap-4 md:items-start justify-between mb-4">
         <div class="flex-1 w-full">
           <label for="keywordInput" class="block text-sm font-bold text-zinc-900 mb-1">Tùy chọn 1: Chia theo Từ khóa của Tiêu đề</label>
-          <p class="text-xs text-zinc-500">Dùng khi các phần trong sách gốc bắt đầu bằng chữ như "Chapter", "Part", "Section", v.v.. Các khối vượt trần sẽ tự động được chia nhỏ bằng cách chia đôi.</p>
+          <p class="text-xs text-zinc-500">Dùng khi các phần trong sách gốc bắt đầu bằng chữ như "Chapter", "Part", "Section", v.v. Các khối vượt trần sẽ tự động được chia nhỏ bằng cách chia đôi.</p>
         </div>
         <div class="w-full md:w-32 flex-shrink-0">
           <button 
