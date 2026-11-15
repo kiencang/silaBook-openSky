@@ -402,13 +402,28 @@ export class ProjectModal implements OnInit, OnDestroy {
     const input = event.target as HTMLInputElement;
     if (!input.files || input.files.length === 0) return;
     const file = input.files[0];
+
+    const ext = file.name.split('.').pop()?.toLowerCase() || '';
+    if (ext !== 'zip' && ext !== 'json') {
+      this.toast.error(this.toast.Messages.PROJECT_IMPORT_INVALID_FORMAT);
+      input.value = '';
+      return;
+    }
+
+    const maxSizeBytes = ext === 'zip' ? 150 * 1024 * 1024 : 200 * 1024 * 1024;
+    if (file.size > maxSizeBytes) {
+      const limitMB = maxSizeBytes / (1024 * 1024);
+      this.toast.error(this.toast.Messages.FILE_TOO_LARGE(limitMB, ext));
+      input.value = '';
+      return;
+    }
     
     try {
       this.toast.info('Đang nhập dữ liệu... Xin vui lòng chờ');
       const result = await this.runProjectWorkerTask('IMPORT_PROJECT', { file });
       const proj = result.project as Project;
       
-      if (!proj || !proj.id || !proj.name) {
+      if (!proj || typeof proj !== 'object' || !proj.id || !proj.name) {
         this.toast.error(this.toast.Messages.PROJECT_IMPORT_DRAFT_ERROR);
         return;
       }
@@ -440,7 +455,8 @@ export class ProjectModal implements OnInit, OnDestroy {
       await this.loadProject(proj.id);
     } catch (e: unknown) {
       console.error(e);
-      this.toast.error(this.toast.Messages.PROJECT_IMPORT_ERROR);
+      const errMsg = e instanceof Error && e.message ? e.message : this.toast.Messages.PROJECT_IMPORT_ERROR;
+      this.toast.error(errMsg);
     } finally {
       input.value = ''; // Reset the input
     }

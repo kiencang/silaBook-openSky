@@ -37,6 +37,7 @@ export class ToastService {
     
     // -- Quản lý dự án --
     PROJECT_IMPORT_SUCCESS: 'Đã nhập dự án thành công!',
+    PROJECT_IMPORT_INVALID_FORMAT: 'Định dạng file dự án không hợp lệ. Vui lòng chọn file .zip hoặc .json.',
     PROJECT_IMPORT_DRAFT_ERROR: 'File không hợp lệ hoặc dữ liệu bị lỗi.',
     PROJECT_IMPORT_ERROR: 'Có lỗi xảy ra khi đọc file dự án.',
     PROJECT_BACKUP_SUCCESS: 'Đã sao lưu dự án thành công!',
@@ -62,6 +63,8 @@ export class ToastService {
 
     // -- Dịch thuật --
     TRANSLATION_COMPLETED: 'Dịch hoàn tất toàn bộ!',
+    TRANSLATION_STOPPING: 'Đang dừng dịch thuật... Hệ thống sẽ dừng lại sau khi hoàn tất phần hiện tại.',
+    TRANSLATION_STOPPED_BY_USER: 'Đã dừng dịch thuật hàng loạt theo yêu cầu.',
     TRANSLATION_STOPPED_CRITICAL: 'Tiến trình dịch tự động đã dừng lại do lỗi nghiêm trọng (ví dụ: hết tín dụng OpenRouter, vượt giới hạn Rate Limit hoặc sai API Key).',
     TRANSLATION_ERROR: (title: string, err: string) => `Dịch thất bại đối với ${title}: ${err}`
   };

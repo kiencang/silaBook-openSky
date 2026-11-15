@@ -1,6 +1,11 @@
 /// <reference lib="webworker" />
 import JSZip from 'jszip';
 
+const MAX_ZIP_FILE_SIZE_BYTES = 150 * 1024 * 1024; // 150 MB
+const MAX_JSON_FILE_SIZE_BYTES = 200 * 1024 * 1024; // 200 MB
+const MAX_UNCOMPRESSED_JSON_BYTES = 250 * 1024 * 1024; // 250 MB (Chống Zip Bomb)
+const MAX_ZIP_ENTRIES = 5; // Tối đa 5 file thực bên trong gói ZIP
+
 addEventListener('message', async ({ data }) => {
   const { type, payload, id } = data;
 
@@ -65,18 +70,57 @@ addEventListener('message', async ({ data }) => {
           headerBytes.length >= 2 && headerBytes[0] === 0x50 && headerBytes[1] === 0x4b;
 
         if (isZipSignature || fileName.endsWith('.zip')) {
-          const zip = await JSZip.loadAsync(file);
-          const entries = Object.values(zip.files).filter(
-            (entry) => !entry.dir && !entry.name.startsWith('__MACOSX/')
-          );
-          const jsonEntry =
-            entries.find((entry) => entry.name.toLowerCase().endsWith('.json')) || entries[0];
-
-          if (!jsonEntry) {
-            throw new Error('Không tìm thấy dữ liệu dự án bên trong file ZIP.');
+          if (file.size > MAX_ZIP_FILE_SIZE_BYTES) {
+            throw new Error('Dung lượng file ZIP vượt quá giới hạn cho phép (150MB).');
           }
+
+          const zip = await JSZip.loadAsync(file);
+          const entries = Object.values(zip.files).filter((entry) => {
+            if (entry.dir) return false;
+            const lower = entry.name.toLowerCase();
+            if (
+              lower.startsWith('__macosx/') ||
+              lower.endsWith('/.ds_store') ||
+              lower === '.ds_store' ||
+              lower.endsWith('/thumbs.db') ||
+              lower === 'thumbs.db'
+            ) {
+              return false;
+            }
+            return true;
+          });
+
+          if (entries.length === 0) {
+            throw new Error('File ZIP trống, không tìm thấy dữ liệu dự án.');
+          }
+
+          if (entries.length > MAX_ZIP_ENTRIES) {
+            throw new Error(
+              `File ZIP không hợp lệ (chứa ${entries.length} file, vượt quá giới hạn tối đa ${MAX_ZIP_ENTRIES} file của gói dự án).`
+            );
+          }
+
+          const jsonEntry = entries.find((entry) => entry.name.toLowerCase().endsWith('.json'));
+          if (!jsonEntry) {
+            throw new Error('Không tìm thấy file dữ liệu dự án (.json) bên trong gói ZIP.');
+          }
+
+          // Kiểm tra kích thước giải nén từ metadata của JSZip trước khi bung ra RAM (chống Zip Bomb)
+          const uncompressedSize = (
+            jsonEntry as unknown as { _data?: { uncompressedSize?: number } }
+          )._data?.uncompressedSize;
+          if (
+            typeof uncompressedSize === 'number' &&
+            uncompressedSize > MAX_UNCOMPRESSED_JSON_BYTES
+          ) {
+            throw new Error('Dữ liệu giải nén vượt quá giới hạn an toàn (250MB).');
+          }
+
           jsonText = await jsonEntry.async('string');
         } else {
+          if (file.size > MAX_JSON_FILE_SIZE_BYTES) {
+            throw new Error('Dung lượng file JSON vượt quá giới hạn cho phép (200MB).');
+          }
           jsonText = await file.text();
         }
       } else if (payload && typeof payload.text === 'string') {
@@ -85,7 +129,20 @@ addEventListener('message', async ({ data }) => {
         throw new Error('Dữ liệu đầu vào không hợp lệ.');
       }
 
-      const proj = JSON.parse(jsonText);
+      if (jsonText.length > MAX_UNCOMPRESSED_JSON_BYTES) {
+        throw new Error('Dữ liệu giải nén vượt quá giới hạn an toàn (250MB).');
+      }
+
+      let proj: { id?: unknown; name?: unknown; pdfTask?: { chunks?: { base64Pdf?: string; pdfData?: unknown }[] }; [key: string]: unknown };
+      try {
+        proj = JSON.parse(jsonText);
+      } catch {
+        throw new Error('File dự án bị hỏng hoặc không đúng định dạng JSON.');
+      }
+
+      if (!proj || typeof proj !== 'object' || !proj.id || !proj.name) {
+        throw new Error('File không hợp lệ hoặc thiếu thông tin định danh dự án.');
+      }
       
       if (proj && proj.pdfTask && proj.pdfTask.chunks) {
          for (const chunk of proj.pdfTask.chunks) {

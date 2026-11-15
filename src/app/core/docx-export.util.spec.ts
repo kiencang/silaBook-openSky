@@ -2,6 +2,8 @@ import {
   normalizeOmmlDom,
   tokenizeInline,
   convertHtmlTablesToMarkdown,
+  prepareImageForDocx,
+  DocxExporter,
 } from './docx-export.util';
 
 function parseXml(xml: string): Document {
@@ -147,6 +149,43 @@ describe('docx-export.util', () => {
       const md = convertHtmlTablesToMarkdown(html);
       expect(md).toContain('| Col 1 | Col 2 |');
       expect(md).toContain('| **A** | B \\| C |');
+    });
+  });
+
+  describe('prepareImageForDocx & DocxExporter image formats', () => {
+    it('classifies native formats (jpg, png, gif, bmp), converts webp to png, and preserves svg with png fallback', async () => {
+      const dummyBase64 = btoa('dummy-binary-data');
+      const jpgImg = await prepareImageForDocx(`data:image/jpeg;base64,${dummyBase64}`);
+      const pngImg = await prepareImageForDocx(`data:image/png;base64,${dummyBase64}`);
+      const gifImg = await prepareImageForDocx(`data:image/gif;base64,${dummyBase64}`);
+      const bmpImg = await prepareImageForDocx(`data:image/bmp;base64,${dummyBase64}`);
+      const webpImg = await prepareImageForDocx(`data:image/webp;base64,${dummyBase64}`);
+
+      expect(jpgImg.type).toBe('jpg');
+      expect(pngImg.type).toBe('png');
+      expect(gifImg.type).toBe('gif');
+      expect(bmpImg.type).toBe('bmp');
+      expect(webpImg.type).toBe('png');
+
+      const svgXml = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 100"><circle cx="50" cy="50" r="40"/></svg>';
+      const svgImg = await prepareImageForDocx(`data:image/svg+xml;base64,${btoa(svgXml)}`);
+      expect(svgImg.type).toBe('svg');
+      expect(svgImg.width).toBe(800);
+      expect(svgImg.height).toBe(400);
+      expect(svgImg.fallback).toBeDefined();
+      expect(svgImg.fallback?.type).toBe('png');
+      expect(svgImg.fallback?.data.length).toBeGreaterThan(0);
+
+      const blob = await DocxExporter.generateDocx(
+        'Test Images',
+        '![svg](SILA_IMG_0)\n\n![gif](SILA_IMG_1)\n\n![webp](SILA_IMG_2)',
+        {
+          SILA_IMG_0: `data:image/svg+xml;base64,${btoa(svgXml)}`,
+          SILA_IMG_1: `data:image/gif;base64,${dummyBase64}`,
+          SILA_IMG_2: `data:image/webp;base64,${dummyBase64}`,
+        }
+      );
+      expect(blob.size).toBeGreaterThan(0);
     });
   });
 });

@@ -53,7 +53,7 @@ import { ChapterItemComponent } from './components/chapter-item';
                 }
               </div>
               <button 
-                (click)="stopRequested.set(true)"
+                (click)="requestStop()"
                 [disabled]="stopRequested()"
                 class="bg-red-600 hover:bg-red-700 disabled:bg-red-300 text-white px-4 py-2 rounded-lg font-medium shadow-sm transition-colors flex items-center"
               >
@@ -342,6 +342,12 @@ export class Translator {
     }
   }
 
+  requestStop() {
+    if (this.stopRequested()) return;
+    this.stopRequested.set(true);
+    this.toast.info(this.toast.Messages.TRANSLATION_STOPPING);
+  }
+
   executeConfirmedAction() {
     const action = this.confirmAction();
     if (action === 'none') return;
@@ -373,10 +379,10 @@ export class Translator {
     }
 
     let autoExpandedChapterId: string | null = null;
+    let stoppedCritically = false;
     try {
       for (const chapter of toTranslate) {
         if (this.stopRequested()) {
-          this.toast.info('Đã dừng dịch thuật hàng loạt theo yêu cầu.');
           break;
         }
         if (autoExpandedChapterId && autoExpandedChapterId !== chapter.id) {
@@ -390,13 +396,18 @@ export class Translator {
         // Do it sequentially to avoid rate limiting
         const shouldContinue = await this.translateSingle(chapter);
         if (!shouldContinue) {
+          stoppedCritically = true;
           this.stopRequested.set(true);
           this.toast.error(this.toast.Messages.TRANSLATION_STOPPED_CRITICAL);
           break;
         }
       }
-      if (!this.stopRequested()) {
-        this.toast.success(this.toast.Messages.TRANSLATION_COMPLETED);
+      if (!stoppedCritically) {
+        if (this.stopRequested()) {
+          this.toast.info(this.toast.Messages.TRANSLATION_STOPPED_BY_USER);
+        } else {
+          this.toast.success(this.toast.Messages.TRANSLATION_COMPLETED);
+        }
       }
     } finally {
       this.translateOperation.set('none');
