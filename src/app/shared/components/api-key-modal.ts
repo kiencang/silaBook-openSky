@@ -1,4 +1,4 @@
-import { Component, Output, EventEmitter, signal, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Output, EventEmitter, signal, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { ToastService } from '../../core/toast.service';
@@ -6,6 +6,7 @@ import { loadSecureApiKey, saveSecureApiKey, removeSecureApiKey } from '../../co
 import { CustomModel, DEFAULT_CUSTOM_MODELS, DEFAULT_ECONOMY_MODELS, getCustomModels, saveCustomModels, getCustomEconomyModels, saveCustomEconomyModels, getQualityTemperature, saveQualityTemperature, ReasoningEffortOption, getReasoningEffort, saveReasoningEffort } from '../../core/openrouter';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-api-key-modal',
   imports: [FormsModule, MatIconModule],
   template: `
@@ -366,9 +367,6 @@ import { CustomModel, DEFAULT_CUSTOM_MODELS, DEFAULT_ECONOMY_MODELS, getCustomMo
               Hủy
             </button>
             <button (click)="saveKey()" 
-                    [disabled]="!apiKey.trim()"
-                    [class.opacity-50]="!apiKey.trim()"
-                    [class.cursor-not-allowed]="!apiKey.trim()"
                     class="px-4 py-1.5 bg-indigo-600 text-white font-medium hover:bg-indigo-700 rounded-lg shadow-sm transition-all focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 text-xs cursor-pointer border-none">
               Lưu cấu hình
             </button>
@@ -384,7 +382,7 @@ export class ApiKeyModal {
   
   isClosing = signal(false);
   showKey = signal(false);
-  apiKey = '';
+  apiKey = signal('');
   hasSavedKey = signal(false);
   models = signal<CustomModel[]>([]);
   economyModels = signal<CustomModel[]>([]);
@@ -486,7 +484,6 @@ export class ApiKeyModal {
       saveCustomEconomyModels(defaultEconomy);
       saveQualityTemperature(defaultTemp);
       saveReasoningEffort(defaultReasoning);
-      window.dispatchEvent(new Event('api-key-changed'));
     }
 
     this.toast.success('Đã khôi phục và tự động lưu cấu hình mặc định thành công!');
@@ -496,11 +493,7 @@ export class ApiKeyModal {
     if (typeof window !== 'undefined') {
       const saved = await loadSecureApiKey();
       this.hasSavedKey.set(!!(saved && saved.trim() !== ''));
-      if (saved) {
-        this.apiKey = saved;
-      } else {
-        this.apiKey = '';
-      }
+      this.apiKey.set(saved || '');
     }
   }
 
@@ -516,22 +509,34 @@ export class ApiKeyModal {
   }
 
   async saveKey() {
-    const trimmed = this.apiKey.trim();
-    if (!trimmed) return;
-    
-    if (!/^[a-zA-Z0-9_\-.:/]+$/.test(trimmed)) {
+    const trimmed = this.apiKey().trim();
+
+    if (trimmed && !/^[a-zA-Z0-9_\-.:/]+$/.test(trimmed)) {
       this.toast.error('API Key không hợp lệ. Hãy đảm bảo bạn không dán nhầm chữ tiếng Việt có dấu, khoảng trắng hay ký tự đặc biệt.');
       return;
     }
 
     if (typeof window !== 'undefined') {
-      await saveSecureApiKey(trimmed);
+      const hadKey = this.hasSavedKey();
+
+      if (trimmed) {
+        await saveSecureApiKey(trimmed);
+      } else if (hadKey) {
+        removeSecureApiKey();
+      }
+
       saveCustomModels(this.models());
       saveCustomEconomyModels(this.economyModels());
       saveQualityTemperature(this.qualityTemperature());
       saveReasoningEffort(this.reasoningEffort());
-      window.dispatchEvent(new Event('api-key-changed'));
-      this.toast.success('Đã lưu mã hóa an toàn OpenRouter API Key, Models, Temperature & Reasoning thành công!');
+
+      if (trimmed) {
+        this.toast.success('Đã lưu mã hóa an toàn OpenRouter API Key, Models, Temperature & Reasoning thành công!');
+      } else if (hadKey) {
+        this.toast.success('Đã xóa API Key cá nhân và lưu cấu hình Models, Temperature & Reasoning thành công!');
+      } else {
+        this.toast.success('Đã lưu cấu hình Models, Temperature & Reasoning thành công!');
+      }
     }
     this.triggerClose();
   }
@@ -539,7 +544,6 @@ export class ApiKeyModal {
   deleteKey() {
     if (typeof window !== 'undefined') {
       removeSecureApiKey();
-      window.dispatchEvent(new Event('api-key-changed'));
       this.toast.success('Xóa OpenRouter API Key cá nhân thành công.');
     }
     this.triggerClose();

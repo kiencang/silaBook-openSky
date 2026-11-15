@@ -5,18 +5,10 @@ import { ToastService } from './toast.service';
 import { parseMarkdownWithImages } from './marked-setup';
 import { OFFLINE_READER_SCRIPT, OFFLINE_READER_STYLES, OFFLINE_READER_TOOLBAR_HTML, PRINT_PDF_STYLES, escapeHtmlText } from './html-export.util';
 
-import { getEncoding } from 'js-tiktoken';
+import { countTokensSync, ensureTiktokenLoaded } from './tiktoken.util';
 
-let tiktokenEnc: ReturnType<typeof getEncoding> | null = null;
 export function countTokensWithTiktoken(text: string): number {
-  if (!text) return 0;
-  try {
-    if (!tiktokenEnc) tiktokenEnc = getEncoding('cl100k_base');
-    return tiktokenEnc.encode(text).length;
-  } catch {
-    const words = text.trim().split(/\s+/).length;
-    return Math.round(words * 1.35);
-  }
+  return countTokensSync(text);
 }
 
 export interface TranslationVersion {
@@ -336,6 +328,9 @@ export class BookStore {
       this.pronounTask.set(proj.pronounTask);
       this.glossaryTask.set(proj.glossaryTask);
       
+      if (proj.chapters.some((c: Chapter) => c.tokenCount == null)) {
+        await ensureTiktokenLoaded();
+      }
       const adjustedChapters = proj.chapters.map((c: Chapter) => ({
         ...c,
         status: c.status === 'translating' ? ('error' as const) : c.status,
@@ -460,7 +455,10 @@ export class BookStore {
     this.isConverting.set(converting);
   }
 
-  setChapters(chs: Chapter[]) {
+  async setChapters(chs: Chapter[]) {
+    if (chs.some(c => c.tokenCount == null)) {
+      await ensureTiktokenLoaded();
+    }
     const withTokens = chs.map(c => ({
       ...c,
       tokenCount: c.tokenCount ?? countTokensWithTiktoken((c.title || '') + '\n' + (c.originalText || ''))

@@ -1,17 +1,17 @@
-import { Component, ElementRef, inject, viewChild, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, inject, viewChild, signal, effect, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { BookStore } from '../../core/book.store';
 import { ToastService } from '../../core/toast.service';
 import { hasSecureApiKey } from '../../core/crypto-storage.util';
-import { GeminiClient, parseGeminiError, isQuotaError } from '../../core/gemini';
-import { CustomModel, getCustomEconomyModels } from '../../core/openrouter';
+import { customEconomyModels, OpenRouterClient, parseOpenRouterError, isQuotaError } from '../../core/openrouter';
 import { MatIconModule } from '@angular/material/icon';
 import { PdfService } from './pdf.service';
 import { processEpubContent } from './epub.util';
 import { processHtmlContent, getTurndownService, extractBase64FromMarkdown } from './html.util';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-uploader',
   standalone: true,
   imports: [MatIconModule, FormsModule, CommonModule],
@@ -174,8 +174,8 @@ import { processHtmlContent, getTurndownService, extractBase64FromMarkdown } fro
           (dragover)="onDragOver($event)"
           (dragleave)="onDragLeave($event)"
           (drop)="onDrop($event)"
-          [class.bg-zinc-50]="isDragging"
-          [class.border-zinc-400]="isDragging"
+          [class.bg-zinc-50]="isDragging()"
+          [class.border-zinc-400]="isDragging()"
           [class.opacity-50]="store.isConverting()"
           [class.pointer-events-none]="store.isConverting()"
         >
@@ -252,24 +252,27 @@ import { processHtmlContent, getTurndownService, extractBase64FromMarkdown } fro
 })
 export class Uploader {
   store = inject(BookStore);
-  gemini = inject(GeminiClient);
+  openRouter = inject(OpenRouterClient);
   toast = inject(ToastService);
   pdfService = inject(PdfService);
   fileInput = viewChild.required<ElementRef<HTMLInputElement>>('fileInput');
 
-  economyModels = signal<CustomModel[]>(getCustomEconomyModels());
-  isDragging = false;
+  readonly economyModels = customEconomyModels;
+  isDragging = signal(false);
 
   pendingPdfFile = signal<File | null>(null);
-  pdfModel = signal<string>(getCustomEconomyModels()[0]?.id || 'google/gemini-3.5-flash-lite');
+  pdfModel = signal<string>(customEconomyModels()[0]?.id || 'google/gemini-3.5-flash-lite');
   showVideo = signal(false);
 
   constructor() {
-    if (typeof window !== 'undefined') {
-      window.addEventListener('openrouter-models-changed', () => {
-        this.economyModels.set(getCustomEconomyModels());
+    effect(() => {
+      const list = this.economyModels();
+      untracked(() => {
+        if (list.length > 0 && !list.some(m => m.id === this.pdfModel())) {
+          this.pdfModel.set(list[0].id);
+        }
       });
-    }
+    });
   }
   
   pdfFileSizeMB = signal<string | null>(null);
@@ -339,7 +342,7 @@ export class Uploader {
       }
 
       const result = await this.pdfService.runWorkerTask('EXTRACT_TOKEN_PAGES', { arrayBuffer, start, end });
-      const count = await this.gemini.countTokens(result.text || '', 'text/plain', this.pdfModel());
+      const count = await this.openRouter.countTokens(result.text || '', 'text/plain', this.pdfModel());
       this.tokenCount.set(count);
     } catch (e) {
       console.error('Lỗi khi đếm token:', e);
@@ -351,17 +354,17 @@ export class Uploader {
 
   onDragOver(event: DragEvent) {
     event.preventDefault();
-    this.isDragging = true;
+    this.isDragging.set(true);
   }
 
   onDragLeave(event: DragEvent) {
     event.preventDefault();
-    this.isDragging = false;
+    this.isDragging.set(false);
   }
 
   onDrop(event: DragEvent) {
     event.preventDefault();
-    this.isDragging = false;
+    this.isDragging.set(false);
     const items = event.dataTransfer?.items;
     if (items) {
       for (const item of items) {
@@ -430,7 +433,7 @@ export class Uploader {
             if (b64Data.includes(',')) b64Data = b64Data.split(',')[1];
           }
           
-          const markdown = await this.gemini.convertPdfToMarkdown(b64Data, this.pdfModel());
+          const markdown = await this.openRouter.convertPdfToMarkdown(b64Data, this.pdfModel());
           
           const successTaskState = this.store.pdfTask();
           if (successTaskState) {
@@ -442,7 +445,7 @@ export class Uploader {
            if (!isQuotaError(e)) {
              console.error(e);
            }
-           const msg = parseGeminiError(e);
+           const msg = parseOpenRouterError(e);
            const failTaskState = this.store.pdfTask();
            if (failTaskState) {
              const newChunks = [...failTaskState.chunks];
@@ -527,7 +530,7 @@ export class Uploader {
         this.toast.error(this.toast.Messages.FILE_INVALID_FORMAT);
       }
     } catch (e: unknown) {
-      const msg = parseGeminiError(e);
+      const msg = parseOpenRouterError(e);
       this.toast.error(this.toast.Messages.FILE_PROCESS_ERROR(msg));
     } finally {
       this.store.setConverting(false);
@@ -566,7 +569,7 @@ export class Uploader {
       const result = await this.pdfService.runWorkerTask('CHUNK_PDF', { arrayBuffer, start, end, chunkSize: 30 });
 
       if (result.resultType === 'single') {
-        const markdown = await this.gemini.convertPdfToMarkdown(result.b64Data || '', this.pdfModel());
+        const markdown = await this.openRouter.convertPdfToMarkdown(result.b64Data || '', this.pdfModel());
         this.store.setMarkdown(markdown, file.name);
         this.toast.success(this.toast.Messages.FILE_PROCESS_SUCCESS);
       } else {
@@ -583,7 +586,7 @@ export class Uploader {
       if (!isQuotaError(e)) {
         console.error(e);
       }
-      const msg = parseGeminiError(e);
+      const msg = parseOpenRouterError(e);
       this.toast.error(this.toast.Messages.FILE_PROCESS_ERROR(msg));
     } finally {
       this.pendingPdfFile.set(null);

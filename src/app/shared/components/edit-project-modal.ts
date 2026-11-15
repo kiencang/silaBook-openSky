@@ -1,9 +1,10 @@
-import { Component, Output, EventEmitter, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Output, EventEmitter, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { BookStore } from '../../core/book.store';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-edit-project-modal',
   standalone: true,
   imports: [FormsModule, MatIconModule],
@@ -57,8 +58,8 @@ export class EditProjectModal {
   @Output() closeModal = new EventEmitter<void>();
   store = inject(BookStore);
   
-  bookTitle = this.store.bookTitle();
-  author = this.store.author();
+  bookTitle = signal(this.store.bookTitle());
+  author = signal(this.store.author());
   isClosing = signal(false);
 
   triggerClose() {
@@ -69,13 +70,13 @@ export class EditProjectModal {
   }
 
   canSave(): boolean {
-    return this.bookTitle?.trim().length > 0 && this.author?.trim().length > 0;
+    return this.bookTitle()?.trim().length > 0 && this.author()?.trim().length > 0;
   }
 
   saveProject() {
     if (!this.canSave()) return;
     
-    this.store.updateProjectInfo(this.bookTitle.trim(), this.author?.trim() || '');
+    this.store.updateProjectInfo(this.bookTitle().trim(), this.author()?.trim() || '');
     this.triggerClose();
   }
 }

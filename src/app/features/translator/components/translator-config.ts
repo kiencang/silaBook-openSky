@@ -1,10 +1,11 @@
-import { Component, inject, signal, effect, OnInit, OnDestroy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal, effect, untracked, OnInit, OnDestroy } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { FormsModule } from '@angular/forms';
 import { BookStore } from '../../../core/book.store';
-import { CustomModel, getCustomModels, getCustomEconomyModels } from '../../../core/openrouter';
+import { customModels, customEconomyModels } from '../../../core/openrouter';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-translator-config',
   standalone: true,
   imports: [MatIconModule, FormsModule],
@@ -202,8 +203,8 @@ import { CustomModel, getCustomModels, getCustomEconomyModels } from '../../../c
 })
 export class TranslatorConfigComponent implements OnInit, OnDestroy {
   store = inject(BookStore);
-  models = signal<CustomModel[]>(getCustomModels());
-  economyModels = signal<CustomModel[]>(getCustomEconomyModels());
+  readonly models = customModels;
+  readonly economyModels = customEconomyModels;
   isCustomInstructionsExpanded = signal(!!this.store.customInstructions());
   private lastSyncedProjectId: string | null = this.store.currentProjectId();
 
@@ -225,26 +226,25 @@ export class TranslatorConfigComponent implements OnInit, OnDestroy {
       }
     });
 
-    if (typeof window !== 'undefined') {
-      window.addEventListener('openrouter-models-changed', () => {
-        this.models.set(getCustomModels());
-        this.economyModels.set(getCustomEconomyModels());
-        
+    effect(() => {
+      const currentModels = this.models();
+      const currentEcoModels = this.economyModels();
+      untracked(() => {
         const currentModel = this.store.config().model;
-        if (!this.models().some(m => m.id === currentModel)) {
-          const saved = localStorage.getItem('md-translator-last-translation-model');
-          const fallback = (saved && this.models().some(m => m.id === saved)) ? saved : this.models()[0]?.id;
+        if (!currentModels.some(m => m.id === currentModel)) {
+          const saved = typeof window !== 'undefined' ? localStorage.getItem('md-translator-last-translation-model') : null;
+          const fallback = (saved && currentModels.some(m => m.id === saved)) ? saved : currentModels[0]?.id;
           if (fallback) this.onTranslationModelChange(fallback);
         }
-        
+
         const currentEco = this.store.config().economyModel;
-        if (!this.economyModels().some(m => m.id === currentEco)) {
-          const savedEco = localStorage.getItem('md-translator-last-economy-model');
-          const fallbackEco = (savedEco && this.economyModels().some(m => m.id === savedEco)) ? savedEco : this.economyModels()[0]?.id;
+        if (!currentEcoModels.some(m => m.id === currentEco)) {
+          const savedEco = typeof window !== 'undefined' ? localStorage.getItem('md-translator-last-economy-model') : null;
+          const fallbackEco = (savedEco && currentEcoModels.some(m => m.id === savedEco)) ? savedEco : currentEcoModels[0]?.id;
           if (fallbackEco) this.onEconomyModelChange(fallbackEco);
         }
       });
-    }
+    });
   }
 
   ngOnInit() {

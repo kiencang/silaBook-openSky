@@ -1,9 +1,10 @@
-import { Component, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
-import { hasSecureApiKey } from '../../core/crypto-storage.util';
+import { hasUserApiKey } from '../../core/crypto-storage.util';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-footer',
   standalone: true,
   imports: [CommonModule, MatIconModule],
@@ -37,7 +38,7 @@ import { hasSecureApiKey } from '../../core/crypto-storage.util';
       </div>
 
       <div class="flex items-center flex-wrap justify-center gap-x-2 gap-y-1">
-        <span class="font-medium text-zinc-600">v1.0.53</span>
+        <span class="font-medium text-zinc-600">v1.0.54</span>
         <span class="text-zinc-300">•</span>
         <a href="https://github.com/kiencang/silaBook-openSky" target="_blank" rel="noopener noreferrer" class="hover:text-indigo-600 transition-colors">GitHub</a>
         <span class="text-zinc-300">•</span>
@@ -54,22 +55,7 @@ import { hasSecureApiKey } from '../../core/crypto-storage.util';
 })
 export class FooterComponent {
   isDisabled = input<boolean>(false);
-  hasUserApiKey = signal<boolean>(false);
+  readonly hasUserApiKey = hasUserApiKey;
   openApiKeyModal = output<void>();
   openAppsModal = output<void>();
-
-  constructor() {
-    this.checkUserApiKey();
-    if (typeof window !== 'undefined') {
-      window.addEventListener('api-key-changed', () => {
-        this.checkUserApiKey();
-      });
-    }
-  }
-
-  checkUserApiKey() {
-    if (typeof window !== 'undefined') {
-      this.hasUserApiKey.set(hasSecureApiKey());
-    }
-  }
 }

@@ -1,6 +1,6 @@
-import { Injectable } from '@angular/core';
-import { getEncoding, Tiktoken } from 'js-tiktoken';
+import { Injectable, signal } from '@angular/core';
 import { getCachedApiKey, loadSecureApiKey } from './crypto-storage.util';
+import { countTokensAsync, countTokensSync } from './tiktoken.util';
 
 export interface CustomModel {
   id: string;
@@ -53,7 +53,7 @@ export function saveCustomModels(models: CustomModel[]): void {
   })).filter(m => m.id.length > 0);
   
   localStorage.setItem('user_openrouter_models', JSON.stringify(valid));
-  window.dispatchEvent(new Event('openrouter-models-changed'));
+  customModelsState.set(valid);
 }
 
 export function getCustomEconomyModels(): CustomModel[] {
@@ -83,8 +83,14 @@ export function saveCustomEconomyModels(models: CustomModel[]): void {
   })).filter(m => m.id.length > 0);
   
   localStorage.setItem('user_openrouter_economy_models', JSON.stringify(valid));
-  window.dispatchEvent(new Event('openrouter-models-changed'));
+  customEconomyModelsState.set(valid);
 }
+
+const customModelsState = signal<CustomModel[]>(getCustomModels());
+export const customModels = customModelsState.asReadonly();
+
+const customEconomyModelsState = signal<CustomModel[]>(getCustomEconomyModels());
+export const customEconomyModels = customEconomyModelsState.asReadonly();
 
 export function getQualityTemperature(): number {
   if (typeof window === 'undefined') return 1.0;
@@ -106,7 +112,6 @@ export function saveQualityTemperature(temp: number): void {
   if (typeof window === 'undefined') return;
   const clamped = Math.min(1, Math.max(0, Math.round(temp * 10) / 10));
   localStorage.setItem('user_quality_temperature', String(clamped));
-  window.dispatchEvent(new Event('openrouter-models-changed'));
 }
 
 export type ReasoningEffortOption = 'high' | 'medium' | 'low' | 'none';
@@ -127,7 +132,6 @@ export function getReasoningEffort(): ReasoningEffortOption {
 export function saveReasoningEffort(effort: ReasoningEffortOption): void {
   if (typeof window === 'undefined') return;
   localStorage.setItem('user_reasoning_effort', effort);
-  window.dispatchEvent(new Event('openrouter-models-changed'));
 }
 
 export function isQuotaError(e: unknown): boolean {
@@ -176,18 +180,6 @@ export function parseOpenRouterError(e: unknown): string {
 
 @Injectable({ providedIn: 'root' })
 export class OpenRouterClient {
-  private encodingCache: Tiktoken | null = null;
-
-  private getEncoder(): Tiktoken {
-    if (!this.encodingCache) {
-      try {
-        this.encodingCache = getEncoding('cl100k_base');
-      } catch (e) {
-        console.warn('Failed to load cl100k_base encoding, fallback to length estimate', e);
-      }
-    }
-    return this.encodingCache!;
-  }
 
   getApiKey(): string {
     const cached = getCachedApiKey();
@@ -321,18 +313,7 @@ export class OpenRouterClient {
   }
 
   countTokensText(text: string): number {
-    if (!text) return 0;
-    try {
-      const enc = this.getEncoder();
-      if (enc) {
-        return enc.encode(text).length;
-      }
-    } catch (e) {
-      console.warn('Tiktoken encoding failed, fallback to word ratio', e);
-    }
-    // Fallback estimate
-    const words = text.trim().split(/\s+/).length;
-    return Math.round(words * 1.35);
+    return countTokensSync(text);
   }
 
   async countTokens(base64OrText: string, mimeType = 'text/plain', _model = '~google/gemini-flash-latest'): Promise<number> {
@@ -341,7 +322,7 @@ export class OpenRouterClient {
       // Base64 estimation (~ 1 token per 3 bytes of raw base64 data)
       return Math.round(base64OrText.length / 4);
     }
-    return this.countTokensText(base64OrText);
+    return countTokensAsync(base64OrText);
   }
 
   async convertPdfToMarkdown(base64Data: string, model = '~google/gemini-flash-latest'): Promise<string> {

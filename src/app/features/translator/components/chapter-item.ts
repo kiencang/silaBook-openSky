@@ -1,6 +1,7 @@
-import { Component, input, model, output, inject, signal, computed, effect, OnDestroy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, model, output, inject, signal, computed, effect, OnDestroy } from '@angular/core';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-translating-skeleton',
   standalone: true,
   imports: [MatIconModule],
@@ -43,12 +44,12 @@ import { BookStore, Chapter, TranslationVersion } from '../../../core/book.store
 import { ToastService } from '../../../core/toast.service';
 import { getConfiguredMarked, parseMarkdownWithImages } from '../../../core/marked-setup';
 import { ReaderStore } from '../../../core/reader.store';
-import { GeminiClient } from '../../../core/gemini';
 import { OFFLINE_READER_SCRIPT, OFFLINE_READER_STYLES, OFFLINE_READER_TOOLBAR_HTML, PRINT_PDF_STYLES, escapeHtmlText } from '../../../core/html-export.util';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import { getCustomEconomyModels } from '../../../core/openrouter';
+import { getCustomEconomyModels, OpenRouterClient } from '../../../core/openrouter';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-chapter-item',
   standalone: true,
   imports: [MatIconModule, DatePipe, TranslatingSkeletonComponent],
@@ -609,7 +610,7 @@ export class ChapterItemComponent implements OnDestroy {
   store = inject(BookStore);
   toast = inject(ToastService);
   readerStore = inject(ReaderStore);
-  gemini = inject(GeminiClient);
+  openRouter = inject(OpenRouterClient);
   private sanitizer = inject(DomSanitizer);
   chapter = input.required<Chapter>();
   index = input.required<number>();
@@ -717,7 +718,7 @@ export class ChapterItemComponent implements OnDestroy {
     try {
       // Use the economy model from config, fallback to first custom economy model, or version model
       const model = this.store.config().economyModel || getCustomEconomyModels()[0]?.id || version.model || this.store.config().model;
-      const summary = await this.gemini.summarizeTranslation(
+      const summary = await this.openRouter.summarizeTranslation(
         version.text, 
         model,
         this.store.config().translationMode || 'standard'

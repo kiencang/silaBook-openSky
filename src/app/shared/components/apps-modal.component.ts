@@ -1,7 +1,8 @@
-import { Component, Output, EventEmitter, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Output, EventEmitter, signal } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-apps-modal',
   standalone: true,
   imports: [MatIconModule],

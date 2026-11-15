@@ -1,17 +1,17 @@
-import { Component, computed, inject, signal, effect } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal, effect, untracked } from '@angular/core';
 import { BookStore, Chapter, countTokensWithTiktoken } from '../../core/book.store';
 import { MatIconModule } from '@angular/material/icon';
 import { ToastService } from '../../core/toast.service';
 import { hasSecureApiKey } from '../../core/crypto-storage.util';
 import { analyzeAndSplitText, PreviewChapter, countWords } from './splitter.util';
-import { GeminiClient, parseGeminiError, isQuotaError } from '../../core/gemini';
-import { CustomModel, getCustomEconomyModels } from '../../core/openrouter';
+import { customEconomyModels, OpenRouterClient, parseOpenRouterError, isQuotaError } from '../../core/openrouter';
 import { AiAnalysisComponent } from './components/ai-analysis.component';
 import { SplitLimitsComponent } from './components/split-limits.component';
 import { SplitOptionsComponent } from './components/split-options.component';
 import { SplitPreviewComponent } from './components/split-preview.component';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-splitter',
   standalone: true,
   imports: [
@@ -127,11 +127,11 @@ import { SplitPreviewComponent } from './components/split-preview.component';
 export class Splitter {
   store = inject(BookStore);
   toast = inject(ToastService);
-  gemini = inject(GeminiClient);
+  openRouter = inject(OpenRouterClient);
 
   get isAnalyzing() { return this.store.isAnalyzingSplits; }
-  economyModels = signal<CustomModel[]>(getCustomEconomyModels());
-  analysisModel = signal<string>(this.store.config().analysisModel || getCustomEconomyModels()[0]?.id || 'google/gemini-3.5-flash-lite');
+  readonly economyModels = customEconomyModels;
+  analysisModel = signal<string>(this.store.config().analysisModel || customEconomyModels()[0]?.id || 'google/gemini-3.5-flash-lite');
   samplePercentage = signal<number>(50);
 
   draftKeywords = signal<string[]>(['Chapter', 'Part', 'Section']);
@@ -183,11 +183,14 @@ export class Splitter {
   }
 
   constructor() {
-    if (typeof window !== 'undefined') {
-      window.addEventListener('openrouter-models-changed', () => {
-        this.economyModels.set(getCustomEconomyModels());
+    effect(() => {
+      const list = this.economyModels();
+      untracked(() => {
+        if (list.length > 0 && !list.some(m => m.id === this.analysisModel())) {
+          this.analysisModel.set(list[0].id);
+        }
       });
-    }
+    });
 
     const settings = this.store.splitSettings();
     if (settings) {
@@ -283,7 +286,7 @@ export class Splitter {
       this.store.updateConfig({ analysisModel: this.analysisModel() });
 
       this.isAnalyzing.set(true);
-      const jsonString = await this.gemini.analyzeBook(
+      const jsonString = await this.openRouter.analyzeBook(
         text, 
         this.analysisModel(),
         this.store.bookTitle(), 
@@ -326,7 +329,7 @@ export class Splitter {
       if (!isQuotaError(e)) {
         console.error('Analysis failed:', e);
       }
-      this.toast.error(parseGeminiError(e));
+      this.toast.error(parseOpenRouterError(e));
     } finally {
       this.isAnalyzing.set(false);
     }
@@ -417,7 +420,7 @@ export class Splitter {
     }
   }
 
-  applySplit() {
+  async applySplit() {
     if (this.store.hasAnyTranslation()) {
       this.store.phase.set(3);
       return;
@@ -437,7 +440,7 @@ export class Splitter {
       translatedText: c.excludeFromTranslation ? c.originalText : undefined
     }));
 
-    this.store.setChapters(chapters);
+    await this.store.setChapters(chapters);
   }
 }
 

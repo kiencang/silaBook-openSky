@@ -1,8 +1,9 @@
-import { Component, input, output, model } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output, model } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { CustomModel } from '../../../core/openrouter';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-ai-analysis',
   standalone: true,
   imports: [MatIconModule],

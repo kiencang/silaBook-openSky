@@ -1,16 +1,16 @@
-import { Component, inject, signal, effect, computed, ViewChild, ElementRef } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal, effect, computed, untracked, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { BookStore } from '../../core/book.store';
 import { ToastService } from '../../core/toast.service';
 import { hasSecureApiKey } from '../../core/crypto-storage.util';
-import { GeminiClient, parseGeminiError, isQuotaError } from '../../core/gemini';
-import { CustomModel, getCustomModels, escapeMarkdownCell } from '../../core/openrouter';
+import { customModels, escapeMarkdownCell, OpenRouterClient, parseOpenRouterError, isQuotaError } from '../../core/openrouter';
 import { MatIconModule } from '@angular/material/icon';
 import { FormsModule } from '@angular/forms';
 import { MarkdownTableEditorComponent } from '../../shared/components/markdown-table-editor.component';
 import { smartHardSplit } from '../splitter/splitter.util';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-glossary-setup',
   standalone: true,
   imports: [CommonModule, MatIconModule, FormsModule, MarkdownTableEditorComponent],
@@ -201,9 +201,9 @@ import { smartHardSplit } from '../splitter/splitter.util';
 })
 export class GlossarySetup {
   store = inject(BookStore);
-  gemini = inject(GeminiClient);
+  openRouter = inject(OpenRouterClient);
   toast = inject(ToastService);
-  models = signal<CustomModel[]>(getCustomModels());
+  readonly models = customModels;
 
   isGenerating = signal<boolean>(false);
   generationStatus = signal<string>('');
@@ -250,15 +250,15 @@ export class GlossarySetup {
       this.store.updateConfig({ glossaryGenModel: validModel });
     }
 
-    if (typeof window !== 'undefined') {
-      window.addEventListener('openrouter-models-changed', () => {
-        this.models.set(getCustomModels());
+    effect(() => {
+      this.models();
+      untracked(() => {
         const valid = this.resolveValidModel(this.glossaryModel());
         if (valid !== this.glossaryModel()) {
           this.onModelChange(valid);
         }
       });
-    }
+    });
     effect(() => {
       const activeContent = this.store.glossaryTable();
       if (!this.isManuallyEdited()) {
@@ -381,7 +381,7 @@ export class GlossarySetup {
         const batch = chunksToProcess.slice(i, i + maxConcurrent);
         const promises = batch.map(async chunk => {
           try {
-            const result = await this.gemini.generateGlossaryRaw(chunk.text, task.model, this.store.bookTitle(), this.store.author());
+            const result = await this.openRouter.generateGlossaryRaw(chunk.text, task.model, this.store.bookTitle(), this.store.author());
             chunk.result = result;
             chunk.status = 'completed';
           } catch (err) {
@@ -438,7 +438,7 @@ export class GlossarySetup {
         console.error(e);
       }
       this.store.setGlossaryTask({ ...task, status: 'error' });
-      this.toast.error(this.toast.Messages.GLOSSARY_ERROR(parseGeminiError(e)));
+      this.toast.error(this.toast.Messages.GLOSSARY_ERROR(parseOpenRouterError(e)));
     } finally {
       this.isGenerating.set(false);
       this.store.isGeneratingMetadata.set(false);

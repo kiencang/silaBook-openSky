@@ -1,9 +1,10 @@
-import { Component, input, model, signal, computed, effect } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, model, signal, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-markdown-table-editor',
   standalone: true,
   imports: [CommonModule, FormsModule, MatIconModule],

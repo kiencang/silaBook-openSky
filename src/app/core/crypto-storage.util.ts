@@ -3,6 +3,8 @@
  * and IndexedDB Key Storage.
  */
 
+import { signal } from '@angular/core';
+
 const DB_NAME = 'sila_secure_keystore';
 const DB_VERSION = 1;
 const STORE_NAME = 'keys';
@@ -178,6 +180,7 @@ export async function saveSecureApiKey(plainKey: string): Promise<void> {
     return;
   }
   cachedDecryptedKey = trimmed;
+  hasUserApiKeyState.set(true);
   const encrypted = await encryptApiKey(trimmed);
   if (typeof window !== 'undefined') {
     localStorage.setItem('user_openrouter_api_key', encrypted);
@@ -190,6 +193,7 @@ export async function saveSecureApiKey(plainKey: string): Promise<void> {
  */
 export function removeSecureApiKey(): void {
   cachedDecryptedKey = null;
+  hasUserApiKeyState.set(false);
   if (typeof window !== 'undefined') {
     localStorage.removeItem('user_openrouter_api_key');
     localStorage.removeItem('user_gemini_api_key');
@@ -211,6 +215,7 @@ export async function loadSecureApiKey(): Promise<string> {
   const rawSaved = localStorage.getItem('user_openrouter_api_key');
   if (!rawSaved || !rawSaved.trim()) {
     cachedDecryptedKey = null;
+    hasUserApiKeyState.set(false);
     return '';
   }
 
@@ -218,11 +223,14 @@ export async function loadSecureApiKey(): Promise<string> {
 
   if (!trimmed.startsWith('enc:v1:')) {
     cachedDecryptedKey = trimmed;
+    hasUserApiKeyState.set(true);
     saveSecureApiKey(trimmed).catch((err) => console.warn('Auto-upgrade key encryption error:', err));
     return trimmed;
   }
 
-  return await decryptApiKey(trimmed);
+  const decrypted = await decryptApiKey(trimmed);
+  hasUserApiKeyState.set(!!(decrypted && decrypted.trim()));
+  return decrypted;
 }
 
 /**
@@ -236,3 +244,6 @@ export function hasSecureApiKey(): boolean {
   }
   return false;
 }
+
+const hasUserApiKeyState = signal<boolean>(hasSecureApiKey());
+export const hasUserApiKey = hasUserApiKeyState.asReadonly();

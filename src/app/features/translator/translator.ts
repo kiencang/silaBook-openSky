@@ -1,9 +1,8 @@
-import { Component, computed, inject, signal, ViewChildren, QueryList } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal, ViewChildren, QueryList } from '@angular/core';
 import { BookStore, Chapter, TranslationVersion } from '../../core/book.store';
 import { ToastService } from '../../core/toast.service';
 import { hasSecureApiKey } from '../../core/crypto-storage.util';
-import { GeminiClient, parseGeminiError, isQuotaError } from '../../core/gemini';
-import { getQualityTemperature, getCustomEconomyModels } from '../../core/openrouter';
+import { getQualityTemperature, getCustomEconomyModels, OpenRouterClient, parseOpenRouterError, isQuotaError } from '../../core/openrouter';
 import { MatIconModule } from '@angular/material/icon';
 import { FormsModule } from '@angular/forms';
 import { TokenEstimationComponent } from './components/token-estimation';
@@ -11,6 +10,7 @@ import { TranslatorConfigComponent } from './components/translator-config';
 import { ChapterItemComponent } from './components/chapter-item';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-translator',
   standalone: true,
   imports: [MatIconModule, FormsModule, TokenEstimationComponent, TranslatorConfigComponent, ChapterItemComponent],
@@ -191,7 +191,8 @@ import { ChapterItemComponent } from './components/chapter-item';
           <app-chapter-item 
             [chapter]="chapter" 
             [index]="i" 
-            [(isExpanded)]="expanded[chapter.id]"
+            [isExpanded]="!!expanded()[chapter.id]"
+            (isExpandedChange)="setChapterExpanded(chapter.id, $event)"
             (translateSingle)="translateSingle(chapter)" 
             (requestNavigate)="handleNavigate($event)"
           />
@@ -202,12 +203,16 @@ import { ChapterItemComponent } from './components/chapter-item';
 })
 export class Translator {
   store = inject(BookStore);
-  gemini = inject(GeminiClient);
+  openRouter = inject(OpenRouterClient);
   toast = inject(ToastService);
   
   @ViewChildren(ChapterItemComponent) chapterItems!: QueryList<ChapterItemComponent>;
 
-  expanded: Record<string, boolean> = {};
+  expanded = signal<Record<string, boolean>>({});
+
+  setChapterExpanded(chapterId: string, val: boolean) {
+    this.expanded.update(curr => ({ ...curr, [chapterId]: val }));
+  }
 
   confirmAction = signal<'none' | 'retranslate' | 'all' | 'untranslated'>('none');
   stopRequested = signal(false);
@@ -236,7 +241,7 @@ export class Translator {
     }
 
     this.store.updateChapter(chapter.id, { status: 'translating' });
-    this.expanded[chapter.id] = true;
+    this.setChapterExpanded(chapter.id, true);
     
     try {
       const config = this.store.config();
@@ -261,7 +266,7 @@ export class Translator {
         }
       }
 
-      const { text: translatedText, customGlossary, glossaryStatus, glossaryRatio } = await this.gemini.translateChapter(
+      const { text: translatedText, customGlossary, glossaryStatus, glossaryRatio } = await this.openRouter.translateChapter(
         chapter.originalText, 
         config.model, 
         this.store.bookTitle(),
@@ -279,7 +284,7 @@ export class Translator {
       
       let summaryText: string | undefined = undefined;
       if (config.generateSummary !== false) {
-        summaryText = await this.gemini.summarizeTranslation(
+        summaryText = await this.openRouter.summarizeTranslation(
           translatedText, 
           config.economyModel || getCustomEconomyModels()[0]?.id || config.model,
           config.translationMode || 'standard'
@@ -325,7 +330,7 @@ export class Translator {
         console.error(e);
       }
       this.store.updateChapter(chapter.id, { status: 'error' });
-      this.toast.error(this.toast.Messages.TRANSLATION_ERROR(chapter.title, parseGeminiError(e)));
+      this.toast.error(this.toast.Messages.TRANSLATION_ERROR(chapter.title, parseOpenRouterError(e)));
       
       const msg = (e as Error)?.message || e?.toString() || '';
       const lowerMsg = msg.toLowerCase();
@@ -375,10 +380,10 @@ export class Translator {
           break;
         }
         if (autoExpandedChapterId && autoExpandedChapterId !== chapter.id) {
-          this.expanded[autoExpandedChapterId] = false;
+          this.setChapterExpanded(autoExpandedChapterId, false);
           autoExpandedChapterId = null;
         }
-        const wasAlreadyExpanded = !!this.expanded[chapter.id];
+        const wasAlreadyExpanded = !!this.expanded()[chapter.id];
         if (!wasAlreadyExpanded) {
           autoExpandedChapterId = chapter.id;
         }
