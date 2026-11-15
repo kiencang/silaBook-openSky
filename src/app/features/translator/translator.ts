@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal, ViewChild
 import { BookStore, Chapter, TranslationVersion } from '../../core/book.store';
 import { ToastService } from '../../core/toast.service';
 import { hasSecureApiKey } from '../../core/crypto-storage.util';
-import { getQualityTemperature, getCustomEconomyModels, OpenRouterClient, parseOpenRouterError, isQuotaError } from '../../core/openrouter';
+import { getQualityTemperature, getCustomEconomyModels, OpenRouterClient, parseOpenRouterError, isQuotaError, isPromptLoadError } from '../../core/openrouter';
 import { MatIconModule } from '@angular/material/icon';
 import { FormsModule } from '@angular/forms';
 import { TokenEstimationComponent } from './components/token-estimation';
@@ -279,7 +279,8 @@ export class Translator {
         contextSummarySnapshot,
         this.store.customInstructions(),
         config.translationMode || 'standard',
-        config.economyModel || getCustomEconomyModels()[0]?.id
+        config.economyModel || getCustomEconomyModels()[0]?.id,
+        config.generateSummary !== false
       );
       
       let summaryText: string | undefined = undefined;
@@ -334,6 +335,7 @@ export class Translator {
       const msg = (e as Error)?.message || e?.toString() || '';
       const lowerMsg = msg.toLowerCase();
       const isCritical =
+        isPromptLoadError(e) ||
         isQuotaError(e) ||
         lowerMsg.includes('401') ||
         lowerMsg.includes('unauthorized') ||

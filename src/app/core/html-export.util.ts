@@ -622,3 +622,91 @@ export const OFFLINE_READER_SCRIPT = `
 })();
 </script>
 `;
+
+export function buildPrintablePdfHtml(docTitle: string, htmlBody: string): string {
+  return `<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${escapeHtmlText(docTitle)}</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+${PRINT_PDF_STYLES}
+</style>
+</head>
+<body>
+<div class="content-wrapper">
+${htmlBody}
+</div>
+<script>
+  window.onload = () => {
+    setTimeout(() => {
+      window.print();
+    }, 500);
+  };
+</script>
+</body>
+</html>`;
+}
+
+export function buildOfflineReaderHtml(
+  docTitle: string,
+  htmlBody: string,
+  projectId: string | null | undefined,
+  chapterId: string
+): string {
+  return `<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="x-sila-project-id" content="${escapeHtmlText(projectId)}">
+<meta name="x-sila-chapter-id" content="${escapeHtmlText(chapterId)}">
+<title>${escapeHtmlText(docTitle)}</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Lexend:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+${OFFLINE_READER_STYLES}
+</style>
+</head>
+<body>
+${OFFLINE_READER_TOOLBAR_HTML}
+<div class="content-wrapper">
+${htmlBody}
+</div>
+${OFFLINE_READER_SCRIPT}
+</body>
+</html>`;
+}
+
+export function triggerBlobDownload(blob: Blob, fileName: string): void {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = fileName;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+export function openPrintablePdfWindow(htmlDoc: string): boolean {
+  const blob = new Blob([htmlDoc], { type: 'text/html;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const newWindow = window.open(url, '_blank');
+  if (!newWindow) {
+    URL.revokeObjectURL(url);
+    return false;
+  }
+  let revoked = false;
+  const cleanupUrl = () => {
+    if (!revoked) {
+      revoked = true;
+      URL.revokeObjectURL(url);
+    }
+  };
+  newWindow.addEventListener('afterprint', () => setTimeout(cleanupUrl, 1000), { once: true });
+  setTimeout(cleanupUrl, 60000);
+  return true;
+}
+

@@ -1,192 +1,63 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { getCachedApiKey, loadSecureApiKey } from './crypto-storage.util';
 import { countTokensAsync, countTokensSync } from './tiktoken.util';
+import {
+  CustomModel,
+  DEFAULT_CUSTOM_MODELS,
+  DEFAULT_ECONOMY_MODELS,
+  getCustomModels,
+  saveCustomModels,
+  getCustomEconomyModels,
+  saveCustomEconomyModels,
+  customModels,
+  customEconomyModels,
+  getQualityTemperature,
+  saveQualityTemperature,
+  ReasoningEffortOption,
+  getReasoningEffort,
+  saveReasoningEffort,
+  PromptLoadError,
+  isPromptLoadError,
+  isQuotaError,
+  parseOpenRouterError
+} from './openrouter-config.util';
+import {
+  OpenRouterJsonSchema,
+  escapeMarkdownCell,
+  stripMarkdownCodeFence,
+  extractJsonArrayFromAiResponse,
+  FILTER_GLOSSARY_JSON_SCHEMA,
+  PRONOUNS_EXTRACTION_JSON_SCHEMA,
+  GLOSSARY_EXTRACTION_JSON_SCHEMA,
+  BOOK_ANALYSIS_JSON_SCHEMA
+} from './openrouter-schemas.util';
 
-export interface CustomModel {
-  id: string;
-  name: string;
-}
-
-export function escapeMarkdownCell(val: unknown): string {
-  if (val === null || val === undefined) return '';
-  return String(val).trim().replace(/\\?\|/g, '\\|').replace(/\r?\n/g, '<br>');
-}
-
-export const DEFAULT_CUSTOM_MODELS: CustomModel[] = [
-  { id: '~google/gemini-flash-latest', name: 'Google Gemini Flash Latest' },
-  { id: 'openai/gpt-5.6-luna', name: 'OpenAI GPT-5.6 Luna' },
-  { id: 'meta/muse-spark-1.3', name: 'Meta Muse Spark 1.3' },
-  { id: '~deepseek/deepseek-v4-flash-latest', name: 'DeepSeek V4 Flash Latest' },
-  { id: '~z-ai/glm-flash-latest', name: 'Z.ai GLM Flash Latest' }
-];
-
-export const DEFAULT_ECONOMY_MODELS: CustomModel[] = [
-  { id: 'google/gemini-3.5-flash-lite', name: 'Google Gemini 3.5 Flash Lite (đa phương thức)' },
-  { id: '~z-ai/glm-flash-latest', name: 'Z.ai GLM Flash Latest (đa phương thức)' },
-  { id: '~deepseek/deepseek-v4-flash-latest', name: 'DeepSeek V4 Flash Latest' }
-];
-
-export function getCustomModels(): CustomModel[] {
-  if (typeof window === 'undefined') return DEFAULT_CUSTOM_MODELS;
-  try {
-    const raw = localStorage.getItem('user_openrouter_models');
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed.slice(0, 9).map((item: { id?: string; name?: string }) => ({
-          id: String(item.id || '').trim(),
-          name: String(item.name || '').trim() || String(item.id || '').trim()
-        })).filter(item => item.id.length > 0);
-      }
-    }
-  } catch {
-    // fallback
-  }
-  return DEFAULT_CUSTOM_MODELS;
-}
-
-export function saveCustomModels(models: CustomModel[]): void {
-  if (typeof window === 'undefined') return;
-  const valid = models.slice(0, 9).map(m => ({
-    id: m.id.trim(),
-    name: m.name.trim() || m.id.trim()
-  })).filter(m => m.id.length > 0);
-  
-  localStorage.setItem('user_openrouter_models', JSON.stringify(valid));
-  customModelsState.set(valid);
-}
-
-export function getCustomEconomyModels(): CustomModel[] {
-  if (typeof window === 'undefined') return DEFAULT_ECONOMY_MODELS;
-  try {
-    const raw = localStorage.getItem('user_openrouter_economy_models');
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed.slice(0, 3).map((item: { id?: string; name?: string }) => ({
-          id: String(item.id || '').trim(),
-          name: String(item.name || '').trim() || String(item.id || '').trim()
-        })).filter(item => item.id.length > 0);
-      }
-    }
-  } catch {
-    // fallback
-  }
-  return DEFAULT_ECONOMY_MODELS;
-}
-
-export function saveCustomEconomyModels(models: CustomModel[]): void {
-  if (typeof window === 'undefined') return;
-  const valid = models.slice(0, 3).map(m => ({
-    id: m.id.trim(),
-    name: m.name.trim() || m.id.trim()
-  })).filter(m => m.id.length > 0);
-  
-  localStorage.setItem('user_openrouter_economy_models', JSON.stringify(valid));
-  customEconomyModelsState.set(valid);
-}
-
-const customModelsState = signal<CustomModel[]>(getCustomModels());
-export const customModels = customModelsState.asReadonly();
-
-const customEconomyModelsState = signal<CustomModel[]>(getCustomEconomyModels());
-export const customEconomyModels = customEconomyModelsState.asReadonly();
-
-export function getQualityTemperature(): number {
-  if (typeof window === 'undefined') return 1.0;
-  try {
-    const raw = localStorage.getItem('user_quality_temperature');
-    if (raw !== null) {
-      const parsed = parseFloat(raw);
-      if (!isNaN(parsed)) {
-        return Math.min(1, Math.max(0, Math.round(parsed * 10) / 10));
-      }
-    }
-  } catch {
-    // fallback
-  }
-  return 1.0;
-}
-
-export function saveQualityTemperature(temp: number): void {
-  if (typeof window === 'undefined') return;
-  const clamped = Math.min(1, Math.max(0, Math.round(temp * 10) / 10));
-  localStorage.setItem('user_quality_temperature', String(clamped));
-}
-
-export type ReasoningEffortOption = 'high' | 'medium' | 'low' | 'none';
-
-export function getReasoningEffort(): ReasoningEffortOption {
-  if (typeof window === 'undefined') return 'high';
-  try {
-    const raw = localStorage.getItem('user_reasoning_effort');
-    if (raw === 'high' || raw === 'medium' || raw === 'low' || raw === 'none') {
-      return raw;
-    }
-  } catch {
-    // fallback
-  }
-  return 'high';
-}
-
-export function saveReasoningEffort(effort: ReasoningEffortOption): void {
-  if (typeof window === 'undefined') return;
-  localStorage.setItem('user_reasoning_effort', effort);
-}
-
-export function isQuotaError(e: unknown): boolean {
-  const msg = (e as Error)?.message || e?.toString() || '';
-  const lowerMsg = msg.toLowerCase();
-  return lowerMsg.includes('quota') || lowerMsg.includes('429') || lowerMsg.includes('402') || lowerMsg.includes('insufficient_credits') || lowerMsg.includes('rate_limit') || lowerMsg.includes('credit');
-}
-
-export function parseOpenRouterError(e: unknown): string {
-  const msg = (e as Error)?.message || e?.toString() || '';
-  const lower = msg.toLowerCase();
-
-  let rawDetail = '';
-  try {
-    if (msg.includes('{')) {
-      const str = msg.substring(msg.indexOf('{'));
-      const obj = JSON.parse(str);
-      if (obj?.error?.message) {
-        rawDetail = String(obj.error.message);
-      }
-    }
-  } catch {
-    // ignore
-  }
-
-  if (lower.includes('401') || lower.includes('unauthorized') || lower.includes('invalid api key')) {
-    return 'Lỗi: OpenRouter API Key không hợp lệ hoặc bị từ chối. Vui lòng kiểm tra lại cấu hình Key.';
-  }
-  if (lower.includes('402') || lower.includes('insufficient_credits') || lower.includes('credit')) {
-    return rawDetail
-      ? `Lỗi: Không đủ số dư/hạn mức trên OpenRouter (402). Chi tiết: ${rawDetail}`
-      : 'Lỗi: Tài khoản OpenRouter của bạn đã hết số dư (Out of credits). Vui lòng nạp thêm credit trên OpenRouter.';
-  }
-  if (lower.includes('quota') || lower.includes('429') || lower.includes('rate limit')) {
-    return 'Lỗi: Đã vượt quá giới hạn tần suất yêu cầu (Rate limit / Quota exceeded). Vui lòng thử lại sau giây lát.';
-  }
-  if (lower.includes('network') || lower.includes('fetch failed')) {
-    return 'Lỗi kết nối mạng: Không thể kết nối tới máy chủ OpenRouter. Vui lòng kiểm tra kết nối internet.';
-  }
-  if (lower.includes('timeout')) {
-    return 'Lỗi: Quá thời gian chờ phản hồi từ OpenRouter (Timeout).';
-  }
-  if (lower.includes('overloaded') || lower.includes('503') || lower.includes('502') || lower.includes('500')) {
-    return 'Lỗi: Máy chủ AI hoặc OpenRouter đang quá tải, vui lòng thử lại sau giây lát.';
-  }
-
-  if (rawDetail) {
-    return `Lỗi từ OpenRouter: ${rawDetail}`;
-  }
-
-  return msg ? msg : 'Lỗi không xác định khi kết nối OpenRouter, vui lòng thử lại.';
-}
+export {
+  DEFAULT_CUSTOM_MODELS,
+  DEFAULT_ECONOMY_MODELS,
+  getCustomModels,
+  saveCustomModels,
+  getCustomEconomyModels,
+  saveCustomEconomyModels,
+  customModels,
+  customEconomyModels,
+  getQualityTemperature,
+  saveQualityTemperature,
+  getReasoningEffort,
+  saveReasoningEffort,
+  PromptLoadError,
+  isPromptLoadError,
+  isQuotaError,
+  parseOpenRouterError,
+  escapeMarkdownCell,
+  stripMarkdownCodeFence,
+  extractJsonArrayFromAiResponse
+};
+export type { CustomModel, ReasoningEffortOption, OpenRouterJsonSchema };
 
 @Injectable({ providedIn: 'root' })
 export class OpenRouterClient {
+  private readonly promptCache = new Map<string, string>();
 
   getApiKey(): string {
     const cached = getCachedApiKey();
@@ -204,7 +75,12 @@ export class OpenRouterClient {
     return (typeof process !== 'undefined' && process.env['OPENROUTER_API_KEY']) || '';
   }
 
-  private async loadPromptText(url: string): Promise<string | null> {
+  private async loadPromptText(url: string, maxAttempts = 3): Promise<string> {
+    const cached = this.promptCache.get(url);
+    if (cached !== undefined) {
+      return cached;
+    }
+
     const defaultOpts: RequestInit = { 
       cache: 'no-store',
       headers: {
@@ -213,13 +89,33 @@ export class OpenRouterClient {
         'Expires': '0'
       }
     };
-    try {
-      const res = await fetch(`${url}?t=${Date.now()}`, defaultOpts);
-      if (res.ok) return await res.text();
-    } catch (e) {
-      console.error(`Failed to load ${url}`, e);
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        const res = await fetch(`${url}?t=${Date.now()}`, defaultOpts);
+        if (res.ok) {
+          const text = await res.text();
+          if (text.trim().length > 0) {
+            this.promptCache.set(url, text);
+            return text;
+          }
+        } else if (res.status === 404) {
+          // Không thử lại nếu file thực sự không tồn tại (404)
+          break;
+        }
+      } catch (e) {
+        if (attempt === maxAttempts) {
+          console.error(`Failed to load ${url} after ${maxAttempts} attempts`, e);
+        }
+      }
+
+      if (attempt < maxAttempts) {
+        const delayMs = 400 * Math.pow(2, attempt - 1); // 400ms, 800ms
+        await new Promise(resolve => setTimeout(resolve, delayMs));
+      }
     }
-    return null;
+
+    throw new PromptLoadError(url);
   }
 
   private async callChatCompletions(
@@ -227,7 +123,7 @@ export class OpenRouterClient {
     messages: { role: 'system' | 'user' | 'assistant'; content: string | unknown[] }[],
     options: {
       jsonMode?: boolean;
-      jsonSchema?: { name: string; strict?: boolean; schema: Record<string, unknown> };
+      jsonSchema?: OpenRouterJsonSchema;
       temperature?: number;
       plugins?: Record<string, unknown>[];
     } = {}
@@ -419,11 +315,10 @@ export class OpenRouterClient {
   }
 
   async convertPdfToMarkdown(base64Data: string, model = '~google/gemini-flash-latest'): Promise<string> {
-    const pdfSI = await this.loadPromptText('/prompts/pdf_to_md_system_instruction.md');
-    const pdfP = await this.loadPromptText('/prompts/pdf_to_md_prompt.md');
-
-    const systemInstruction = pdfSI || 'You are an exact document converter. Convert the provided document into standard Markdown. Preserve all headings, lists, paragraphs, tables, and overall structure precisely without adding any extra conversational text. Ignore images and header/footer elements like page numbers.';
-    const textPrompt = pdfP || 'Convert this document into clean Markdown.';
+    const [systemInstruction, textPrompt] = await Promise.all([
+      this.loadPromptText('/prompts/pdf_to_md_system_instruction.md'),
+      this.loadPromptText('/prompts/pdf_to_md_prompt.md')
+    ]);
 
     const input = [
       {
@@ -441,18 +336,13 @@ export class OpenRouterClient {
 
     // Sử dụng OpenRouter Responses API (/api/v1/responses) theo tài liệu chuẩn chính thức
     // và khóa engine 'native' để không tự nhảy sang mistral-ocr có thu phí.
-    let result = await this.callResponses(model, input, {
+    const result = await this.callResponses(model, input, {
       instructions: systemInstruction,
       temperature: 0.3,
       plugins: [{ id: 'file-parser', pdf: { engine: 'native' } }]
     });
 
-    if (result.startsWith('```markdown')) {
-      result = result.replace(/^```markdown\n/, '').replace(/\n```$/, '');
-    } else if (result.startsWith('```')) {
-      result = result.replace(/^```\n/, '').replace(/\n```$/, '');
-    }
-    return result.trim();
+    return stripMarkdownCodeFence(result);
   }
 
   async filterGlossary(text: string, glossaryTable: string, model = '~google/gemini-flash-latest'): Promise<{ text: string; usedCount: number; totalCount: number }> {
@@ -480,13 +370,12 @@ export class OpenRouterClient {
 
       if (compactList.length <= 100) return { text: glossaryTable, usedCount: compactList.length, totalCount: compactList.length };
 
-      const si = await this.loadPromptText('/prompts/filter_glossary_system_instruction.md') || 'You are an expert terminology extractor. Filter terms present in the text. Respond in valid JSON object with a "items" array where each element has "english" and "pos" properties.';
-      let prompt = await this.loadPromptText('/prompts/filter_glossary_prompt.md');
-      if (!prompt) {
-        prompt = "Glossary Terms:\n{{danh sách thuật ngữ}}\n\nText Block:\n{{nội dung cần dịch}}";
-      }
-      
-      prompt = prompt.replace('{{danh sách thuật ngữ}}', () => JSON.stringify(compactList));
+      const [si, rawPrompt] = await Promise.all([
+        this.loadPromptText('/prompts/filter_glossary_system_instruction.md'),
+        this.loadPromptText('/prompts/filter_glossary_prompt.md')
+      ]);
+
+      let prompt = rawPrompt.replace('{{danh sách thuật ngữ}}', () => JSON.stringify(compactList));
       prompt = prompt.replace('{{nội dung cần dịch}}', () => text);
       prompt += '\nReturn JSON format: {"items": [{"english": "...", "pos": "..."}]}';
 
@@ -499,72 +388,16 @@ export class OpenRouterClient {
         {
           jsonMode: true,
           temperature: 0.3,
-          jsonSchema: {
-            name: 'filter_glossary',
-            strict: true,
-            schema: {
-              type: 'object',
-              properties: {
-                items: {
-                  type: 'array',
-                  items: {
-                    type: 'object',
-                    properties: {
-                      english: { type: 'string' },
-                      pos: { type: 'string' }
-                    },
-                    required: ['english', 'pos'],
-                    additionalProperties: false
-                  }
-                }
-              },
-              required: ['items'],
-              additionalProperties: false
-            }
-          }
+          jsonSchema: FILTER_GLOSSARY_JSON_SCHEMA
         }
       );
 
-      let matchedItems: { english: string; pos: string }[] = [];
-      try {
-        const parsed = JSON.parse(responseText);
-        if (Array.isArray(parsed)) {
-          matchedItems = parsed;
-        } else if (typeof parsed === 'object' && parsed !== null) {
-          const p = parsed as Record<string, unknown>;
-          if (Array.isArray(p['items'])) {
-            matchedItems = p['items'] as { english: string; pos: string }[];
-          } else if (Array.isArray(p['terms'])) {
-            matchedItems = p['terms'] as { english: string; pos: string }[];
-          } else {
-            const firstArray = Object.values(p).find(val => Array.isArray(val));
-            if (firstArray) matchedItems = firstArray as { english: string; pos: string }[];
-          }
-        }
-      } catch {
-        const match = responseText.match(/\[[\s\S]*\]/);
-        if (match) {
-          try {
-            matchedItems = JSON.parse(match[0]);
-          } catch {
-            // Ignore fallback JSON parse error
-          }
-        }
-        if (matchedItems.length === 0) {
-          const objMatch = responseText.match(/\{[\s\S]*\}/);
-          if (objMatch) {
-            try {
-              const p = JSON.parse(objMatch[0]);
-              const firstArray = Object.values(p).find(val => Array.isArray(val));
-              if (firstArray) matchedItems = firstArray as { english: string; pos: string }[];
-            } catch {
-              // Ignore fallback JSON parse error
-            }
-          }
-        }
-      }
+      const matchedItems = extractJsonArrayFromAiResponse<{ english: string; pos: string }>(
+        responseText,
+        ['items', 'terms']
+      );
       
-      if (!Array.isArray(matchedItems) || matchedItems.length === 0) {
+      if (!matchedItems || matchedItems.length === 0) {
         return { text: '', usedCount: 0, totalCount: fullGlossary.length };
       }
       
@@ -581,6 +414,9 @@ export class OpenRouterClient {
       return { text: resultTable, usedCount: filteredGlossary.length, totalCount: fullGlossary.length };
       
     } catch (e) {
+      if (isPromptLoadError(e)) {
+        throw e;
+      }
       console.error('Failed to filter glossary', e);
       return { text: glossaryTable, usedCount: 0, totalCount: 0 }; 
     }
@@ -590,31 +426,27 @@ export class OpenRouterClient {
     try {
       if (!rawPronounTable.trim()) return '';
       
-      const si = await this.loadPromptText('/prompts/normalize_pronouns_system_instructions.md') || 'You are an expert context analyzer. Your task is to normalize and refine the provided raw pronoun table based on the full book content.';
-      let prompt = await this.loadPromptText('/prompts/normalize_pronouns_prompt.md');
-      if (!prompt) {
-        prompt = "Raw Pronoun Table:\n{{bảng đại từ}}\n\nFull Book Content:\n{{nội dung}}\n\nPlease normalize it.";
-      }
+      const [si, rawPrompt] = await Promise.all([
+        this.loadPromptText('/prompts/normalize_pronouns_system_instructions.md'),
+        this.loadPromptText('/prompts/normalize_pronouns_prompt.md')
+      ]);
       
-      prompt = prompt.replace('{{tên sách}}', () => bookTitle || 'Không rõ');
+      let prompt = rawPrompt.replace('{{tên sách}}', () => bookTitle || 'Không rõ');
       prompt = prompt.replace('{{tên tác giả}}', () => author || 'Vô danh');
       prompt = prompt.replace('{{bảng đại từ}}', () => rawPronounTable);
       prompt = prompt.replace('{{nội dung}}', () => text);
 
-      let result = await this.callChatCompletions(model, [
+      const result = await this.callChatCompletions(model, [
         { role: 'system', content: si },
         { role: 'user', content: prompt }
       ]);
       
-      if (result.startsWith('```markdown')) {
-        result = result.replace(/^```markdown\n/, '').replace(/\n```$/, '');
-      } else if (result.startsWith('```')) {
-        result = result.replace(/^```\n/, '').replace(/\n```$/, '');
-      }
-      
-      return result.trim();
+      return stripMarkdownCodeFence(result);
       
     } catch (e) {
+      if (isPromptLoadError(e)) {
+        throw e;
+      }
       console.error('Failed to normalize pronouns', e);
       return rawPronounTable; 
     }
@@ -633,9 +465,27 @@ export class OpenRouterClient {
     contextSummary?: string,
     customInstructions?: string,
     translationMode: 'standard' | 'scientific' = 'standard',
-    economyModel?: string
+    economyModel?: string,
+    preloadSummary = true
   ): Promise<{ text: string; customGlossary?: string; glossaryStatus?: 'none' | 'full' | 'filtered'; glossaryRatio?: number }> {
-    
+    const siFileName = translationMode === 'scientific' ? '/prompts/scientific_system_instructions.md' : '/prompts/multi_system_instructions.md';
+    const promptFileName = translationMode === 'scientific' ? '/prompts/scientific_prompt.md' : '/prompts/multi_prompt.md';
+    const summarySiFileName = translationMode === 'scientific' ? '/prompts/summary_scientific_system_instruction.md' : '/prompts/summary_multi_system_instruction.md';
+    const summaryPromptFileName = translationMode === 'scientific' ? '/prompts/summary_scientific_prompt.md' : '/prompts/summary_multi_prompt.md';
+
+    // Tiền tải toàn bộ bộ SI/Prompt cần thiết (dịch + tóm tắt) trước khi gọi API OpenRouter để không tốn credit nếu mất tệp chỉ thị
+    const preloadTasks: Promise<string>[] = [
+      this.loadPromptText(siFileName),
+      this.loadPromptText(promptFileName)
+    ];
+    if (preloadSummary) {
+      preloadTasks.push(
+        this.loadPromptText(summarySiFileName),
+        this.loadPromptText(summaryPromptFileName)
+      );
+    }
+    const [systemInstruction, loadedPrompt] = await Promise.all(preloadTasks);
+
     let activeGlossary = '';
     let glossaryStatus: 'none' | 'full' | 'filtered' = 'none';
     let glossaryRatio: number | undefined = undefined;
@@ -654,72 +504,66 @@ export class OpenRouterClient {
             glossaryRatio = 100;
         }
     }
+
+    let finalPrompt = loadedPrompt.replace('{{tên sách}}', () => bookTitle || 'Không rõ');
+    finalPrompt = finalPrompt.replace('{{tên tác giả}}', () => author || 'Vô danh');
     
-    const siFileName = translationMode === 'scientific' ? '/prompts/scientific_system_instructions.md' : '/prompts/multi_system_instructions.md';
-    const promptFileName = translationMode === 'scientific' ? '/prompts/scientific_prompt.md' : '/prompts/multi_prompt.md';
-    
-    const systemInstruction = await this.loadPromptText(siFileName) || 'You are an expert translator into Vietnamese.';
-    let finalPrompt = await this.loadPromptText(promptFileName) || '';
-    
-    if (finalPrompt) {
-      finalPrompt = finalPrompt.replace('{{tên sách}}', () => bookTitle || 'Không rõ');
-      finalPrompt = finalPrompt.replace('{{tên tác giả}}', () => author || 'Vô danh');
-      
-      if (usePronouns && pronounTable) {
-        const pronounBlock = `<pronouns_rules>\n**Bảng đại từ nhân xưng:**\n${pronounTable}\n\n*LƯU Ý: Ở trên là Bảng đại từ nhân xưng tham chiếu. Bạn BẮT BUỘC phải sử dụng cấu trúc xưng hô này cho cách người kể chuyện gọi nhân vật (ngôi thứ 3) và trong các cuộc hội thoại thông thường. TUY NHIÊN, bạn được phép điều chỉnh linh hoạt cách xưng hô (ngôi thứ 1 & 2) nếu bối cảnh cảm xúc của câu chuyện thực sự đòi hỏi sự chuyển đổi.*\n</pronouns_rules>`;
-        finalPrompt = finalPrompt.replace('{{đại từ nhân xưng}}', () => pronounBlock);
-      } else {
-        finalPrompt = finalPrompt.replace('{{đại từ nhân xưng}}', '');
-      }
-
-      if (activeGlossary) {
-        const glossaryBlock = `<glossary_rules>\n**Bảng thuật ngữ / Từ khó:**\n${activeGlossary}\n\n*LƯU Ý: Bảng thuật ngữ trên đây là một DANH SÁCH THAM KHẢO quan trọng, NHƯNG bạn hãy áp dụng LINH HOẠT các thuật ngữ này vào bản dịch để đảm bảo tính thống nhất chuyên môn/từ ngữ toàn cục của cuốn sách. Điều cần ghi nhớ là đừng ép buộc áp dụng một cách cứng nhắc nếu ngữ cảnh cụ thể của đoạn văn hoàn toàn khác.*\n</glossary_rules>`;
-        finalPrompt = finalPrompt.replace('{{thuật ngữ}}', () => glossaryBlock);
-      } else {
-        finalPrompt = finalPrompt.replace('{{thuật ngữ}}', '');
-      }
-
-      if (contextSummary) {
-         const contextBlock = `<previous_chunk_handoff>\n**Tóm tắt bối cảnh từ phần trước để tham khảo:**\n${contextSummary}\n\n*LƯU Ý: Đây là thông tin nối tiếp từ khối văn bản trước (diễn biến sự kiện, trạng thái nhân vật, hoặc luồng logic/lập luận, **cùng với sắc thái/giọng điệu chung**). Hãy dùng nó để nắm bắt ngữ cảnh nhằm đảm bảo tính liền mạch cho bản dịch, đặc biệt là duy trì đúng giọng điệu và cảm xúc. TUYỆT ĐỐI KHÔNG lặp lại nội dung tóm tắt này vào phần bản dịch.*\n</previous_chunk_handoff>`;
-         finalPrompt = finalPrompt.replace('{{tóm tắt bối cảnh}}', () => contextBlock);
-      } else {
-         finalPrompt = finalPrompt.replace('{{tóm tắt bối cảnh}}', '');
-      }
-
-      if (customInstructions) {
-         const instructionsBlock = `<custom_instructions>\n**Chỉ thị bổ sung khi dịch:**\n${customInstructions}\n</custom_instructions>`;
-         finalPrompt = finalPrompt.replace('{{chỉ thị bổ sung}}', () => instructionsBlock);
-      } else {
-         finalPrompt = finalPrompt.replace('{{chỉ thị bổ sung}}', '');
-      }
-
-      finalPrompt = finalPrompt.replace('{{nội dung cần dịch}}', () => '\n' + text);
-      finalPrompt = finalPrompt.replace(/\n\s*\n\s*\n/g, '\n\n');
+    if (usePronouns && pronounTable) {
+      const pronounBlock = `<pronouns_rules>\n**Bảng đại từ nhân xưng:**\n${pronounTable}\n\n*LƯU Ý: Ở trên là Bảng đại từ nhân xưng tham chiếu. Bạn BẮT BUỘC phải sử dụng cấu trúc xưng hô này cho cách người kể chuyện gọi nhân vật (ngôi thứ 3) và trong các cuộc hội thoại thông thường. TUY NHIÊN, bạn được phép điều chỉnh linh hoạt cách xưng hô (ngôi thứ 1 & 2) nếu bối cảnh cảm xúc của câu chuyện thực sự đòi hỏi sự chuyển đổi.*\n</pronouns_rules>`;
+      finalPrompt = finalPrompt.replace('{{đại từ nhân xưng}}', () => pronounBlock);
     } else {
-      finalPrompt = `Translate the following text into Vietnamese. Maintain original Markdown structure:\n\n${text}`;
+      finalPrompt = finalPrompt.replace('{{đại từ nhân xưng}}', '');
     }
 
-    let result = await this.callChatCompletions(model, [
+    if (activeGlossary) {
+      const glossaryBlock = `<glossary_rules>\n**Bảng thuật ngữ / Từ khó:**\n${activeGlossary}\n\n*LƯU Ý: Bảng thuật ngữ trên đây là một DANH SÁCH THAM KHẢO quan trọng, NHƯNG bạn hãy áp dụng LINH HOẠT các thuật ngữ này vào bản dịch để đảm bảo tính thống nhất chuyên môn/từ ngữ toàn cục của cuốn sách. Điều cần ghi nhớ là đừng ép buộc áp dụng một cách cứng nhắc nếu ngữ cảnh cụ thể của đoạn văn hoàn toàn khác.*\n</glossary_rules>`;
+      finalPrompt = finalPrompt.replace('{{thuật ngữ}}', () => glossaryBlock);
+    } else {
+      finalPrompt = finalPrompt.replace('{{thuật ngữ}}', '');
+    }
+
+    if (contextSummary) {
+       const contextBlock = `<previous_chunk_handoff>\n**Tóm tắt bối cảnh từ phần trước để tham khảo:**\n${contextSummary}\n\n*LƯU Ý: Đây là thông tin nối tiếp từ khối văn bản trước (diễn biến sự kiện, trạng thái nhân vật, hoặc luồng logic/lập luận, **cùng với sắc thái/giọng điệu chung**). Hãy dùng nó để nắm bắt ngữ cảnh nhằm đảm bảo tính liền mạch cho bản dịch, đặc biệt là duy trì đúng giọng điệu và cảm xúc. TUYỆT ĐỐI KHÔNG lặp lại nội dung tóm tắt này vào phần bản dịch.*\n</previous_chunk_handoff>`;
+       finalPrompt = finalPrompt.replace('{{tóm tắt bối cảnh}}', () => contextBlock);
+    } else {
+       finalPrompt = finalPrompt.replace('{{tóm tắt bối cảnh}}', '');
+    }
+
+    if (customInstructions) {
+       const instructionsBlock = `<custom_instructions>\n**Chỉ thị bổ sung khi dịch:**\n${customInstructions}\n</custom_instructions>`;
+       finalPrompt = finalPrompt.replace('{{chỉ thị bổ sung}}', () => instructionsBlock);
+    } else {
+       finalPrompt = finalPrompt.replace('{{chỉ thị bổ sung}}', '');
+    }
+
+    finalPrompt = finalPrompt.replace('{{nội dung cần dịch}}', () => '\n' + text);
+    finalPrompt = finalPrompt.replace(/\n\s*\n\s*\n/g, '\n\n');
+
+    const result = await this.callChatCompletions(model, [
       { role: 'system', content: systemInstruction },
       { role: 'user', content: finalPrompt }
     ]);
     
-    if (result.startsWith('```markdown')) {
-      result = result.replace(/^```markdown\n/, '').replace(/\n```$/, '');
-    } else if (result.startsWith('```')) {
-      result = result.replace(/^```\n/, '').replace(/\n```$/, '');
-    }
-    
-    return { text: result.trim(), customGlossary: activeGlossary || undefined, glossaryStatus, glossaryRatio };
+    return {
+      text: stripMarkdownCodeFence(result),
+      customGlossary: activeGlossary || undefined,
+      glossaryStatus,
+      glossaryRatio
+    };
   }
 
-  async generatePronounsRaw(text: string, model = '~google/gemini-flash-latest', bookTitle = '', author = ''): Promise<{ originalName?: string; gender?: string; ageGroup?: string; role?: string; translatedTitles?: string; narratorPronoun?: string; dialoguePronouns?: string; reasoning?: string; notes?: string; }[]> {
-    const psi = await this.loadPromptText('/prompts/pronouns_system_instructions.md');
-    const pp = await this.loadPromptText('/prompts/pronouns_prompt.md');
+  async generatePronounsRaw(
+    text: string,
+    model = '~google/gemini-flash-latest',
+    bookTitle = '',
+    author = ''
+  ): Promise<{ originalName?: string; gender?: string; ageGroup?: string; role?: string; translatedTitles?: string; narratorPronoun?: string; dialoguePronouns?: string; reasoning?: string; notes?: string; }[]> {
+    const [psi, pp] = await Promise.all([
+      this.loadPromptText('/prompts/pronouns_system_instructions.md'),
+      this.loadPromptText('/prompts/pronouns_prompt.md')
+    ]);
 
-    let finalPrompt = pp || `Hãy phân tích đoạn văn bản nguồn dưới đây và lập Bảng đại từ nhân xưng chuẩn xác nhất.\n\n<metadata>\n- Tên sách: {{tên sách}}\n- Tác giả: {{tên tác giả}}\n</metadata>\n\n<source_text>\n{{nội dung}}\n</source_text>`;
-    
-    finalPrompt = finalPrompt.replace('{{tên sách}}', () => bookTitle || 'Không rõ');
+    let finalPrompt = pp.replace('{{tên sách}}', () => bookTitle || 'Không rõ');
     finalPrompt = finalPrompt.replace('{{tên tác giả}}', () => author || 'Vô danh');
     finalPrompt = finalPrompt.replace('{{nội dung}}', () => text);
     finalPrompt += '\n\nIMPORTANT: Return a JSON object with a "characters" array containing objects with keys: originalName, gender, ageGroup, role, translatedTitles, narratorPronoun, dialoguePronouns, reasoning, notes. Example: {"characters": [...]}';
@@ -727,106 +571,29 @@ export class OpenRouterClient {
     const responseText = await this.callChatCompletions(
       model,
       [
-        { role: 'system', content: psi || 'You analyze text and return character pronoun information in JSON object format: {"characters": [...]}' },
+        { role: 'system', content: psi },
         { role: 'user', content: finalPrompt }
       ],
       {
         jsonMode: true,
-        jsonSchema: {
-          name: 'pronouns_extraction',
-          strict: true,
-          schema: {
-            type: 'object',
-            properties: {
-              characters: {
-                type: 'array',
-                items: {
-                  type: 'object',
-                  properties: {
-                    originalName: { type: 'string' },
-                    gender: {
-                      type: 'string',
-                      enum: ['Male', 'Female', 'Non-binary', 'Unknown']
-                    },
-                    ageGroup: { type: 'string' },
-                    role: { type: 'string' },
-                    translatedTitles: { type: 'string' },
-                    narratorPronoun: { type: 'string' },
-                    dialoguePronouns: { type: 'string' },
-                    reasoning: { type: 'string' },
-                    notes: { type: 'string' }
-                  },
-                  required: [
-                    'originalName',
-                    'gender',
-                    'ageGroup',
-                    'role',
-                    'translatedTitles',
-                    'narratorPronoun',
-                    'dialoguePronouns',
-                    'reasoning',
-                    'notes'
-                  ],
-                  additionalProperties: false
-                }
-              }
-            },
-            required: ['characters'],
-            additionalProperties: false
-          }
-        }
+        jsonSchema: PRONOUNS_EXTRACTION_JSON_SCHEMA
       }
     );
 
-    let arr: unknown[] = [];
-    try {
-      const parsed = JSON.parse(responseText);
-      if (Array.isArray(parsed)) {
-        arr = parsed;
-      } else if (typeof parsed === 'object' && parsed !== null) {
-        const p = parsed as Record<string, unknown>;
-        if (Array.isArray(p['characters'])) {
-          arr = p['characters'];
-        } else if (Array.isArray(p['pronouns'])) {
-          arr = p['pronouns'];
-        } else if (Array.isArray(p['data'])) {
-          arr = p['data'];
-        } else if (Array.isArray(p['items'])) {
-          arr = p['items'];
-        } else {
-          const firstArray = Object.values(p).find(val => Array.isArray(val));
-          if (firstArray) arr = firstArray as unknown[];
-        }
-      }
-    } catch {
-      const match = responseText.match(/\[[\s\S]*\]/);
-      if (match) {
-        try {
-          arr = JSON.parse(match[0]);
-        } catch {
-          // Ignore fallback JSON parse error
-        }
-      }
-      if (!Array.isArray(arr) || arr.length === 0) {
-        const objMatch = responseText.match(/\{[\s\S]*\}/);
-        if (objMatch) {
-          try {
-            const p = JSON.parse(objMatch[0]);
-            if (Array.isArray(p?.characters)) arr = p.characters;
-            else if (Array.isArray(p?.pronouns)) arr = p.pronouns;
-            else {
-              const firstArray = Object.values(p).find(val => Array.isArray(val));
-              if (firstArray) arr = firstArray as unknown[];
-            }
-          } catch {
-            // Ignore fallback JSON parse error
-          }
-        }
-      }
-    }
+    const arr = extractJsonArrayFromAiResponse<{
+      originalName?: string;
+      gender?: string;
+      ageGroup?: string;
+      role?: string;
+      translatedTitles?: string;
+      narratorPronoun?: string;
+      dialoguePronouns?: string;
+      reasoning?: string;
+      notes?: string;
+    }>(responseText, ['characters', 'pronouns', 'data', 'items']);
 
-    if (Array.isArray(arr)) {
-      return arr as { originalName?: string; gender?: string; ageGroup?: string; role?: string; translatedTitles?: string; narratorPronoun?: string; dialoguePronouns?: string; reasoning?: string; notes?: string; }[];
+    if (arr !== null) {
+      return arr;
     }
 
     throw new Error('Không thể đọc dữ liệu JSON từ AI. Vui lòng thử lại.');
@@ -844,13 +611,18 @@ export class OpenRouterClient {
     return '';
   }
 
-  async generateGlossaryRaw(text: string, model = '~google/gemini-flash-latest', bookTitle = '', author = ''): Promise<{ english?: string; pos?: string; vietnamese?: string; contextNotes?: string; }[]> {
-    const gsi = await this.loadPromptText('/prompts/glossary_system_instructions.md');
-    const gp = await this.loadPromptText('/prompts/glossary_prompt.md');
+  async generateGlossaryRaw(
+    text: string,
+    model = '~google/gemini-flash-latest',
+    bookTitle = '',
+    author = ''
+  ): Promise<{ english?: string; pos?: string; vietnamese?: string; contextNotes?: string; }[]> {
+    const [gsi, gp] = await Promise.all([
+      this.loadPromptText('/prompts/glossary_system_instructions.md'),
+      this.loadPromptText('/prompts/glossary_prompt.md')
+    ]);
 
-    let finalPrompt = gp || `Hãy phân tích nội dung và trích xuất Bảng thuật ngữ chuyên ngành/Từ khó dịch tiếng Anh - Việt.\n\n<metadata>\n- Tên sách: {{tên sách}}\n- Tác giả: {{tên tác giả}}\n</metadata>\n\n<source_text>\n{{nội dung}}\n</source_text>`;
-    
-    finalPrompt = finalPrompt.replace('{{tên sách}}', () => bookTitle || 'Không rõ');
+    let finalPrompt = gp.replace('{{tên sách}}', () => bookTitle || 'Không rõ');
     finalPrompt = finalPrompt.replace('{{tên tác giả}}', () => author || 'Vô danh');
     finalPrompt = finalPrompt.replace('{{nội dung}}', () => text);
     finalPrompt += '\n\nIMPORTANT: Return a JSON object with a "glossary" array containing objects with keys: english, pos, vietnamese, contextNotes. Example: {"glossary": [...]}';
@@ -858,88 +630,24 @@ export class OpenRouterClient {
     const responseText = await this.callChatCompletions(
       model,
       [
-        { role: 'system', content: gsi || 'You analyze text and return terminology in JSON object format: {"glossary": [...]}' },
+        { role: 'system', content: gsi },
         { role: 'user', content: finalPrompt }
       ],
       {
         jsonMode: true,
-        jsonSchema: {
-          name: 'glossary_extraction',
-          strict: true,
-          schema: {
-            type: 'object',
-            properties: {
-              glossary: {
-                type: 'array',
-                items: {
-                  type: 'object',
-                  properties: {
-                    english: { type: 'string' },
-                    vietnamese: { type: 'string' },
-                    pos: { type: 'string' },
-                    contextNotes: { type: 'string' }
-                  },
-                  required: ['english', 'vietnamese', 'pos', 'contextNotes'],
-                  additionalProperties: false
-                }
-              }
-            },
-            required: ['glossary'],
-            additionalProperties: false
-          }
-        }
+        jsonSchema: GLOSSARY_EXTRACTION_JSON_SCHEMA
       }
     );
 
-    let arr: unknown[] = [];
-    try {
-      const parsed = JSON.parse(responseText);
-      if (Array.isArray(parsed)) {
-        arr = parsed;
-      } else if (typeof parsed === 'object' && parsed !== null) {
-        const p = parsed as Record<string, unknown>;
-        if (Array.isArray(p['glossary'])) {
-          arr = p['glossary'];
-        } else if (Array.isArray(p['terms'])) {
-          arr = p['terms'];
-        } else if (Array.isArray(p['items'])) {
-          arr = p['items'];
-        } else if (Array.isArray(p['data'])) {
-          arr = p['data'];
-        } else {
-          const firstArray = Object.values(p).find(val => Array.isArray(val));
-          if (firstArray) arr = firstArray as unknown[];
-        }
-      }
-    } catch {
-      const match = responseText.match(/\[[\s\S]*\]/);
-      if (match) {
-        try {
-          arr = JSON.parse(match[0]);
-        } catch {
-          // Ignore fallback JSON parse error
-        }
-      }
-      if (!Array.isArray(arr) || arr.length === 0) {
-        const objMatch = responseText.match(/\{[\s\S]*\}/);
-        if (objMatch) {
-          try {
-            const p = JSON.parse(objMatch[0]);
-            if (Array.isArray(p?.glossary)) arr = p.glossary;
-            else if (Array.isArray(p?.terms)) arr = p.terms;
-            else {
-              const firstArray = Object.values(p).find(val => Array.isArray(val));
-              if (firstArray) arr = firstArray as unknown[];
-            }
-          } catch {
-            // Ignore fallback JSON parse error
-          }
-        }
-      }
-    }
+    const arr = extractJsonArrayFromAiResponse<{
+      english?: string;
+      pos?: string;
+      vietnamese?: string;
+      contextNotes?: string;
+    }>(responseText, ['glossary', 'terms', 'items', 'data']);
 
-    if (Array.isArray(arr)) {
-      return arr as { english?: string; pos?: string; vietnamese?: string; contextNotes?: string; }[];
+    if (arr !== null) {
+      return arr;
     }
 
     throw new Error('Không thể đọc dữ liệu JSON thuật ngữ từ AI. Vui lòng thử lại.');
@@ -958,66 +666,29 @@ export class OpenRouterClient {
   }
 
   async analyzeBook(text: string, model = '~google/gemini-flash-latest', bookTitle = '', author = ''): Promise<string> {
-    const si = await this.loadPromptText('/prompts/book_analysis_system_instructions.md');
-    const p = await this.loadPromptText('/prompts/book_analysis_prompt.md');
+    const [si, p] = await Promise.all([
+      this.loadPromptText('/prompts/book_analysis_system_instructions.md'),
+      this.loadPromptText('/prompts/book_analysis_prompt.md')
+    ]);
 
-    let finalPrompt = p || `Phân tích văn bản và trả về JSON cấu hình theo yêu cầu.\n\n<source_text>\n{{nội dung}}\n</source_text>`;
-    
-    finalPrompt = finalPrompt.replace('{{tên sách}}', () => bookTitle || 'Không rõ');
+    let finalPrompt = p.replace('{{tên sách}}', () => bookTitle || 'Không rõ');
     finalPrompt = finalPrompt.replace('{{tên tác giả}}', () => author || 'Vô danh');
     finalPrompt = finalPrompt.replace('{{nội dung}}', () => text);
 
-    let result = await this.callChatCompletions(
+    const result = await this.callChatCompletions(
       model,
       [
-        { role: 'system', content: si || 'You analyze book content and output JSON configuration.' },
+        { role: 'system', content: si },
         { role: 'user', content: finalPrompt }
       ],
       {
         jsonMode: true,
         temperature: 0.3,
-        jsonSchema: {
-          name: 'book_analysis',
-          strict: true,
-          schema: {
-            type: 'object',
-            properties: {
-              splitOptions: {
-                type: 'object',
-                properties: {
-                  recommendedOption: {
-                    type: 'string',
-                    enum: ['keyword', 'regex', 'standalone']
-                  },
-                  recommendedKeywords: {
-                    type: 'array',
-                    items: { type: 'string' }
-                  },
-                  recommendedRegex: { type: 'string' },
-                  reason: { type: 'string' }
-                },
-                required: [
-                  'recommendedOption',
-                  'recommendedKeywords',
-                  'recommendedRegex',
-                  'reason'
-                ],
-                additionalProperties: false
-              }
-            },
-            required: ['splitOptions'],
-            additionalProperties: false
-          }
-        }
+        jsonSchema: BOOK_ANALYSIS_JSON_SCHEMA
       }
     );
 
-    if (result.startsWith('```json')) {
-      result = result.replace(/^```json\n/, '').replace(/\n```$/, '');
-    } else if (result.startsWith('```')) {
-      result = result.replace(/^```\n/, '').replace(/\n```$/, '');
-    }
-    return result.trim();
+    return stripMarkdownCodeFence(result);
   }
 
   async summarizeTranslation(translatedText: string, model = '~google/gemini-flash-latest', translationMode: 'standard' | 'scientific' = 'standard'): Promise<string> {
@@ -1027,11 +698,10 @@ export class OpenRouterClient {
       const siFileName = translationMode === 'scientific' ? '/prompts/summary_scientific_system_instruction.md' : '/prompts/summary_multi_system_instruction.md';
       const promptFileName = translationMode === 'scientific' ? '/prompts/summary_scientific_prompt.md' : '/prompts/summary_multi_prompt.md';
 
-      const si = await this.loadPromptText(siFileName);
-      const p = await this.loadPromptText(promptFileName);
-
-      const systemInstruction = si || 'You are an expert summarizer. Provide a concise context summary in Vietnamese for the next chapter.';
-      const promptTemplate = p || 'Hãy tóm tắt nội dung bản dịch dưới đây để làm thông tin bối cảnh (context) cho việc dịch phần tiếp theo:\n\n{{nội dung}}';
+      const [systemInstruction, promptTemplate] = await Promise.all([
+        this.loadPromptText(siFileName),
+        this.loadPromptText(promptFileName)
+      ]);
       
       const finalPrompt = promptTemplate.replace('{{nội dung}}', () => translatedText);
 
@@ -1042,6 +712,9 @@ export class OpenRouterClient {
       
       return result.trim();
     } catch (e) {
+      if (isPromptLoadError(e)) {
+        throw e;
+      }
       console.error('Failed to summarize translation', e);
       return '';
     }

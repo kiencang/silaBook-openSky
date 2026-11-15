@@ -3,7 +3,12 @@ import { isPlatformBrowser } from '@angular/common';
 import { DbService, Project, ProjectMeta, SplitSettings } from './db';
 import { ToastService } from './toast.service';
 import { parseMarkdownWithImages } from './marked-setup';
-import { OFFLINE_READER_SCRIPT, OFFLINE_READER_STYLES, OFFLINE_READER_TOOLBAR_HTML, PRINT_PDF_STYLES, escapeHtmlText } from './html-export.util';
+import {
+  buildOfflineReaderHtml,
+  buildPrintablePdfHtml,
+  openPrintablePdfWindow,
+  triggerBlobDownload,
+} from './html-export.util';
 
 import { countTokensSync, ensureTiktokenLoaded } from './tiktoken.util';
 
@@ -572,13 +577,7 @@ export class BookStore {
     this.chapters.set([]);
   }
 
-  async exportProjectToPdf(project?: Project) {
-    if (!isPlatformBrowser(this.platformId)) return;
-
-    const name = project ? project.name : this.currentProjectName();
-    const chaps = project ? project.chapters : this.chapters();
-    const imagesInfo = project ? project.images : this.images();
-
+  private combineProjectChaptersMarkdown(chaps: Chapter[]): string {
     let combinedMarkdown = '';
     for (let i = 0; i < chaps.length; i++) {
       const c = chaps[i];
@@ -590,52 +589,24 @@ export class BookStore {
         combinedMarkdown += chapterMarkdown + '\n\n';
       }
     }
+    return combinedMarkdown;
+  }
+
+  async exportProjectToPdf(project?: Project) {
+    if (!isPlatformBrowser(this.platformId)) return;
+
+    const name = project ? project.name : this.currentProjectName();
+    const chaps = project ? project.chapters : this.chapters();
+    const imagesInfo = project ? project.images : this.images();
+    const combinedMarkdown = this.combineProjectChaptersMarkdown(chaps);
 
     try {
       const htmlBody = parseMarkdownWithImages(combinedMarkdown, imagesInfo);
-      const htmlDoc = `<!DOCTYPE html>
-<html lang="vi">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>${escapeHtmlText(name)}_silaBook_vi</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<style>
-${PRINT_PDF_STYLES}
-</style>
-</head>
-<body>
-<div class="content-wrapper">
-${htmlBody}
-</div>
-<script>
-  window.onload = () => {
-    setTimeout(() => {
-      window.print();
-    }, 500);
-  };
-</script>
-</body>
-</html>`;
-
-      const blob = new Blob([htmlDoc], { type: 'text/html;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      
-      const newWindow = window.open(url, '_blank');
-      if (!newWindow) {
-        URL.revokeObjectURL(url);
+      const htmlDoc = buildPrintablePdfHtml(`${name}_silaBook_vi`, htmlBody);
+      if (!openPrintablePdfWindow(htmlDoc)) {
         this.toastService.error('Vui lòng cho phép popup để nhận PDF');
         return;
       }
-      let revoked = false;
-      const cleanupUrl = () => {
-        if (!revoked) {
-          revoked = true;
-          URL.revokeObjectURL(url);
-        }
-      };
-      newWindow.addEventListener('afterprint', () => setTimeout(cleanupUrl, 1000), { once: true });
-      setTimeout(cleanupUrl, 60000);
       this.toastService.success('Đang tạo bản PDF chuẩn bị tải...');
     } catch (e: unknown) {
       console.error('Error opening PDF print:', e);
@@ -650,52 +621,13 @@ ${htmlBody}
     const chaps = project ? project.chapters : this.chapters();
     const projectId = project ? project.id : this.currentProjectId();
     const imagesInfo = project ? project.images : this.images();
-
-    let combinedMarkdown = '';
-    for (let i = 0; i < chaps.length; i++) {
-      const c = chaps[i];
-      const isTrans = c.status === 'done' && !!c.translatedText;
-      let chapterMarkdown = isTrans ? c.translatedText : c.originalText;
-      if (chapterMarkdown) {
-        const prefix = isTrans ? `c${i}-t` : `c${i}-o`;
-        chapterMarkdown = chapterMarkdown.replace(/\[\^([^\]]+)\]/g, `[^${prefix}-$1]`);
-        combinedMarkdown += chapterMarkdown + '\n\n';
-      }
-    }
+    const combinedMarkdown = this.combineProjectChaptersMarkdown(chaps);
 
     try {
       const htmlBody = parseMarkdownWithImages(combinedMarkdown, imagesInfo);
-      const htmlDoc = `<!DOCTYPE html>
-<html lang="vi">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="x-sila-project-id" content="${escapeHtmlText(projectId)}">
-<meta name="x-sila-chapter-id" content="full">
-<title>${escapeHtmlText(name)}_silaBook_vi</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Lexend:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<style>
-${OFFLINE_READER_STYLES}
-</style>
-</head>
-<body>
-${OFFLINE_READER_TOOLBAR_HTML}
-<div class="content-wrapper">
-${htmlBody}
-</div>
-${OFFLINE_READER_SCRIPT}
-</body>
-</html>`;
-
+      const htmlDoc = buildOfflineReaderHtml(`${name}_silaBook_vi`, htmlBody, projectId, 'full');
       const blob = new Blob([htmlDoc], { type: 'text/html;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${name}_silaBook_vi.html`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      triggerBlobDownload(blob, `${name}_silaBook_vi.html`);
       this.toastService.success(this.toastService.Messages.EXPORT_HTML_SUCCESS);
     } catch (e: unknown) {
       console.error('Error exporting to HTML:', e);
@@ -710,33 +642,12 @@ ${OFFLINE_READER_SCRIPT}
     try {
       const name = project ? project.name : this.currentProjectName();
       const chaps = project ? project.chapters : this.chapters();
-
-      let combinedMarkdown = '';
-      for (let i = 0; i < chaps.length; i++) {
-        const c = chaps[i];
-        const isTrans = c.status === 'done' && !!c.translatedText;
-        let chapterMarkdown = isTrans ? c.translatedText : c.originalText;
-        if (chapterMarkdown) {
-          const prefix = isTrans ? `c${i}-t` : `c${i}-o`;
-          chapterMarkdown = chapterMarkdown.replace(/\[\^([^\]]+)\]/g, `[^${prefix}-$1]`);
-          combinedMarkdown += chapterMarkdown + '\n\n';
-        }
-      }
-
-      // EPUB images
       const imagesInfo = project ? project.images : this.images();
-      const { EpubExporter } = await import('./epub-export.util');
+      const combinedMarkdown = this.combineProjectChaptersMarkdown(chaps);
 
+      const { EpubExporter } = await import('./epub-export.util');
       const blob = await EpubExporter.generateEpub(name || 'Untitled', combinedMarkdown, imagesInfo);
-      
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${name}_silaBook_vi.epub`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      triggerBlobDownload(blob, `${name}_silaBook_vi.epub`);
       this.toastService.success(this.toastService.Messages.EXPORT_EPUB_SUCCESS);
     } catch (e: unknown) {
       console.error('Error exporting to EPUB:', e);
@@ -751,37 +662,97 @@ ${OFFLINE_READER_SCRIPT}
     try {
       const name = project ? project.name : this.currentProjectName();
       const chaps = project ? project.chapters : this.chapters();
-
-      let combinedMarkdown = '';
-      for (let i = 0; i < chaps.length; i++) {
-        const c = chaps[i];
-        const isTrans = c.status === 'done' && !!c.translatedText;
-        let chapterMarkdown = isTrans ? c.translatedText : c.originalText;
-        if (chapterMarkdown) {
-          const prefix = isTrans ? `c${i}-t` : `c${i}-o`;
-          chapterMarkdown = chapterMarkdown.replace(/\[\^([^\]]+)\]/g, `[^${prefix}-$1]`);
-          combinedMarkdown += chapterMarkdown + '\n\n';
-        }
-      }
-
-      // DOCX images
       const imagesInfo = project ? project.images : this.images();
-      const { DocxExporter } = await import('./docx-export.util');
+      const combinedMarkdown = this.combineProjectChaptersMarkdown(chaps);
 
+      const { DocxExporter } = await import('./docx-export.util');
       const blob = await DocxExporter.generateDocx(name || 'Untitled', combinedMarkdown, imagesInfo);
-      
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${name}_silaBook_vi.docx`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      triggerBlobDownload(blob, `${name}_silaBook_vi.docx`);
       this.toastService.success(this.toastService.Messages.EXPORT_DOCX_SUCCESS);
     } catch (e: unknown) {
       console.error('Error exporting to DOCX:', e);
       this.toastService.error('Lỗi khi tạo file DOCX');
+    }
+  }
+
+  async exportChapterToEpub(chapter: Chapter, index: number) {
+    if (!isPlatformBrowser(this.platformId) || !chapter.translatedText) return;
+
+    this.toastService.info('Đang tạo bản EPUB để tải...');
+    try {
+      const prefix = `c${index}-t`;
+      const processed = chapter.translatedText.replace(/\[\^([^\]]+)\]/g, `[^${prefix}-$1]`);
+      const title = chapter.title || `Phần ${index + 1}`;
+      const docTitle = `${this.currentProjectName()}_${title}`;
+      const { EpubExporter } = await import('./epub-export.util');
+
+      const blob = await EpubExporter.generateEpub(docTitle, processed, this.images());
+      triggerBlobDownload(blob, `${docTitle}_silaBook_vi.epub`);
+      this.toastService.success(this.toastService.Messages.EXPORT_EPUB_SUCCESS);
+    } catch (e: unknown) {
+      console.error('Error exporting chapter to EPUB:', e);
+      this.toastService.error('Có lỗi xảy ra khi tải xuống EPUB.');
+    }
+  }
+
+  async exportChapterToDocx(chapter: Chapter, index: number) {
+    if (!isPlatformBrowser(this.platformId) || !chapter.translatedText) return;
+
+    this.toastService.info('Đang tạo bản DOCX để tải...');
+    try {
+      const prefix = `c${index}-t`;
+      const processed = chapter.translatedText.replace(/\[\^([^\]]+)\]/g, `[^${prefix}-$1]`);
+      const title = chapter.title || `Phần ${index + 1}`;
+      const docTitle = `${this.currentProjectName()}_${title}`;
+      const { DocxExporter } = await import('./docx-export.util');
+
+      const blob = await DocxExporter.generateDocx(docTitle, processed, this.images());
+      triggerBlobDownload(blob, `${docTitle}_silaBook_vi.docx`);
+      this.toastService.success(this.toastService.Messages.EXPORT_DOCX_SUCCESS);
+    } catch (e: unknown) {
+      console.error('Error exporting chapter to DOCX:', e);
+      this.toastService.error('Có lỗi xảy ra khi tải xuống DOCX.');
+    }
+  }
+
+  exportChapterToPdf(chapter: Chapter, index: number) {
+    if (!isPlatformBrowser(this.platformId) || !chapter.translatedText) return;
+
+    try {
+      const prefix = `c${index}-t`;
+      const processed = chapter.translatedText.replace(/\[\^([^\]]+)\]/g, `[^${prefix}-$1]`);
+      const htmlBody = parseMarkdownWithImages(processed, this.images());
+      const title = chapter.title || `Phần ${index + 1}`;
+      const docTitle = `${this.currentProjectName()}_${title}_silaBook_vi`;
+      const htmlDoc = buildPrintablePdfHtml(docTitle, htmlBody);
+
+      if (!openPrintablePdfWindow(htmlDoc)) {
+        this.toastService.error('Vui lòng cho phép popup để nhận PDF');
+        return;
+      }
+      this.toastService.success('Đang tạo bản PDF chuẩn bị tải...');
+    } catch (e: unknown) {
+      console.error('Error opening PDF print:', e);
+      this.toastService.error('Có lỗi xảy ra khi tải xuống PDF.');
+    }
+  }
+
+  exportChapterToHtml(chapter: Chapter, index: number) {
+    if (!isPlatformBrowser(this.platformId) || !chapter.translatedText) return;
+
+    try {
+      const prefix = `c${index}-t`;
+      const processed = chapter.translatedText.replace(/\[\^([^\]]+)\]/g, `[^${prefix}-$1]`);
+      const htmlBody = parseMarkdownWithImages(processed, this.images());
+      const title = chapter.title || `Phần ${index + 1}`;
+      const docTitle = `${this.currentProjectName()}_${title}_silaBook_vi`;
+      const htmlDoc = buildOfflineReaderHtml(docTitle, htmlBody, this.currentProjectId(), chapter.id);
+      const blob = new Blob([htmlDoc], { type: 'text/html;charset=utf-8' });
+      triggerBlobDownload(blob, `${docTitle}.html`);
+      this.toastService.success('Đã tải xuống file HTML.');
+    } catch (e: unknown) {
+      console.error('Error exporting to HTML:', e);
+      this.toastService.error('Có lỗi xảy ra khi tải xuống HTML.');
     }
   }
 }
