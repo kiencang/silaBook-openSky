@@ -39,7 +39,12 @@ Phần duy nhất cần AI đa phương thức là chuyển PDF thành markdown,
 Gemini có bộ chặn lọc nội dung khá gắt gao, điều này là cần thiết để tránh xử lý các nội dung có tiềm ẩn nguy cơ nguy hiểm hoặc gây hại, tuy nhiên mức độ chặn nhầm của nó là có, đặc biệt với thể loại tiểu thuyết với nhiều tình tiết hư cấu dễ gây hiểu nhầm. Các AI khác có mức chặn, hạn chế thấp hơn có thể hữu ích trong trường hợp này.
 
 ## Cách dùng
-Không có điểm khác biệt đáng kể nào trong cách dùng ở nhánh `openSky` này với bản gốc. Chỉ có điểm khác duy nhất ở phần nhập API Key & bổ sung các model AI theo nhu cầu. Công cụ hướng dẫn rất chi tiết trong phần sử dụng tương ứng. Thao tác thêm mới các model, điều chỉnh một vài thông số cũng rất đơn giản. Nói chung nếu bạn đã từng dùng bản gốc thì nhánh openSky này gần như không phải học thêm gì nhiều.
+Không có điểm khác biệt đáng kể nào trong [cách dùng](https://silabook-intro.wpsila.com/) ở nhánh `openSky` này với bản gốc. Chỉ có điểm khác duy nhất ở phần nhập API Key & bổ sung các model AI theo nhu cầu. Công cụ hướng dẫn rất chi tiết trong phần sử dụng tương ứng. Thao tác thêm mới các model, điều chỉnh một vài thông số cũng rất đơn giản. Nói chung nếu bạn đã từng dùng bản gốc thì nhánh openSky này gần như không phải học thêm gì nhiều.
+
+## Hiển thị công thức toán
+Công cụ hiện làm khá tốt chức năng bảo vệ công thức toán trong bản dịch, định dạng tối ưu nhất để hiển thị là EPUB, HTML (PDF từ HTML sinh ra nên cũng tự nhiên kế thừa). Đối với định dạng DOCX, vẫn có thể hiển thị lỗi trong một số trường hợp hiếm.
+
+**Lưu ý nhỏ**: Công thức toán ở định dạng EPUB chỉ một số trình đọc hiển thị tốt, ví dụ như Thorium Reader (https://www.thoriumreader.com/en/), các trình đọc EPUB kiểu cũ như Aquile Reader sẽ hiển thị lỗi;
 
 ## Các model AI
 Danh sách các model quan trọng nhất có thể tìm thấy ở đây: https://openrouter.ai/discover
