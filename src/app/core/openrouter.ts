@@ -335,9 +335,10 @@ export class OpenRouterClient {
     const userContent: unknown[] = [
       { type: 'text', text: textPrompt },
       {
-        type: 'image_url',
-        image_url: {
-          url: `data:application/pdf;base64,${base64Data}`
+        type: 'file',
+        file: {
+          filename: 'document.pdf',
+          file_data: `data:application/pdf;base64,${base64Data}`
         }
       }
     ];
