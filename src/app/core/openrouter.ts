@@ -144,11 +144,26 @@ export function parseOpenRouterError(e: unknown): string {
   const msg = (e as Error)?.message || e?.toString() || '';
   const lower = msg.toLowerCase();
 
+  let rawDetail = '';
+  try {
+    if (msg.includes('{')) {
+      const str = msg.substring(msg.indexOf('{'));
+      const obj = JSON.parse(str);
+      if (obj?.error?.message) {
+        rawDetail = String(obj.error.message);
+      }
+    }
+  } catch {
+    // ignore
+  }
+
   if (lower.includes('401') || lower.includes('unauthorized') || lower.includes('invalid api key')) {
     return 'Lỗi: OpenRouter API Key không hợp lệ hoặc bị từ chối. Vui lòng kiểm tra lại cấu hình Key.';
   }
   if (lower.includes('402') || lower.includes('insufficient_credits') || lower.includes('credit')) {
-    return 'Lỗi: Tài khoản OpenRouter của bạn đã hết số dư (Out of credits). Vui lòng nạp thêm credit trên OpenRouter.';
+    return rawDetail
+      ? `Lỗi: Không đủ số dư/hạn mức trên OpenRouter (402). Chi tiết: ${rawDetail}`
+      : 'Lỗi: Tài khoản OpenRouter của bạn đã hết số dư (Out of credits). Vui lòng nạp thêm credit trên OpenRouter.';
   }
   if (lower.includes('quota') || lower.includes('429') || lower.includes('rate limit')) {
     return 'Lỗi: Đã vượt quá giới hạn tần suất yêu cầu (Rate limit / Quota exceeded). Vui lòng thử lại sau giây lát.';
@@ -163,16 +178,8 @@ export function parseOpenRouterError(e: unknown): string {
     return 'Lỗi: Máy chủ AI hoặc OpenRouter đang quá tải, vui lòng thử lại sau giây lát.';
   }
 
-  try {
-    if (msg.includes('{')) {
-      const str = msg.substring(msg.indexOf('{'));
-      const obj = JSON.parse(str);
-      if (obj?.error?.message) {
-        return `Lỗi từ OpenRouter: ${obj.error.message}`;
-      }
-    }
-  } catch {
-    // ignore
+  if (rawDetail) {
+    return `Lỗi từ OpenRouter: ${rawDetail}`;
   }
 
   return msg ? msg : 'Lỗi không xác định khi kết nối OpenRouter, vui lòng thử lại.';
@@ -317,6 +324,87 @@ export class OpenRouterClient {
     return content;
   }
 
+  private async callResponses(
+    model: string,
+    input: unknown[],
+    options: {
+      instructions?: string;
+      temperature?: number;
+      plugins?: Record<string, unknown>[];
+    } = {}
+  ): Promise<string> {
+    await loadSecureApiKey();
+    const apiKey = this.getApiKey();
+    if (!apiKey) {
+      throw new Error('Chưa cấu hình OpenRouter API Key. Vui lòng mở mục cài đặt API Key để thiết lập.');
+    }
+
+    const reasoningEffort = getReasoningEffort();
+    const payload: Record<string, unknown> = {
+      model: model || '~google/gemini-flash-latest',
+      input,
+      temperature: options.temperature ?? getQualityTemperature()
+    };
+
+    if (options.instructions) {
+      payload['instructions'] = options.instructions;
+    }
+
+    if (reasoningEffort !== 'none') {
+      payload['reasoning'] = {
+        effort: reasoningEffort
+      };
+    }
+
+    if (options.plugins && options.plugins.length > 0) {
+      payload['plugins'] = options.plugins;
+    }
+
+    const res = await fetch('https://openrouter.ai/api/v1/responses', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'HTTP-Referer': 'https://silabook-opensky.wpsila.com',
+        'X-Title': 'silaBook openSky',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) {
+      let errText = '';
+      try {
+        errText = await res.text();
+      } catch {
+        errText = res.statusText;
+      }
+      throw new Error(`OpenRouter HTTP ${res.status}: ${errText}`);
+    }
+
+    const data = await res.json();
+
+    if (Array.isArray(data.output)) {
+      const texts: string[] = [];
+      for (const item of data.output) {
+        if (item?.type === 'message' && Array.isArray(item.content)) {
+          for (const part of item.content) {
+            if (part?.type === 'output_text' && typeof part.text === 'string') {
+              texts.push(part.text);
+            }
+          }
+        }
+      }
+      const combined = texts.join('\n').trim();
+      if (combined) return combined;
+    }
+
+    if (typeof data.output_text === 'string' && data.output_text.trim()) {
+      return data.output_text;
+    }
+
+    throw new Error('Phản hồi từ OpenRouter Responses API không hợp lệ hoặc bị rỗng.');
+  }
+
   countTokensText(text: string): number {
     return countTokensSync(text);
   }
@@ -337,26 +425,24 @@ export class OpenRouterClient {
     const systemInstruction = pdfSI || 'You are an exact document converter. Convert the provided document into standard Markdown. Preserve all headings, lists, paragraphs, tables, and overall structure precisely without adding any extra conversational text. Ignore images and header/footer elements like page numbers.';
     const textPrompt = pdfP || 'Convert this document into clean Markdown.';
 
-    const userContent: unknown[] = [
-      { type: 'text', text: textPrompt },
+    const input = [
       {
-        type: 'file',
-        file: {
-          filename: 'document.pdf',
-          file_data: `data:application/pdf;base64,${base64Data}`
-        }
+        role: 'user',
+        content: [
+          { type: 'input_text', text: textPrompt },
+          {
+            type: 'input_file',
+            filename: 'document.pdf',
+            file_data: `data:application/pdf;base64,${base64Data}`
+          }
+        ]
       }
     ];
 
-    const messages = [
-      { role: 'system' as const, content: systemInstruction },
-      { role: 'user' as const, content: userContent }
-    ];
-
-    // Chỉ sử dụng engine 'native': chuyển thẳng file PDF gốc cho model xử lý trực tiếp,
-    // khóa không cho OpenRouter tự động nhảy sang mistral-ocr ($2/1.000 trang),
-    // và báo lỗi ngay nếu model không hỗ trợ đọc file PDF nguyên bản.
-    let result = await this.callChatCompletions(model, messages, {
+    // Sử dụng OpenRouter Responses API (/api/v1/responses) theo tài liệu chuẩn chính thức
+    // và khóa engine 'native' để không tự nhảy sang mistral-ocr có thu phí.
+    let result = await this.callResponses(model, input, {
+      instructions: systemInstruction,
       temperature: 0.3,
       plugins: [{ id: 'file-parser', pdf: { engine: 'native' } }]
     });
