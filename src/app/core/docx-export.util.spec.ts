@@ -93,6 +93,37 @@ describe('docx-export.util', () => {
       expect(out).not.toContain('w:rPr');
       expect(out).toContain('nor');
     });
+
+    it('splits curly braces { and } into standalone <m:r> runs without <m:nor/> to prevent literal backslash \\{ in LibreOffice while keeping <m:nor/> on inner operators', () => {
+      const xml = `
+        <m:oMath xmlns:m="${MATH_NS}">
+          <m:r><m:t xml:space="preserve">{…,−4,−3,−2,−1,0,1,2,3,4,…</m:t></m:r>
+          <m:r><m:t xml:space="preserve">}={0,−1,1,−2,2,−3,3,−4,4,…</m:t></m:r>
+          <m:r><m:t xml:space="preserve">}</m:t></m:r>
+        </m:oMath>
+      `;
+      const doc = parseXml(xml);
+      normalizeOmmlDom(doc);
+
+      const runs = Array.from(doc.getElementsByTagName('m:r'));
+      const runInfos = runs.map((r) => ({
+        text: r.getElementsByTagName('m:t')[0]?.textContent || '',
+        hasNor: r.getElementsByTagName('m:nor').length > 0,
+      }));
+
+      // Curly braces must be isolated in their own runs and must NEVER have <m:nor/>
+      const braceRuns = runInfos.filter((info) => info.text === '{' || info.text === '}');
+      expect(braceRuns.length).toBe(4);
+      for (const br of braceRuns) {
+        expect(br.hasNor).toBe(false);
+      }
+
+      // Inner '=' and negative number sequences must be protected with <m:nor/>
+      const eqRun = runInfos.find((info) => info.text === '=');
+      expect(eqRun?.hasNor).toBe(true);
+      const seqRun = runInfos.find((info) => info.text.includes('−4'));
+      expect(seqRun?.hasNor).toBe(true);
+    });
   });
 
   describe('tokenizeInline & convertHtmlTablesToMarkdown', () => {

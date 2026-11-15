@@ -101,6 +101,32 @@ export function normalizeOmmlDom(doc: Document): void {
     }
   }
 
+  // 1b. Tách riêng các dấu ngoặc nhọn '{' và '}' ra thành các <m:r> độc lập.
+  // Trong LibreOffice (SmOoxmlImport::handleR), nếu một <m:r> vừa có <m:nor/> vừa chứa '{' hoặc '}',
+  // LibreOffice sẽ bọc chuỗi trong dấu ngoặc kép "..." rồi mới chạy replaceAll("{", "\\{"),
+  // khiến StarMath hiểu "\\{" là chuỗi văn bản thuần và in thừa dấu "\" ra màn hình.
+  const initialRuns = getByTag(doc, 'r');
+  for (const r of initialRuns) {
+    const t = getDirectChild(r, 't');
+    const rawText = t?.textContent || '';
+    if (/[{}]/.test(rawText) && rawText.trim().length > 1 && r.parentElement) {
+      const segments = rawText.split(/([{}])/).filter(s => s.length > 0);
+      if (segments.length > 1) {
+        const parent = r.parentElement;
+        for (const seg of segments) {
+          const clonedR = r.cloneNode(true) as Element;
+          const clonedT = getDirectChild(clonedR, 't');
+          if (clonedT) {
+            clonedT.textContent = seg;
+            clonedT.setAttribute('xml:space', 'preserve');
+          }
+          parent.insertBefore(clonedR, r);
+        }
+        parent.removeChild(r);
+      }
+    }
+  }
+
   // 2. Chuẩn hóa các run (<m:r>) trong chỉ số mũ (<m:sup>) và chỉ số dưới (<m:sub>)
   // Đóng gói toán tử dạng literal text để tránh bị LibreOffice/Word báo lỗi cú pháp
   const scriptContainers = [...getByTag(doc, 'sup'), ...getByTag(doc, 'sub')];
@@ -109,6 +135,7 @@ export function normalizeOmmlDom(doc: Document): void {
     for (const r of runs) {
       const t = getDirectChild(r, 't');
       const text = t?.textContent || '';
+      if (/^[{}]+$/.test(text.trim())) continue;
       
       // Nếu chứa toán tử ở cuối (như "2+", "+", "-", "3-") hoặc chứa dấu toán học đặc thù
       const hasTrailingOp = /[+\-−*∗]$/.test(text.trim());
@@ -150,16 +177,33 @@ export function normalizeOmmlDom(doc: Document): void {
     }
   }
 
-  // 4. Bảo vệ các dấu ngoặc đơn lẻ (mở & đóng), chuỗi gộp chứa ngoặc hoặc toán tử/dấu câu ở biên dễ gây lỗi OCR
+  // 4. Bảo vệ các dấu ngoặc đơn lẻ (mở & đóng, trừ ngoặc nhọn '{' '}'), chuỗi gộp chứa ngoặc hoặc toán tử/dấu câu ở biên dễ gây lỗi OCR
   // (ví dụ: "$($", "$K^+ ($", "$(,$", "$2),$") và dọn dẹp <w:rPr/> / <m:sty m:val="undefined"/>
   const allRuns = getByTag(doc, 'r');
   for (const r of allRuns) {
     const t = getDirectChild(r, 't');
     const trimmedText = (t?.textContent || '').trim();
+    const isCurlyBraceRun = /^[{}]+$/.test(trimmedText);
+
+    if (isCurlyBraceRun) {
+      // Đảm bảo thẻ <m:r> chứa '{' hoặc '}' không có <m:nor/> để tránh lỗi in thừa dấu '\' trong LibreOffice
+      const mRPr = getDirectChild(r, 'rPr');
+      if (mRPr) {
+        const nor = getDirectChild(mRPr, 'nor');
+        if (nor) {
+          mRPr.removeChild(nor);
+        }
+        if (mRPr.children.length === 0) {
+          r.removeChild(mRPr);
+        }
+      }
+    }
 
     const hasBracketOrEdgeOp =
-      /[()[\]{}<>⟨⟩]/.test(trimmedText) ||
-      /^[+\-−*∗/=,;:~≈]|[+\-−*∗/=,;:~≈]$/.test(trimmedText);
+      !isCurlyBraceRun &&
+      (/[()[\]<>⟨⟩]/.test(trimmedText) ||
+        /^[+\-−*∗/=,;:~≈]|[+\-−*∗/=,;:~≈]$/.test(trimmedText) ||
+        /[,;:~=<>][+\-−*∗]/.test(trimmedText));
 
     if (hasBracketOrEdgeOp) {
       // Loại bỏ thẻ <w:rPr> rỗng nếu có (vì w:rPr đứng trước m:rPr sẽ vô hiệu hóa m:rPr)

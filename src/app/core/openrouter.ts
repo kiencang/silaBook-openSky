@@ -222,6 +222,7 @@ export class OpenRouterClient {
       jsonMode?: boolean;
       jsonSchema?: { name: string; strict?: boolean; schema: Record<string, unknown> };
       temperature?: number;
+      plugins?: Record<string, unknown>[];
     } = {}
   ): Promise<string> {
     await loadSecureApiKey();
@@ -247,6 +248,10 @@ export class OpenRouterClient {
 
       if (responseFormat) {
         p['response_format'] = responseFormat;
+      }
+
+      if (options.plugins && options.plugins.length > 0) {
+        p['plugins'] = options.plugins;
       }
 
       return p;
@@ -348,7 +353,14 @@ export class OpenRouterClient {
       { role: 'user' as const, content: userContent }
     ];
 
-    let result = await this.callChatCompletions(model, messages, { temperature: 0.3 });
+    // Chỉ sử dụng engine 'native': chuyển thẳng file PDF gốc cho model xử lý trực tiếp,
+    // khóa không cho OpenRouter tự động nhảy sang mistral-ocr ($2/1.000 trang),
+    // và báo lỗi ngay nếu model không hỗ trợ đọc file PDF nguyên bản.
+    let result = await this.callChatCompletions(model, messages, {
+      temperature: 0.3,
+      plugins: [{ id: 'file-parser', pdf: { engine: 'native' } }]
+    });
+
     if (result.startsWith('```markdown')) {
       result = result.replace(/^```markdown\n/, '').replace(/\n```$/, '');
     } else if (result.startsWith('```')) {
