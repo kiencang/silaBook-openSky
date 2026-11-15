@@ -86,6 +86,15 @@ Tuy nhiên cũng có một số model AI có đầu vào chấp nhận tương �
 
 Tóm lại: Trừ khi bạn định dịch cuốn sách tầm 1000 trang hoặc hơn, còn không thì không cần lo lắng về context của AI. Đối với đa số các AI hiện nay, thậm chí sách 1000 trang vẫn nằm trong khả năng xử lý của nó.
 
+## Dịch các thứ tiếng khác sang tiếng Việt?
+Hiện công cụ chỉ có chức năng duy nhất là dịch Anh - Việt, trong khi OpenRouter lại có rất nhiều model có tiềm năng dịch các cặp ngôn ngữ khác, chẳng hạn như Trung - Việt.
+
+Lý do tôi không triển khai các cặp khác dù rất muốn là vì khoảng 50% chất lượng của công cụ này phụ thuộc vào các cặp SI/Prompt chỉ thị cho AI. Trong khi bản thân không biết gì về các ngôn ngữ như Trung, Nhật, Hàn, v.v... để bổ sung.
+
+Ai có kinh nghiệm với các cặp ngôn ngữ đó và muốn phát triển thêm công cụ này, chỉ việc vào phần thư mục Prompts của công cụ để điều chỉnh: https://github.com/kiencang/silaBook-openSky/tree/main/public/prompts
+
+Nếu bạn muốn tìm hiểu thêm các cặp đó có thể vào đây: https://github.com/kiencang/SI-Prompt-Book-EV-Translate (bản trên ứng dụng có khác biệt đôi chút, do có tinh chỉnh thêm trong quá trình dùng);
+
 ## Tuyên bố từ chối trách nhiệm
 Công cụ này có thể được sử dụng cho mục đích nghiên cứu và học tập cá nhân.
 
