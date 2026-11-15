@@ -330,15 +330,25 @@ export class Translator {
         console.error(e);
       }
       this.store.updateChapter(chapter.id, { status: 'error' });
-      this.toast.error(this.toast.Messages.TRANSLATION_ERROR(chapter.title, parseOpenRouterError(e)));
-      
+
       const msg = (e as Error)?.message || e?.toString() || '';
       const lowerMsg = msg.toLowerCase();
-      if (lowerMsg.includes('quota') || lowerMsg.includes('429') || 
-          lowerMsg.includes('api key') || lowerMsg.includes('403') || lowerMsg.includes('permission_denied')) {
+      const isCritical =
+        isQuotaError(e) ||
+        lowerMsg.includes('401') ||
+        lowerMsg.includes('unauthorized') ||
+        lowerMsg.includes('api key') ||
+        lowerMsg.includes('403') ||
+        lowerMsg.includes('permission_denied');
+
+      const parsedErr = parseOpenRouterError(e);
+      if (isCritical && this.translateOperation() !== 'none') {
+        this.toast.error(this.toast.Messages.TRANSLATION_STOPPED_CRITICAL(chapter.title, parsedErr));
         return false;
       }
-      return true;
+
+      this.toast.error(this.toast.Messages.TRANSLATION_ERROR(chapter.title, parsedErr));
+      return !isCritical;
     }
   }
 
@@ -398,7 +408,6 @@ export class Translator {
         if (!shouldContinue) {
           stoppedCritically = true;
           this.stopRequested.set(true);
-          this.toast.error(this.toast.Messages.TRANSLATION_STOPPED_CRITICAL);
           break;
         }
       }

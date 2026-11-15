@@ -65,7 +65,7 @@ export class ToastService {
     TRANSLATION_COMPLETED: 'Dịch hoàn tất toàn bộ!',
     TRANSLATION_STOPPING: 'Đang dừng dịch thuật... Hệ thống sẽ dừng lại sau khi hoàn tất phần hiện tại.',
     TRANSLATION_STOPPED_BY_USER: 'Đã dừng dịch thuật hàng loạt theo yêu cầu.',
-    TRANSLATION_STOPPED_CRITICAL: 'Tiến trình dịch tự động đã dừng lại do lỗi nghiêm trọng (ví dụ: hết tín dụng OpenRouter, vượt giới hạn Rate Limit hoặc sai API Key).',
+    TRANSLATION_STOPPED_CRITICAL: (title: string, err: string) => `Đã dừng dịch tự động (tại ${title}) — ${err}`,
     TRANSLATION_ERROR: (title: string, err: string) => `Dịch thất bại đối với ${title}: ${err}`
   };
 
